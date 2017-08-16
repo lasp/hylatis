@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<dataset id="spark_ascii">
+<dataset id="ascii">
 
   <adapter class="latis.reader.adapter.AsciiAdapter2"
            delimiter="\s+"

@@ -1,0 +1,16 @@
+# SBT
+target/
+boot/
+lib_managed/
+src_managed/
+project/plugins/project/
+
+# Eclipse
+/bin
+.project
+.classpath
+.settings/
+.cache*
+
+# Editors
+*~

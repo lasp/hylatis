@@ -13,5 +13,3 @@ enablePlugins(JettyPlugin)
 lazy val latis       = ProjectRef(file("../latis"), "latis")
 lazy val latis_spark = ProjectRef(file("../latis-spark"), "latis-spark")
 
-EclipseKeys.skipProject in latis := true
-EclipseKeys.skipProject in latis-spark := true

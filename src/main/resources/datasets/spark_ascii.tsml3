@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<dataset id="spark_data_frame">
+<dataset id="spark_ascii">
 
   <adapter class="latis.reader.adapter.SparkDataFrameAdapter"
            location="ascii" />

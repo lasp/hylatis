@@ -2,16 +2,19 @@
 
 ## Dependencies
 
-[LaTiS][latis] must be cloned in a sister directory called `latis`.
+The following repositories must be cloned in sister directories:
 
-[latis]: https://github.com/latis-data/latis
+- [latis](http://stash.lasp.colorado.edu/projects/WEBAPPS/repos/latis)
+- [latis-spark](http://stash.lasp.colorado.edu/projects/WEBAPPS/repos/latis-spark)
 
 ## Running
 
-This project is configured to use [xsbt-web-plugin][xsbt] for running
-the server in Jetty.
+### Standalone
 
-To run the server, run the `jetty:start` task. Jetty can be stopped
-with `jetty:stop`.
+Running `sbt run` will run `latis-hylatis` using embedded Jetty.
 
-[xsbt]: https://github.com/earldouglas/xsbt-web-plugin
+### On Spark
+
+After setting the configuration of the Spark dependency in the
+`latis-spark` build to `provided`, running `sbt assembly` will produce
+a JAR than can be submitted using the `spark-submit` script.

@@ -1,5 +1,5 @@
 lazy val root = (project in file(".")).
-  dependsOn(latis, `latis-spark`).
+  //dependsOn(latis3).
   settings(
     name := "latis-hylatis",
     scalaVersion := "2.11.8",
@@ -10,8 +10,10 @@ lazy val root = (project in file(".")).
         "-Ywarn-unused-import"
       ),
     libraryDependencies ++= Seq(
-      "com.sun.jersey"    % "jersey-core"     % jerseyVersion % "runtime",
-      "com.sun.jersey"    % "jersey-server"   % jerseyVersion % "runtime",
+      //"com.sun.jersey"    % "jersey-core"     % jerseyVersion % "runtime",
+      //"com.sun.jersey"    % "jersey-server"   % jerseyVersion % "runtime",
+      "io.lambdata"       %% "latis-core"     % latisVersion,
+      "io.lambdata"       %% "latis-spark"    % latisVersion,
       "junit"             % "junit"           % "4.+"  % Test,
       "com.novocode"      % "junit-interface" % "0.11" % Test,
       "org.eclipse.jetty" % "jetty-server"    % jettyVersion,
@@ -33,6 +35,7 @@ lazy val root = (project in file(".")).
     }
   )
 
+val latisVersion = "3.0.0-SNAPSHOT"
 val jerseyVersion = "1.19.4"
 val jettyVersion  = "9.4.7.v20170914"
 
@@ -50,5 +53,5 @@ val scalacCommon =
     "-Xfuture"
   )
 
-lazy val latis         = ProjectRef(file("../latis"), "latis")
-lazy val `latis-spark` = ProjectRef(file("../latis-spark"), "latis-spark")
+//lazy val latis3         = ProjectRef(file("../latis3"), "latis3")
+//lazy val `latis-spark` = ProjectRef(file("../latis3/spark"), "spark")

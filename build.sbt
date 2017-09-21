@@ -10,10 +10,12 @@ lazy val root = (project in file(".")).
         "-Ywarn-unused-import"
       ),
     libraryDependencies ++= Seq(
-      "com.sun.jersey"    % "jersey-core"   % jerseyVersion % "runtime",
-      "com.sun.jersey"    % "jersey-server" % jerseyVersion % "runtime",
-      "org.eclipse.jetty" % "jetty-server"  % jettyVersion,
-      "org.eclipse.jetty" % "jetty-servlet" % jettyVersion
+      "com.sun.jersey"    % "jersey-core"     % jerseyVersion % "runtime",
+      "com.sun.jersey"    % "jersey-server"   % jerseyVersion % "runtime",
+      "junit"             % "junit"           % "4.+"  % Test,
+      "com.novocode"      % "junit-interface" % "0.11" % Test,
+      "org.eclipse.jetty" % "jetty-server"    % jettyVersion,
+      "org.eclipse.jetty" % "jetty-servlet"   % jettyVersion
     ),
     assemblyMergeStrategy in assembly := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first

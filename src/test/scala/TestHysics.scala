@@ -96,10 +96,22 @@ Note, order preserved
                   .filter("x < 2")
                   .filter("wavelength in (630.87, 531.86, 463.79)")
                   .groupBy("y","x")
-                  .pivot("wavelength", Seq(630.87, 531.86, 463.79))
-                  .sum("value")
+                  .pivot("wavelength", Seq(630.87, 531.86, 463.79)) //improve performance by providing values
+                  .sum("value") //aggregation required but not needed
                   .sort("y", "x")
                   .show
+                  
+   /*
+    * TODO: avoid shuffling
+    * since there will be no duplicates
+    *   we do not need to aggregate with "sum"
+    *   we don't need to groupBy(y,x)?
+    * we may end up with null wavelength cells
+    * fill when collecting?
+    * maybe groupBy is OK if late enough since we need to collect anyway
+    *   the filtering will have taken place
+    * implications on when/how to sort?
+    */
     
     /*
 +---+---+--------+--------+--------+

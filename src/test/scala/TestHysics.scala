@@ -4,6 +4,10 @@ import latis.reader.AsciiMatrixReader
 import latis.writer.SparkDataFrameWriter
 import latis.util.SparkUtils
 import latis.reader.HysicsReader
+import latis.metadata.Metadata
+import latis.fdm._
+import latis.reader.SparkDataFrameAdapter
+import latis.writer._
 
 class TestHysics {
   
@@ -25,17 +29,17 @@ class TestHysics {
     println(ss.length)
   }
   
-  //@Test
-  def read_image_file_into_spark(): Unit = {
-    val reader = AsciiMatrixReader("file:/data_systems/data/test/hylatis/img2000.txt")
-    val ds = reader.getDataset
-    //Writer3().write(ds)
-    SparkDataFrameWriter.write(ds)
-    
-    val spark = SparkUtils.getSparkSession
-    val df = spark.sql(s"SELECT * FROM matrix WHERE row < 3 and col < 3")
-    df.show
-  }
+//  //@Test
+//  def read_image_file_into_spark(): Unit = {
+//    val reader = AsciiMatrixReader("file:/data_systems/data/test/hylatis/img2000.txt")
+//    val ds = reader.getDataset
+//    //Writer3().write(ds)
+//    SparkDataFrameWriter.write(ds)
+//    
+//    val spark = SparkUtils.getSparkSession
+//    val df = spark.sql(s"SELECT * FROM matrix WHERE row < 3 and col < 3")
+//    df.show
+//  }
   
   //@Test
   def read_hysics(): Unit = {
@@ -93,13 +97,30 @@ Note, order preserved
     //TODO: how much of this could be assumed based on (y,x) domain?
     //val df = dfRGB
     val df = spark.table("hysics")
-                  .filter("x < 2")
+                  .filter("x < 210")
+                  .filter("x >= 200")
                   .filter("wavelength in (630.87, 531.86, 463.79)")
                   .groupBy("y","x")
                   .pivot("wavelength", Seq(630.87, 531.86, 463.79)) //improve performance by providing values
                   .sum("value") //aggregation required but not needed
                   .sort("y", "x")
-                  .show
+                  .withColumnRenamed("630.87", "R")
+                  .withColumnRenamed("531.86", "G")
+                  .withColumnRenamed("463.79", "B")
+                  //.show
+          
+    df.createOrReplaceTempView("rgb")
+    val model = Dataset(Metadata("id" -> "rgb"))(
+      Function("image")(
+          Tuple(Integer("y"), Integer("x")),
+          Tuple(Real("R"), Real("G"), Real("B"))
+      )
+    )
+    
+    val sdfa = new SparkDataFrameAdapter(Map("location" -> "rgb"))
+    val imageds = sdfa.makeDataset(model)
+    //Writer().write(imageds)
+    new ImageWriter().write(imageds)
                   
    /*
     * TODO: avoid shuffling
@@ -111,11 +132,20 @@ Note, order preserved
     * maybe groupBy is OK if late enough since we need to collect anyway
     *   the filtering will have taken place
     * implications on when/how to sort?
+    * 
+    * with FDM, shouldn't have to groupBy
+    *   and samples are unique so no need for agg
+    *   sorting should also be automatic
+    * required for spark API
+    *   pivot expects RelationalGroupedDataset, and returns one
+    *   can we avoid this?
+    *   override sql.Dataset?
+    *   or RDD?
     */
     
     /*
 +---+---+--------+--------+--------+
-|  y|  x|  630.87|  531.86|  463.79|
+|  y|  x|       R|       G|       B|
 +---+---+--------+--------+--------+
 |0.0|0.0|0.061348|0.060825|0.062387|
 |0.0|1.0|0.067032| 0.07077|0.075786|

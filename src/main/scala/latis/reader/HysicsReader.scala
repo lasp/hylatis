@@ -22,11 +22,11 @@ class HysicsReader(dir: String) {
   
   val delimiter = "," //TODO: parameterize
   
-  val domain = Tuple("domain")(Seq(
-    Real("y"),
-    Real("x"),
-    Real("wavelength")
-  ))
+  val xScalar = Integer(id = "x")
+  val yScalar = Integer(id = "y")
+  val wavelength = Real(id = "wavelength")
+  
+  val domain = Tuple(yScalar, xScalar, wavelength)
   
   val codomain = Real("value")
   
@@ -49,7 +49,7 @@ class HysicsReader(dir: String) {
   }
   
   def getDataset: Dataset = {
-    val range = 2000 until 2002
+    val range = 2000 until 2010
     val buffer = new ArrayBuffer[Array[Array[Double]]](range.length)
     range.foreach { n =>
       //TODO: deal with n < 1000
@@ -66,10 +66,10 @@ class HysicsReader(dir: String) {
       ix <- 0 until nx;
       iw <- 0 until nw
     ) yield {
-      val y = Real("y", iy.toDouble)
-      val x = Real("x", ix.toDouble)
-      val w = Real("wavelength", wavelengths(iw))
-      val value = Real("value", data(iy)(ix)(iw).toDouble)
+      val y = yScalar.copy(iy.toLong)
+      val x = xScalar.copy(ix.toLong)
+      val w = wavelength.copy(wavelengths(iw))
+      val value = codomain.copy(data(iy)(ix)(iw).toDouble)
       val domain = Tuple(y,x,w)
       Sample(domain, value)
     }

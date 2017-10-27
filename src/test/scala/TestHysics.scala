@@ -5,7 +5,7 @@ import latis.writer.SparkDataFrameWriter
 import latis.util.SparkUtils
 import latis.reader.HysicsReader
 import latis.metadata.Metadata
-import latis.fdm._
+import latis.model._
 import latis.reader.SparkDataFrameAdapter
 import latis.writer._
 
@@ -55,7 +55,7 @@ class TestHysics {
   //https://www.rp-photonics.com/rgb_sources.html
   // 630 nm for red, 532 nm for green, and 465 nm for blue light.
   //hysics: 630.87, 531.86, 463.79
-  //@Test
+  @Test
   def rgb = {
     val reader = HysicsReader()
     val ds = reader.getDataset
@@ -110,15 +110,15 @@ Note, order preserved
                   //.show
           
     df.createOrReplaceTempView("rgb")
-    val model = Dataset(Metadata("id" -> "rgb"))(
-      Function("image")(
-          Tuple(Integer("y"), Integer("x")),
-          Tuple(Real("R"), Real("G"), Real("B"))
-      )
+    val metadata = Metadata("id" -> "rgb")
+    val model = Function(Metadata("id" -> "image"))(
+      Tuple(Integer("y"), Integer("x")),
+      Tuple(Real("R"), Real("G"), Real("B"))
     )
     
     val sdfa = new SparkDataFrameAdapter(Map("location" -> "rgb"))
-    val imageds = sdfa.makeDataset(model)
+    sdfa.init(metadata, model)
+    val imageds = sdfa.makeDataset
     //Writer().write(imageds)
     new ImageWriter().write(imageds)
                   

@@ -3,7 +3,7 @@ package latis.reader
 import java.net.URL
 import scala.io.Source
 import latis.ops._
-import latis.fdm._
+import latis.model._
 import latis.metadata._
 import scala.collection.mutable.ArrayBuffer
 
@@ -30,9 +30,8 @@ class HysicsReader(dir: String) {
   
   val codomain = Real("value")
   
-  val model = Dataset(Metadata("id" -> "hysics")) {
-    Function("f")(domain, codomain)
-  }
+  val metadata = Metadata("id" -> "hysics")
+  val model = Function(Metadata("id" -> "f"))(domain, codomain)
   
   lazy val wavelengths: Array[Double] = {
     val source = Source.fromFile(dir + "wavelength.txt")
@@ -73,8 +72,8 @@ class HysicsReader(dir: String) {
       val domain = Tuple(y,x,w)
       Sample(domain, value)
     }
-    
-    Dataset(model.metadata)(SampledFunction(Metadata())(domain, codomain)(samples))
+//TODO: can't have null adapter    
+    Dataset(metadata, SampledFunction(samples), null)
   }
   
 }

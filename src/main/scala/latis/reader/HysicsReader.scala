@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
  * row and column are 1-based Integer indexes, starting in the upper left.
  * Order is row-major (column index varying fastest).
  */
-class HysicsReader(dir: String) {
+class HysicsReader(dir: String) extends DatasetSource {
   //TODO: make a Matrix subtype of SampledFunction with matrix semantics
   //TODO: allow value to be any Variable type?
   //TODO: impl as Adapter so we can hand it a model with metadata
@@ -47,7 +47,8 @@ class HysicsReader(dir: String) {
     data
   }
   
-  def getDataset: Dataset = {
+
+  def getDataset(operations: Seq[Operation] = Seq.empty): Dataset = {
     val range = 2000 until 2010
     val buffer = new ArrayBuffer[Array[Array[Double]]](range.length)
     range.foreach { n =>
@@ -72,7 +73,7 @@ class HysicsReader(dir: String) {
       val domain = Tuple(y,x,w)
       Sample(domain, value)
     }
-//TODO: can't have null adapter    
+
     Dataset(metadata, SampledFunction(samples), null)
   }
   

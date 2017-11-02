@@ -32,7 +32,9 @@ lazy val root = (project in file(".")).
     assemblyOption in assembly := {
       val orig = (assemblyOption in assembly).value
       orig.copy(includeScala = false)
-    }
+    },
+    // Enable sbt to find scala files (dataset descriptors) in /src/main/resources/datasets/
+    unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
   )
 
 val latisVersion = "3.0.0-SNAPSHOT"

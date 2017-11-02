@@ -1,4 +1,5 @@
 import org.junit._
+import org.junit.Assert._
 import scala.io.Source
 import latis.reader.AsciiMatrixReader
 import latis.writer.SparkDataFrameWriter
@@ -8,6 +9,8 @@ import latis.metadata.Metadata
 import latis.model._
 import latis.reader.SparkDataFrameAdapter
 import latis.writer._
+import latis.reader.DatasetSource
+import latis.ops.HysicsImageOp
 
 class TestHysics {
   
@@ -44,7 +47,7 @@ class TestHysics {
   //@Test
   def read_hysics(): Unit = {
     val reader = HysicsReader()
-    val ds = reader.getDataset
+    val ds = reader.getDataset()
     SparkDataFrameWriter.write(ds)
     
     val spark = SparkUtils.getSparkSession
@@ -55,10 +58,10 @@ class TestHysics {
   //https://www.rp-photonics.com/rgb_sources.html
   // 630 nm for red, 532 nm for green, and 465 nm for blue light.
   //hysics: 630.87, 531.86, 463.79
-  @Test
+  //@Test
   def rgb = {
     val reader = HysicsReader()
-    val ds = reader.getDataset
+    val ds = reader.getDataset()
     SparkDataFrameWriter.write(ds)
     val spark = SparkUtils.getSparkSession
     //val dfRGB = spark.sql(s"SELECT * FROM hysics where x < 2 and wavelength in (630.87, 531.86, 463.79)")
@@ -120,7 +123,9 @@ Note, order preserved
     sdfa.init(metadata, model)
     val imageds = sdfa.makeDataset
     //Writer().write(imageds)
-    new ImageWriter().write(imageds)
+    //ImageWriter("testRGB.jpeg").write(imageds)
+    //TODO: jpeg is all black
+    ImageWriter("testRGB.png").write(imageds)
                   
    /*
     * TODO: avoid shuffling
@@ -153,5 +158,38 @@ Note, order preserved
 |1.0|1.0|0.066708|0.071449|0.076174|
 +---+---+--------+--------+--------+
      */
+  }
+  
+  //@Test
+  def image_via_adapter = {
+    //load "hysics" data frame in spark
+    val reader = HysicsReader()
+    val ds = reader.getDataset()
+    SparkDataFrameWriter.write(ds)
+  
+    //get image dataset via adapter
+    val ops = Seq(HysicsImageOp(0, 10, 0, 10))
+    val imageds = DatasetSource.fromName("hysics_image").getDataset(ops)
+    //write to png image
+    ImageWriter("testRGB.png").write(imageds)
+    
+    //TODO: look at warnings: Stage 0 contains a task of very large size (181806 KB). The maximum recommended task size is 100 KB.
+  }
+  
+  @Test
+  def operation_regex = {
+    val NUM = """\d+"""
+    val pattern = s"getImage\\(($NUM),($NUM),($NUM),($NUM)\\)"
+    val s = "getImage(0,10,0,10)"
+    val ms = pattern.r.findFirstMatchIn(s) match {
+      case Some(m) => m.subgroups
+    }
+    assertEquals(4, ms.length)
+  }
+  
+  //@Test
+  def reflection = {
+    val ds = DatasetSource.fromName("ascii2").getDataset()
+    Writer().write(ds)
   }
 }

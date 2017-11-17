@@ -11,6 +11,7 @@ import latis.reader.SparkDataFrameAdapter
 import latis.writer._
 import latis.reader.DatasetSource
 import latis.ops.HysicsImageOp
+import latis.ops._
 
 class TestHysics {
   
@@ -160,7 +161,7 @@ Note, order preserved
      */
   }
   
-  //@Test
+  @Test
   def image_via_adapter = {
     //load "hysics" data frame in spark
     val reader = HysicsReader()
@@ -168,11 +169,19 @@ Note, order preserved
     SparkDataFrameWriter.write(ds)
   
     //get image dataset via adapter
-    val ops = Seq(HysicsImageOp(0, 10, 0, 10))
-    val imageds = DatasetSource.fromName("hysics_image").getDataset(ops)
+    //val ops = Seq(HysicsImageOp(0, 10, 0, 10))
+    val ops = Seq(
+      Select("x >= 0"),
+      Select("x < 3"),
+      Select("y >= 0"),
+      Select("y < 3"),
+      PivotWithValues("wavelength", Seq("630.87", "531.86", "463.79"), Seq("R", "G", "B"))
+    )
+    val imageds = DatasetSource.fromName("hysics").getDataset(ops)
+//TODO: adapter needs new model after pivot... 
+    Writer().write(imageds)
     //write to png image
-    ImageWriter("testRGB.png").write(imageds)
-    
+    //ImageWriter("testRGB.png").write(imageds) 
     //TODO: look at warnings: Stage 0 contains a task of very large size (181806 KB). The maximum recommended task size is 100 KB.
   }
   

@@ -17,13 +17,16 @@ object hysics_image extends DatasetDescriptor(
 //      Real(id = "value")
 //    )
   )(
-    HysicsImageAdapter()
+    SparkDataFrameAdapter("hysics")
   )(
-//      //get 3 w slices, pivot
-//    Operations(
-//      HysicsImageOp(0, 10, 0, 10) //handle in HysicsImageAdapter
-//      //TODO: generalize to Selections... in generic SDFA
-//  )
+    Operations(
+      /*
+       * TODO: we want to apply x,y selections before others 
+       * but they are input by the user
+       * have user supply the makeImage(r,g,b) op?
+       * CompositeOperation = Seq[Operation] ?
+       */
+  )
 )
 /*
  * TODO: extend some form of DatasetSource

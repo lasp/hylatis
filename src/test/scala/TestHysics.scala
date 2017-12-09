@@ -178,7 +178,19 @@ Note, order preserved
       PivotWithValues("wavelength", Seq("630.87", "531.86", "463.79"), Seq("R", "G", "B"))
     )
     val imageds = DatasetSource.fromName("hysics").getDataset(ops)
-//TODO: adapter needs new model after pivot... 
+/*
+ * TODO: adapter needs new model after pivot... 
+ * ideally spark would preserve FDM
+ * trying to munge just the model locally in the adapter is problematic
+ *   we don't have a good way for the adapter to change the model with current life cycle
+ * but want to be lazy about applying ops to data
+ * need to eagerly munge model so it can be used to construct dataset
+ * op.applyToModel ?
+ *   depends on type of Op
+ *   filter and selection don't affect model
+ * See notes in SparkDataFrameAdapter.scala
+ * 
+ */
     Writer().write(imageds)
     //write to png image
     //ImageWriter("testRGB.png").write(imageds) 

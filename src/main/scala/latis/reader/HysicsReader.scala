@@ -7,13 +7,6 @@ import latis.model._
 import latis.metadata._
 import scala.collection.mutable.ArrayBuffer
 
-/**
- * Read entire contents of a matrix (2D) into a Dataset of type
- *   (row, column) -> value
- * The value will be of type Text.
- * row and column are 1-based Integer indexes, starting in the upper left.
- * Order is row-major (column index varying fastest).
- */
 class HysicsReader(dir: String) extends DatasetSource {
   //TODO: make a Matrix subtype of SampledFunction with matrix semantics
   //TODO: allow value to be any Variable type?

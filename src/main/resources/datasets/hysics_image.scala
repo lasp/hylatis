@@ -5,29 +5,29 @@ import latis.reader._
 import latis.ops._
 import latis.model._
 
-object hysics_image extends DatasetDescriptor(
-    Metadata("id" -> "hysics_image")
-  )(
-    Function(Metadata("id" -> "image"))(
-      Tuple(Integer("y"), Integer("x")),
-      Tuple(Real("R"), Real("G"), Real("B"))
-    )
-//    Function(Metadata("id" -> "cube"))(
-//      Tuple(Integer(id = "x"), Integer(id = "y"), Real(id = "wavelength")),
-//      Real(id = "value")
+//object hysics_image extends DatasetDescriptor(
+//    Metadata("id" -> "hysics_image")
+//  )(
+//    Function(Metadata("id" -> "image"))(
+//      Tuple(Integer("y"), Integer("x")),
+//      Tuple(Real("R"), Real("G"), Real("B"))
 //    )
-  )(
-    SparkDataFrameAdapter("hysics")
-  )(
-    Operations(
-      /*
-       * TODO: we want to apply x,y selections before others 
-       * but they are input by the user
-       * have user supply the makeImage(r,g,b) op?
-       * CompositeOperation = Seq[Operation] ?
-       */
-  )
-)
+////    Function(Metadata("id" -> "cube"))(
+////      Tuple(Integer(id = "x"), Integer(id = "y"), Real(id = "wavelength")),
+////      Real(id = "value")
+////    )
+//  )(
+//    SparkDataFrameAdapter("hysics")
+//  )(
+//    Operations(
+//      /*
+//       * TODO: we want to apply x,y selections before others 
+//       * but they are input by the user
+//       * have user supply the makeImage(r,g,b) op?
+//       * CompositeOperation = Seq[Operation] ?
+//       */
+//  )
+//)
 /*
  * TODO: extend some form of DatasetSource
  * access "hysics" data frame

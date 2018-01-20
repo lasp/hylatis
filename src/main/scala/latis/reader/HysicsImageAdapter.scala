@@ -7,14 +7,15 @@ import latis.util.SparkUtils
  * Adapter that knows how to apply image dataset generation operations 
  * to the hysics data cube.
  */
-class HysicsImageAdapter(props: Map[String, String]) extends SparkDataFrameAdapter(props) {
+class HysicsImageAdapter(props: Map[String, String]) { //extends SparkDataFrameAdapter(props) {
   
   //Define R, G, and B wavelength values
   val r = 630.87
   val g = 531.86
   val b = 463.79
   
-  override def handleOperation(op: Operation): Boolean = op match {
+  //override 
+  def handleOperation(op: Operation): Boolean = op match {
     case HysicsImageOp(x1,x2,y1,y2) =>
       val spark = SparkUtils.getSparkSession
       val df = spark.table("hysics")

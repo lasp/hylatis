@@ -120,7 +120,8 @@ Note, order preserved
       Tuple(Real("R"), Real("G"), Real("B"))
     )
     
-    val sdfa = new SparkDataFrameAdapter(Map("location" -> "rgb"))
+    //val sdfa = new SparkDataFrameAdapter(Map("location" -> "rgb"))
+    val sdfa = SparkDataFrameAdapter(model, table="rgb")
     sdfa.init(metadata, model)
     val imageds = sdfa.makeDataset
     //Writer().write(imageds)

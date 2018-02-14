@@ -10,10 +10,17 @@ lazy val hylatis = (project in file("."))
   .settings(
     name := "latis-hylatis",
     libraryDependencies ++= Seq(
-      "io.latis-data"     %% "latis-core"   % latisVersion,
-      "io.latis-data"     %% "latis-spark"  % latisVersion,
-      "org.eclipse.jetty" % "jetty-server"  % jettyVersion,
-      "org.eclipse.jetty" % "jetty-servlet" % jettyVersion
+      "io.latis-data"     %% "latis-core"    % latisVersion,
+      "io.latis-data"     %% "latis-spark"   % latisVersion,
+      "org.eclipse.jetty" % "jetty-server"   % jettyVersion,
+      "org.eclipse.jetty" % "jetty-servlet"  % jettyVersion,
+      "org.geotools"      % "gt-main"        % "18.2",
+      "org.geotools"      % "gt-epsg-hsql"   % "18.2",
+      "org.geotools"      % "gt-api"         % "18.2",
+      "org.geotools"      % "gt-referencing" % "18.2"
+    ),
+    resolvers ++= Seq(
+      "Boundless" at "http://repo.boundlessgeo.com/main"
     ),
     assemblyMergeStrategy in assembly := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first

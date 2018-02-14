@@ -1,3 +1,5 @@
+package latis
+
 import org.junit._
 import org.junit.Assert._
 import scala.io.Source
@@ -6,12 +8,17 @@ import latis.writer.SparkDataFrameWriter
 import latis.util.SparkUtils
 import latis.reader.HysicsReader
 import latis.metadata.Metadata
+import latis.data._
 import latis.model._
 import latis.reader.SparkDataFrameAdapter
 import latis.writer._
 import latis.reader.DatasetSource
 import latis.ops.HysicsImageOp
 import latis.ops._
+import java.net.URL
+import java.net.URI
+import java.io.File
+import latis.util.AWSUtils
 
 class TestHysics {
   
@@ -121,13 +128,13 @@ Note, order preserved
     )
     
     //val sdfa = new SparkDataFrameAdapter(Map("location" -> "rgb"))
-    val sdfa = SparkDataFrameAdapter(model, table="rgb")
-    sdfa.init(metadata, model)
-    val imageds = sdfa.makeDataset
+//    val sdfa = SparkDataFrameAdapter(model, table="rgb")
+//    sdfa.init(metadata, model)
+//    val imageds = sdfa.makeDataset
     //Writer().write(imageds)
     //ImageWriter("testRGB.jpeg").write(imageds)
     //TODO: jpeg is all black
-    ImageWriter("testRGB.png").write(imageds)
+//    ImageWriter("testRGB.png").write(imageds)
                   
    /*
     * TODO: avoid shuffling
@@ -162,7 +169,7 @@ Note, order preserved
      */
   }
   
-  @Test
+  //@Test
   def image_via_adapter = {
     //load "hysics" data frame in spark
     val reader = HysicsReader()
@@ -213,5 +220,37 @@ Note, order preserved
   def reflection = {
     val ds = DatasetSource.fromName("ascii2").getDataset()
     Writer().write(ds)
+  }
+  
+  //@Test
+  def file_list = {
+    val ds = DatasetSource.fromName("hysics_des_veg_cloud_image_files").getDataset()
+    val baseURL = ds.getProperty("baseURL", "")
+    ds foreach {
+      case Sample(_, d) => d match { //TODO: can't do nested match on Text here
+        case Text(file) => 
+          val key = file
+          val obj = new File(new URI(s"$baseURL/$file"))
+          println(s"$key  $obj")
+//          s3.putObject("hylatis-hysics-001", key, obj)
+      }
+    }
+    //Writer().write(ds)
+  }
+  
+  //@Test
+  def read_wavelengths = {
+    val s3 = AWSUtils.s3Client.get
+    val is = s3.getObject("hylatis-hysics-001", "des_veg_cloud/wavelength.txt").getObjectContent
+    Source.fromInputStream(is).getLines foreach println
+  }
+  
+  @Test
+  def list_bucket = {
+    import scala.collection.JavaConversions._
+    val s3 = AWSUtils.s3Client.get
+    val os = s3.listObjects("hylatis-hysics-001").getObjectSummaries
+    println(os.length)
+    os.foreach(o => println(o.getKey))
   }
 }

@@ -1,23 +1,19 @@
-lazy val root = (project in file(".")).
-  //dependsOn(latis3).
-  settings(
+ThisBuild / organization := "lasp"
+ThisBuild / scalaVersion := "2.11.8"
+
+val latisVersion = "3.0.0-SNAPSHOT"
+//val jerseyVersion = "1.19.4"
+val jettyVersion  = "9.4.7.v20170914"
+
+lazy val hylatis = (project in file("."))
+  .settings(commonSettings)
+  .settings(
     name := "latis-hylatis",
-    scalaVersion := "2.11.8",
-    scalacOptions ++= scalacCommon,
-    scalacOptions in (Compile, compile) ++=
-      scalacCommon ++ Seq(
-        "-Ywarn-unused",
-        "-Ywarn-unused-import"
-      ),
     libraryDependencies ++= Seq(
-      //"com.sun.jersey"    % "jersey-core"     % jerseyVersion % "runtime",
-      //"com.sun.jersey"    % "jersey-server"   % jerseyVersion % "runtime",
-      "io.lambdata"       %% "latis-core"     % latisVersion,
-      "io.lambdata"       %% "latis-spark"    % latisVersion,
-      "junit"             % "junit"           % "4.+"  % Test,
-      "com.novocode"      % "junit-interface" % "0.11" % Test,
-      "org.eclipse.jetty" % "jetty-server"    % jettyVersion,
-      "org.eclipse.jetty" % "jetty-servlet"   % jettyVersion
+      "io.latis-data"     %% "latis-core"   % latisVersion,
+      "io.latis-data"     %% "latis-spark"  % latisVersion,
+      "org.eclipse.jetty" % "jetty-server"  % jettyVersion,
+      "org.eclipse.jetty" % "jetty-servlet" % jettyVersion
     ),
     assemblyMergeStrategy in assembly := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
@@ -36,24 +32,33 @@ lazy val root = (project in file(".")).
     // Enable sbt to find scala files (dataset descriptors) in /src/main/resources/datasets/
     unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
   )
+  
+lazy val commonSettings = compilerFlags ++ Seq(
+  Compile / compile / wartremoverWarnings ++= Warts.allBut(
+    Wart.Any,         // false positives
+    Wart.Nothing,     // false positives
+    Wart.Product,     // false positives
+    Wart.Serializable // false positives
+  ),
+  // Test suite dependencies
+  libraryDependencies ++= Seq(
+    "junit"            % "junit"           % "4.12"      % Test,
+    "com.novocode"     % "junit-interface" % "0.11"      % Test
+  )
+)
 
-val latisVersion = "3.0.0-SNAPSHOT"
-val jerseyVersion = "1.19.4"
-val jettyVersion  = "9.4.7.v20170914"
-
-val scalacCommon =
-  Seq(
-    "-encoding", "UTF-8",
+lazy val compilerFlags = Seq(
+  scalacOptions ++= Seq(
     "-deprecation",
+    "-encoding", "utf-8",
     "-feature",
+  ),
+  Compile / compile / scalacOptions ++= Seq(
     "-unchecked",
     "-Xlint",
-    "-Ywarn-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard",
-    "-Xfuture"
+    "-Ywarn-value-discard"
   )
+)
 
-//lazy val latis3         = ProjectRef(file("../latis3"), "latis3")
-//lazy val `latis-spark` = ProjectRef(file("../latis3/spark"), "spark")

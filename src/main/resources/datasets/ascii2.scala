@@ -41,30 +41,30 @@ object ImplicitConversions {
 
 
 
-object ascii2 extends DatasetDescriptor(
-  "ascii2"
-)(
-  Function("f")(
-    Text(id="myTime"),
-    Tuple(
-      Integer(id="myInt"),
-      Real(id="myReal"),
-      Text(id="myText")
-    )
-  )
-)(
-  AsciiAdapter(
-    //"location" -> "file:/Users/lindholm/git/latis3/latis-core/src/test/resources/data/mixed.txt",
-    location = "file:/home/lindholm/git/latis3/latis-core/src/test/resources/data/mixed.txt"
-  , delimiter = """\s+"""
-  , comment_character = "#"
-  )
-)(   
-//    Operations(
-//      Select("x > 1"),
-//      First
+//object ascii2 extends DatasetDescriptor(
+//  "ascii2"
+//)(
+//  Function("f")(
+//    Text(id="myTime"),
+//    Tuple(
+//      Integer(id="myInt"),
+//      Real(id="myReal"),
+//      Text(id="myText")
 //    )
-)
+//  )
+//)(
+//  AsciiAdapter(
+//    //"location" -> "file:/Users/lindholm/git/latis3/latis-core/src/test/resources/data/mixed.txt",
+//    location = "file:/home/lindholm/git/latis3/latis-core/src/test/resources/data/mixed.txt"
+//  , delimiter = """\s+"""
+//  , comment_character = "#"
+//  )
+//)(   
+////    Operations(
+////      Select("x > 1"),
+////      First
+////    )
+//)
 
 //object ascii {
 //  val dataset = Dataset("ascii")(

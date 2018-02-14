@@ -42,34 +42,34 @@ class HysicsReader(dir: String) extends DatasetSource {
   
 
   def getDataset(operations: Seq[Operation] = Seq.empty): Dataset = {
-    val range = 2000 until 2010
-    val buffer = new ArrayBuffer[Array[Array[Double]]](range.length)
-    range.foreach { n =>
-      //TODO: deal with n < 1000
-      buffer += readImage(s"img$n.txt")
-    }
-    val data = buffer.toArray
-    
-    val ny = data.length
-    val nx = data(0).length
-    val nw = wavelengths.length
-    
-    val samples: Seq[Sample] = for (
-      iy <- 0 until ny;
-      ix <- 0 until nx;
-      iw <- 0 until nw
-    ) yield {
-      val y = yScalar.copy(iy.toLong)
-      val x = xScalar.copy(ix.toLong)
-      val w = wavelength.copy(wavelengths(iw))
-      val value = codomain.copy(data(iy)(ix)(iw).toDouble)
-      val domain = Tuple(y,x,w)
-      Sample(domain, value)
-    }
-
-    Dataset(metadata, SampledFunction(samples), null)
+//    val range = 2000 until 2010
+//    val buffer = new ArrayBuffer[Array[Array[Double]]](range.length)
+//    range.foreach { n =>
+//      //TODO: deal with n < 1000
+//      buffer += readImage(s"img$n.txt")
+//    }
+//    val data = buffer.toArray
+//    
+//    val ny = data.length
+//    val nx = data(0).length
+//    val nw = wavelengths.length
+//    
+//    val samples: Seq[Sample] = for (
+//      iy <- 0 until ny;
+//      ix <- 0 until nx;
+//      iw <- 0 until nw
+//    ) yield {
+//      val y = yScalar.copy(iy.toLong)
+//      val x = xScalar.copy(ix.toLong)
+//      val w = wavelength.copy(wavelengths(iw))
+//      val value = codomain.copy(data(iy)(ix)(iw).toDouble)
+//      val domain = Tuple(y,x,w)
+//      Sample(domain, value)
+//    }
+//
+//    Dataset(metadata, SampledFunction(samples), null)
+    ???
   }
-  
 }
 
 object HysicsReader {

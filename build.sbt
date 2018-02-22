@@ -17,7 +17,8 @@ lazy val hylatis = (project in file("."))
       "org.geotools"      % "gt-main"        % "18.2",
       "org.geotools"      % "gt-epsg-hsql"   % "18.2",
       "org.geotools"      % "gt-api"         % "18.2",
-      "org.geotools"      % "gt-referencing" % "18.2"
+      "org.geotools"      % "gt-referencing" % "18.2",
+      "org.apache.commons" % "commons-math3" % "3.6.1"
     ),
     resolvers ++= Seq(
       "Boundless" at "http://repo.boundlessgeo.com/main"

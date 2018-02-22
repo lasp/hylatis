@@ -8,7 +8,7 @@ import latis.data._
 import scala.collection.mutable.ArrayBuffer
 import latis.model.Real
 import java.io._
-import org.apache.commons.math3.analysis.interpolation.SplineInterpolator
+import org.apache.commons.math3.analysis.interpolation._
 
 
 object TestGeoLocation extends App {
@@ -20,7 +20,7 @@ object TestGeoLocation extends App {
   
   val ds = DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
   //Writer().write(ds)
-  val lonLats: Array[(Double, Double)] = ds.samples.toArray.map {
+  val lonLats: Seq[(Double, Double)] = ds.samples.toSeq.map {
     case Sample(time, TupleData(Seq(Real(lat), Real(lon)))) => (lon,lat)
   }
   
@@ -30,21 +30,35 @@ object TestGeoLocation extends App {
   def toXY(lonLat: (Double, Double), lonLat0: (Double, Double)) = (lonLat, lonLat0) match {
     case ((lon, lat), (lon0, lat0)) => ((lon - lon0)/cos(lat0*Pi/180.0), (lat - lat0))
   }
-  val xys: Array[(Double, Double)] = lonLats.map(ll => toXY(ll, lonLats.head))
+  val xys: Seq[(Double, Double)] = lonLats.map(ll => toXY(ll, lonLats.head))
   
   //xys foreach println
 //  val pw = new PrintWriter(new File("xys.txt" ))
 //  xys.foreach(p => pw.println(s"${p._1}, ${p._2}"))
 //  pw.close()
   
-  //NOTE: reversing for derivative
-  val (rxs, rys) = xys.reverse.unzip
+  // Duplicate first and last sample for sliding operation
+  val xys2 = xys.head +: xys :+ xys.last
+  // Compute slope from points on either side
+  val slopes = xys2.sliding(3) map {
+    case Seq((x1, y1), (x, _), (x2, y2)) => (x, (y2 - y1)/(x2 - x1))
+  }
   
-  val spline = new SplineInterpolator().interpolate(rxs, rys)
-  val deriv = spline.derivative()
-  val slopes = rxs.reverse.map(x => (x, deriv.value(x) * (-1))) //re-reverse xs, negate slope
-  val pw = new PrintWriter(new File("slopes.txt" ))
-  slopes.foreach(p => pw.println(s"${p._1}, ${p._2}"))
+  
+  //only works if strictly increasing
+//  val (rxs, rys) = xys.reverse.toArray.unzip
+//  val spline = new SplineInterpolator().interpolate(rxs, rys)
+//  val deriv = spline.derivative()
+//  val slopes = rxs.reverse.map(x => (x, deriv.value(x) * (-1))) //re-reverse xs, negate slope
+  
+//  val (xs, ys) = xys.toArray.unzip
+//  val is = Array.range(0, xs.length).map(_.toDouble)
+//  val xspline = new LoessInterpolator().interpolate(is, xs)
+//  val xderiv = xspline.derivative()
+//  val xslopes = is.map(xderiv.value(_))
+  
+  val pw = new PrintWriter(new File("slopes_spline.txt" ))
+  slopes.foreach (p => pw.println(s"${p._1}, ${p._2}"))
   pw.close()
   
   /*
@@ -57,6 +71,16 @@ object TestGeoLocation extends App {
    * 
    * do sliding window of 3 and compute slope from neighbors
    * repeat slope at endpoints?
+   *   probably should just use the 2 points at the ends
+   *  *just repeat the first and last samples before "sliding"?
+   *   define set of end-point behaviors for sliding operations
+   * 
+   * Use parametric curve: x(i), y(i)
+   *   dy/dx = (dy/di) / (dx/di))
+   *   the inner two will be strictly increasing
+   *   the spline seems to be to true to the data, hits every point, we need to smooth
+   *   AkimaSplineInterpolator, got const slope -1.21654e-05
+   *   
    */
   
   

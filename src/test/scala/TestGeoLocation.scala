@@ -25,10 +25,10 @@ object TestGeoLocation extends App {
   }
   
   
-  // Local approximation: distance in degrees, dLon stretched by 1/cos(lat0)
+  // Local approximation: distance in degrees, dLon reduced by cos(lat0)
   import scala.math._
   def toXY(lonLat: (Double, Double), lonLat0: (Double, Double)) = (lonLat, lonLat0) match {
-    case ((lon, lat), (lon0, lat0)) => ((lon - lon0)/cos(lat0*Pi/180.0), (lat - lat0))
+    case ((lon, lat), (lon0, lat0)) => ((lon - lon0)*cos(lat0*Pi/180.0), (lat - lat0))
   }
   val xys: Seq[(Double, Double)] = lonLats.map(ll => toXY(ll, lonLats.head))
   
@@ -57,9 +57,9 @@ object TestGeoLocation extends App {
 //  val xderiv = xspline.derivative()
 //  val xslopes = is.map(xderiv.value(_))
   
-  val pw = new PrintWriter(new File("slopes_spline.txt" ))
-  slopes.foreach (p => pw.println(s"${p._1}, ${p._2}"))
-  pw.close()
+//  val pw2 = new PrintWriter(new File("slopes.txt" ))
+//  slopes.foreach (p => pw2.println(s"${p._1}, ${p._2}"))
+//  pw2.close()
   
   /*
    * there are duplicate lon values in the gps data 
@@ -79,7 +79,13 @@ object TestGeoLocation extends App {
    *   dy/dx = (dy/di) / (dx/di))
    *   the inner two will be strictly increasing
    *   the spline seems to be to true to the data, hits every point, we need to smooth
-   *   AkimaSplineInterpolator, got const slope -1.21654e-05
+   *   
+   * TODO: try PolynomialCurveFitter.create(3).fit(obs)
+   *   and make Polynomial function from coeffs
+   *   which has a derivative
+   *   or just fit the slopes
+   *   
+   * Consider general trajectory and overlap of slit images
    *   
    */
   

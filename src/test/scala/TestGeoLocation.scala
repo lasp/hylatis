@@ -9,23 +9,29 @@ import scala.collection.mutable.ArrayBuffer
 import latis.model.Real
 import java.io._
 import org.apache.commons.math3.analysis.interpolation._
+import org.apache.commons.math3.fitting.PolynomialCurveFitter
+import org.apache.commons.math3.fitting.WeightedObservedPoint
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction
 
 
 object TestGeoLocation extends App {
   
   /*
-   * dx = 13.16 m/px along slit
+   * assume regular cadence and const velocity, nadir, ...
+   *   each step represents the same ground distance
+   *   use index as abscissa 
    * 
    */
   
+  // Read GPS locations for center of each slit image
   val ds = DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
   //Writer().write(ds)
   val lonLats: Seq[(Double, Double)] = ds.samples.toSeq.map {
     case Sample(time, TupleData(Seq(Real(lat), Real(lon)))) => (lon,lat)
   }
   
-  
   // Local approximation: distance in degrees, dLon reduced by cos(lat0)
+  // Use GeodeticCalculator for more precise results and distance units
   import scala.math._
   def toXY(lonLat: (Double, Double), lonLat0: (Double, Double)) = (lonLat, lonLat0) match {
     case ((lon, lat), (lon0, lat0)) => ((lon - lon0)*cos(lat0*Pi/180.0), (lat - lat0))
@@ -41,24 +47,22 @@ object TestGeoLocation extends App {
   val xys2 = xys.head +: xys :+ xys.last
   // Compute slope from points on either side
   val slopes = xys2.sliding(3) map {
-    case Seq((x1, y1), (x, _), (x2, y2)) => (x, (y2 - y1)/(x2 - x1))
+    case Seq((x1, y1), _, (x2, y2)) => (y2 - y1)/(x2 - x1) //TODO: deal with north-south only = infinite slope
   }
   
+  // Fit curve to slope data to smooth it
+  val degree = 3
+  val fitter = PolynomialCurveFitter.create(degree)
+  val points = slopes.toList.zipWithIndex map { p =>
+    new WeightedObservedPoint(1, p._2, p._1)
+  }
+  import collection.JavaConverters._
+  val coeffs = fitter.fit(points.asJava)
+  val pf = new PolynomialFunction(coeffs)
+  val smoothed_slopes = Seq.range(0, points.length).map(pf.value(_))
   
-  //only works if strictly increasing
-//  val (rxs, rys) = xys.reverse.toArray.unzip
-//  val spline = new SplineInterpolator().interpolate(rxs, rys)
-//  val deriv = spline.derivative()
-//  val slopes = rxs.reverse.map(x => (x, deriv.value(x) * (-1))) //re-reverse xs, negate slope
-  
-//  val (xs, ys) = xys.toArray.unzip
-//  val is = Array.range(0, xs.length).map(_.toDouble)
-//  val xspline = new LoessInterpolator().interpolate(is, xs)
-//  val xderiv = xspline.derivative()
-//  val xslopes = is.map(xderiv.value(_))
-  
-//  val pw2 = new PrintWriter(new File("slopes.txt" ))
-//  slopes.foreach (p => pw2.println(s"${p._1}, ${p._2}"))
+//  val pw2 = new PrintWriter(new File("slopes_smoothed.txt" ))
+//  smoothed_slopes foreach pw2.println
 //  pw2.close()
   
   /*

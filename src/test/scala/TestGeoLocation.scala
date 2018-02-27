@@ -12,9 +12,68 @@ import org.apache.commons.math3.analysis.interpolation._
 import org.apache.commons.math3.fitting.PolynomialCurveFitter
 import org.apache.commons.math3.fitting.WeightedObservedPoint
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction
-
+import scala.math._
 
 object TestGeoLocation extends App {
+  
+  /**
+   * Convert a Seq of (lon,lat) pairs into (x,y) pairs with 
+   * orthodromic distances (along the geoid) in meters
+   * from the first element with the y-axis defined as the
+   * direction from the first to the second point.
+   * TODO: If the path is linear, define Cartesian xs, ys.
+   */
+  //TODO
+  
+  /**
+   * Convert a Seq of (lon,lat) pairs into (x,y) pairs with 
+   * orthodromic distances (along the geoid) in meters
+   * from the first element with the x and y axes aligned with 
+   * lon and lat.
+   */
+  def geoToXY(lonLats: Seq[(Double, Double)]): Seq[(Double, Double)] = {
+    //TODO: implicit CRS?
+    val crs = CRS.decode("EPSG:4326")
+    val gc = new GeodeticCalculator(crs)
+    
+    // Set the first point as the starting point: (0,0)
+    lonLats.head match { case (lon, lat) => 
+      gc.setStartingGeographicPoint(lon, lat)
+    }
+    
+    // Compute x and y in meters relative to the starting point
+    lonLats map { case (lon, lat) =>
+      gc.setDestinationGeographicPoint(lon, lat)
+      val d = gc.getOrthodromicDistance() //meters
+      val a = gc.getAzimuth() // degrees clockwise from north
+      val rad = (90.0 - a) / 180.0 * Pi
+      (d * cos(rad), d * sin(rad))
+    }
+  }
+  
+  //XY origin (0,0) corresponds to latLon0
+  def xyToGeo(xys: Seq[(Double, Double)], lonLat0: (Double, Double)): Seq[(Double, Double)] = {
+    val crs = CRS.decode("EPSG:4326")
+    val gc = new GeodeticCalculator(crs)
+    lonLat0 match {case (lon, lat) => gc.setStartingGeographicPoint(lon, lat)}
+    
+    xys map { case (x, y) =>
+      //azimuth (a): degrees from north: -180 to 180
+      //arctan : -90 to 90
+      //Need to use sign of x to get sign right
+      val a = signum(x) match {
+        case 0 =>
+          if (y > 0) 0.0
+          else 180.0
+        case sign => 90.0 * sign - atan(y/x) * 180.0 / Pi
+      }
+      val d = sqrt(x*x + y*y)
+      gc.setDirection(a, d)
+      val pt = gc.getDestinationGeographicPoint
+      (pt.getX, pt.getY)
+    }
+  }
+  
   
   /*
    * assume regular cadence and const velocity, nadir, ...
@@ -24,31 +83,31 @@ object TestGeoLocation extends App {
    */
   
   // Read GPS locations for center of each slit image
-  val ds = DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
+  val gpsDataset = DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
   //Writer().write(ds)
-  val lonLats: Seq[(Double, Double)] = ds.samples.toSeq.map {
+  val lonLats: Seq[(Double, Double)] = gpsDataset.samples.toSeq.map {
     case Sample(time, TupleData(Seq(Real(lat), Real(lon)))) => (lon,lat)
   }
   
-  // Local approximation: distance in degrees, dLon reduced by cos(lat0)
-  // Use GeodeticCalculator for more precise results and distance units
-  import scala.math._
-  def toXY(lonLat: (Double, Double), lonLat0: (Double, Double)) = (lonLat, lonLat0) match {
-    case ((lon, lat), (lon0, lat0)) => ((lon - lon0)*cos(lat0*Pi/180.0), (lat - lat0))
-  }
-  val xys: Seq[(Double, Double)] = lonLats.map(ll => toXY(ll, lonLats.head))
+//  // Local approximation: distance in degrees, dLon reduced by cos(lat0)
+//  // Use GeodeticCalculator for more precise results and distance units
+//  def toXY(lonLat: (Double, Double), lonLat0: (Double, Double)) = (lonLat, lonLat0) match {
+//    case ((lon, lat), (lon0, lat0)) => ((lon - lon0)*cos(lat0*Pi/180.0), (lat - lat0))
+//  }
+//  val xys: Seq[(Double, Double)] = lonLats.map(ll => toXY(ll, lonLats.head))
   
-  //xys foreach println
-//  val pw = new PrintWriter(new File("xys.txt" ))
-//  xys.foreach(p => pw.println(s"${p._1}, ${p._2}"))
-//  pw.close()
+  // (x,y) positions of slit/image centers
+  val xys = geoToXY(lonLats)
+  
   
   // Duplicate first and last sample for sliding operation
   val xys2 = xys.head +: xys :+ xys.last
   // Compute slope from points on either side
   val slopes = xys2.sliding(3) map {
-    case Seq((x1, y1), _, (x2, y2)) => (y2 - y1)/(x2 - x1) //TODO: deal with north-south only = infinite slope
+    //TODO: deal with north-south only = infinite slope
+    case Seq((x1, y1), _, (x2, y2)) => (y2 - y1)/(x2 - x1) 
   }
+  
   
   // Fit curve to slope data to smooth it
   val degree = 3
@@ -61,7 +120,35 @@ object TestGeoLocation extends App {
   val pf = new PolynomialFunction(coeffs)
   val smoothed_slopes = Seq.range(0, points.length).map(pf.value(_))
   
-//  val pw2 = new PrintWriter(new File("slopes_smoothed.txt" ))
+  
+  // Compute XYs for all pixels along a slit for all images
+  val n = 480
+  val ds = 12.33 //slit pixel size in meters, assume const height above ground
+  val c = ds * (1.0 - n)/2
+  // 1: eastward, -1: westward, 0: north or southward
+  //TODO: deal with N/S direction
+  //TODO: assumes E/W direction doesn't change! need sliding(2)?
+  val xDirection = xys.take(2) match {
+    case Seq((x1, _), (x2, _)) => signum(x2 - x1)
+  }
+  val allXYs = (xys zip smoothed_slopes) flatMap { //for each image
+    case ((x0,y0), m) =>
+      (0 until n) map { i =>  // for each slit pixel
+        val d = sqrt(m*m + 1) //const
+        val x = x0 + xDirection * (ds*i + c) * m / d
+        val y = y0 - xDirection * (ds*i + c) * 1.0 / d
+        (x,y)
+      }
+  }
+  
+  // Convert XYs into Lon, Lat
+  val allLonLats = xyToGeo(allXYs, lonLats.head)
+  
+//  val pw = new PrintWriter(new File("all_lon_lat.txt" ))
+//  allLonLats.foreach(p => pw.println(s"${p._1}, ${p._2}"))
+//  pw.close()
+  
+//  val pw2 = new PrintWriter(new File("slopes2.txt" ))
 //  smoothed_slopes foreach pw2.println
 //  pw2.close()
   

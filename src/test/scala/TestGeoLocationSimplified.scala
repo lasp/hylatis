@@ -22,7 +22,7 @@ object TestGeoLocationSimplified extends App {
   
   val nx = 480
   val ny = 4200
-  val a = 59.00 * Pi / 180.0 //TODO: why negative of azimuth? vector rotates opposite of cs?
+  val a = -59.00 * Pi / 180.0
   val dx = 12.358
   val dy = 0.92167
   
@@ -35,8 +35,8 @@ object TestGeoLocationSimplified extends App {
   val rotateXY = (xy: (Double, Double)) => {
     val x = xy._1
     val y = xy._2
-    val x2 = x * cos(a) - y * sin(a)
-    val y2 = x * sin(a) + y * cos(a)
+    val x2 =   x * cos(a) + y * sin(a)
+    val y2 = - x * sin(a) + y * cos(a)
     (x2, y2)
   }
   
@@ -64,9 +64,9 @@ object TestGeoLocationSimplified extends App {
   val f = (indexToXY andThen rotateXY andThen xyToGeo)
   val allLonLats = for (j <- 0 until ny; i <- 0 until nx) yield f((i,j))
       
-//  val pw = new PrintWriter(new File("all_lon_lat3.txt" ))
-//  allLonLats.foreach(p => pw.println(s"${p._1}, ${p._2}"))
-//  pw.close()
+  val pw = new PrintWriter(new File("all_lon_lat3.txt" ))
+  allLonLats.foreach(p => pw.println(s"${p._1}, ${p._2}"))
+  pw.close()
   
   /*
      * Note, unlike TestGeoLocation, this XY cs is rotated relative to lon,lat.

@@ -21,6 +21,7 @@ class LatisHylatisServer extends HttpServlet {
     //loadData("ascii2")
     
     //load sample Hysics data cube
+    //TODO: need to stream data into spark, union DataFrames
     val reader = HysicsReader()
     val ds = reader.getDataset()
     SparkDataFrameWriter.write(ds)

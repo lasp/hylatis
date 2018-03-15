@@ -22,6 +22,9 @@ object hysics_des_veg_cloud_gps extends DatasetDescriptor {
   )
   
   val location = new URL("file:/data/hysics/des_veg_cloud/gps_info.txt")
-  val adapter = AsciiAdapter(model, location, delimiter="""\s+""")
+  
+  val config = AsciiAdapter.Config(delimiter="""\s+""")
+  
+  val adapter = AsciiAdapter(config, model)
 
 }

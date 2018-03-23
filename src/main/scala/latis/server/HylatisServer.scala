@@ -14,18 +14,19 @@ import latis.reader.HysicsReader
 import latis.ops.Operation
 import latis.ops.HysicsImageOp
 import latis.writer.ImageWriter
+import latis.input.DatasetSource
 
-class LatisHylatisServer extends HttpServlet {
+class HylatisServer extends HttpServlet {
 
-  override def init(): Unit = {
-    //loadData("ascii2")
-    
-    //load sample Hysics data cube
-    //TODO: need to stream data into spark, union DataFrames
-    val reader = HysicsReader()
-    val ds = reader.getDataset()
-    SparkDataFrameWriter.write(ds)
-  }
+//  override def init(): Unit = {
+//    //loadData("ascii2")
+//    
+//    //load sample Hysics data cube
+//    //TODO: need to stream data into spark, union DataFrames
+//    val reader = HysicsReader()
+//    val ds = reader.getDataset()
+//    SparkDataFrameWriter.write(ds)
+//  }
 
   override def doGet(
     request: HttpServletRequest,
@@ -33,17 +34,18 @@ class LatisHylatisServer extends HttpServlet {
   ): Unit = {
     // Making the assumption that the request is just the name of the
     // dataset without any suffix or query.
-    val name = {
+    val datasetName = {
       val path = request.getPathInfo
       // Drop the leading "/"
       path.drop(1)
     }
 
     val ops = parseOps(request.getQueryString)
-    val ds = DatasetSource.fromName(name).getDataset(ops)
+    val ds = DatasetSource.fromName(datasetName).getDataset(ops)
 
-    val writer = {
+    val writer: Writer = {
       val os = response.getOutputStream
+      //TODO: get writer based on suffix or accepts header
       //Writer(os)
       ImageWriter(os, "png")
     }
@@ -62,20 +64,20 @@ class LatisHylatisServer extends HttpServlet {
   }
 
   private def loadData(name: String): Unit = {
-    val ds = DatasetSource.fromName(name).getDataset()
-    //val ds = datasets.ascii.getDataset()
-    SparkDataFrameWriter.write(ds)
+//    val ds = DatasetSource.fromName(name).getDataset()
+//    //val ds = datasets.ascii.getDataset()
+//    SparkDataFrameWriter.write(ds)
   }
 }
 
-object LatisHylatisServer {
+object HylatisServer {
 
   def main(args: Array[String]): Unit = {
     val server = new Server(8090)
 
     val context = new ServletContextHandler()
     context.setContextPath("/latis-hylatis")
-    val handler = context.addServlet(classOf[LatisHylatisServer], "/latis/*")
+    val handler = context.addServlet(classOf[HylatisServer], "/latis/*")
     handler.setInitOrder(0)
 
     server.setHandler(context)

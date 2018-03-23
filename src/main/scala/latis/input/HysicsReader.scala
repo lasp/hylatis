@@ -1,4 +1,4 @@
-package latis.reader
+package latis.input
 
 import java.net.URL
 import scala.io.Source

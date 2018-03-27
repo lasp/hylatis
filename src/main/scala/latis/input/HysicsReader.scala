@@ -3,9 +3,11 @@ package latis.input
 import java.net.URL
 import scala.io.Source
 import latis.ops._
-import latis.model._
+import latis.data._
 import latis.metadata._
 import scala.collection.mutable.ArrayBuffer
+import latis.Dataset
+import latis.util.HysicsUtils
 
 class HysicsReader(dir: String) extends DatasetSource {
   //TODO: make a Matrix subtype of SampledFunction with matrix semantics
@@ -15,66 +17,67 @@ class HysicsReader(dir: String) extends DatasetSource {
   
   val delimiter = "," //TODO: parameterize
   
-  val xScalar = Integer(id = "x")
-  val yScalar = Integer(id = "y")
-  val wavelength = Real(id = "wavelength")
-  
-  val domain = Tuple(yScalar, xScalar, wavelength)
-  
-  val codomain = Real("value")
+  val lonType = ScalarType("longitude")
+  val latType = ScalarType("latitude")
+  val wavelength = ScalarType("wavelength")
+  val domain = TupleType("")(latType, lonType, wavelength)
+  val range = ScalarType("value")
+  val ftype = FunctionType("f")(domain, range)
   
   val metadata = Metadata("id" -> "hysics")
-  val model = Function(Metadata("id" -> "f"))(domain, codomain)
   
-  lazy val wavelengths: Array[Double] = {
+  private lazy val wavelengths: Array[Double] = {
     val source = Source.fromFile(dir + "wavelength.txt")
     val data = source.getLines().next.split(",").map(_.toDouble)
     source.close
     data
   }
    
-  def readImage(image: String): Array[Array[Double]] = {
+  private def readImage(image: String): Array[Array[Double]] = {
     val source = Source.fromFile(dir + image)
     val data = source.getLines.map(_.split(delimiter).map(_.toDouble)).toArray
     source.close
     data
   }
   
+  /**
+   * Read slit images (x,w) -> f
+   * TODO: add lon, lat
+   * then logically join on a new axis "y"
+   */
+  def getDataset(operations: Seq[Operation]): Dataset = {
+    //val range = Iterator.range(1, 4201)
+    val range = Iterator.range(1, 11)
+    
+    val samples: Iterator[Sample] = range.flatMap { iy =>
+ println(iy)     
+      val image: Array[Array[Double]] = readImage(f"img$iy%04d.txt")
 
-  def getDataset(operations: Seq[Operation] = Seq.empty): Dataset = {
-//    val range = 2000 until 2010
-//    val buffer = new ArrayBuffer[Array[Array[Double]]](range.length)
-//    range.foreach { n =>
-//      //TODO: deal with n < 1000
-//      buffer += readImage(s"img$n.txt")
-//    }
-//    val data = buffer.toArray
-//    
-//    val ny = data.length
-//    val nx = data(0).length
-//    val nw = wavelengths.length
-//    
-//    val samples: Seq[Sample] = for (
-//      iy <- 0 until ny;
-//      ix <- 0 until nx;
-//      iw <- 0 until nw
-//    ) yield {
-//      val y = yScalar.copy(iy.toLong)
-//      val x = xScalar.copy(ix.toLong)
-//      val w = wavelength.copy(wavelengths(iw))
-//      val value = codomain.copy(data(iy)(ix)(iw).toDouble)
-//      val domain = Tuple(y,x,w)
-//      Sample(domain, value)
-//    }
-//
-//    Dataset(metadata, SampledFunction(samples), null)
-    ???
+      val nx = image.length
+      val nw = wavelengths.length
+
+      for (
+        ix <- Iterator.range(0, nx);
+        iw <- Iterator.range(0, nw)
+      ) yield {
+        val ll = HysicsUtils.indexToGeo(ix, iy)
+        val lon = Scalar(ll._1)
+        val lat = Scalar(ll._2)
+        val w = Scalar(wavelengths(iw))
+        val value = Scalar(image(ix)(iw).toDouble)
+        val domain = Tuple(lon, lat, w)
+        Sample(domain, value)
+      }
+    }
+
+    //TODO: apply ops?
+    Dataset(ftype, metadata, Function.fromSamples(samples))
   }
 }
 
 object HysicsReader {
   
-  def apply() = new HysicsReader("/data_systems/data/test/hylatis/")
+  def apply() = new HysicsReader("/data/hysics/des_veg_cloud/")
 
   def apply(dir: String): HysicsReader = {
     new HysicsReader(dir)

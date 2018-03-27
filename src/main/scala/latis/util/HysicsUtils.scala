@@ -1,25 +1,27 @@
-import java.io._
+package latis.util
 
 import scala.math._
-
 import org.geotools.referencing.CRS
 import org.geotools.referencing.GeodeticCalculator
 
+//So far, just des_veg_cloud geo ref stuff
+object HysicsUtils {
+  
+  //TODO: consider life cycle of mutable geo calc; not thread safe
+  val geoCalc = {
+    val crs = CRS.decode("EPSG:4326")
+    val gc = new GeodeticCalculator(crs)
+    gc.setStartingGeographicPoint(-108.21367912062485, 34.714010512782387)
+    gc
+  }
 
-
-object TestGeoLocationSimplified extends App {
+  //val nx = 480
+  //val ny = 4200
+  val a = -59.00 * Pi / 180.0  //altitude
+  val dx = 12.358              //step size along slit
+  val dy = 0.92167             //step size between images
   
-  val crs = CRS.decode("EPSG:4326")
-  val geoCalc = new GeodeticCalculator(crs)
-  geoCalc.setStartingGeographicPoint(-108.21367912062485, 34.714010512782387)
-  
-  val nx = 480
-  val ny = 4200
-  val a = -59.00 * Pi / 180.0
-  val dx = 12.358
-  val dy = 0.92167
-  
-  def x(i: Int): Double = dx * (i - 239.5)
+  def x(i: Int): Double = dx * (i - 239.5) //center on slit
   def y(j: Int): Double = dy * j
   
   val indexToXY = (ij: (Int,Int)) => (x(ij._1), y(ij._2))
@@ -55,16 +57,4 @@ object TestGeoLocationSimplified extends App {
   
   
   val indexToGeo = (indexToXY andThen rotateXY andThen xyToGeo)
-  val allLonLats = for (j <- 0 until ny; i <- 0 until nx) yield indexToGeo((i,j))
-      
-  val pw = new PrintWriter(new File("all_lon_lat3.txt" ))
-  allLonLats.foreach(p => pw.println(s"${p._1}, ${p._2}"))
-  pw.close()
-  
-  /*
-     * Note, unlike TestGeoLocation, this XY cs is rotated relative to lon,lat.
-     * Since our XY cs has (0,0) at the StartingGeographicPoint, we can simply rotate
-     * the XY grid to a X'Y' grid that aligns with geo
-     */
-  
 }

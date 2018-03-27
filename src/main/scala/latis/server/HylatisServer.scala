@@ -1,20 +1,15 @@
 package latis.server
 
-import javax.servlet.http.HttpServlet
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletContextHandler
 
-import latis.reader.DatasetSource
-import latis.writer.SparkDataFrameWriter
-import latis.writer.Writer
-import latis.reader.HysicsReader
-import latis.ops.Operation
-import latis.ops.HysicsImageOp
-import latis.writer.ImageWriter
+import javax.servlet.http.HttpServlet
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import latis.input.DatasetSource
+import latis.ops.Operation
+import latis.writer.ImageWriter
+import latis.writer.Writer
 
 class HylatisServer extends HttpServlet {
 
@@ -56,11 +51,12 @@ class HylatisServer extends HttpServlet {
   }
   
   def parseOps(expression: String): Seq[Operation] = {
-    val NUM = """\d+"""
-    val pattern = s"getImage\\(($NUM),($NUM),($NUM),($NUM)\\)"
-    expression.split("&").map {
-      case pattern.r(x1,x2,y1,y2) => HysicsImageOp(x1.toInt,x2.toInt,y1.toInt,y2.toInt)
-    }
+//    val NUM = """\d+"""
+//    val pattern = s"getImage\\(($NUM),($NUM),($NUM),($NUM)\\)"
+//    expression.split("&").map {
+//      case pattern.r(x1,x2,y1,y2) => HysicsImageOp(x1.toInt,x2.toInt,y1.toInt,y2.toInt)
+//    }
+    ???
   }
 
   private def loadData(name: String): Unit = {

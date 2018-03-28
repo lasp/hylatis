@@ -205,7 +205,7 @@ Note, order preserved
     //TODO: look at warnings: Stage 0 contains a task of very large size (181806 KB). The maximum recommended task size is 100 KB.
   }
   
-  @Test
+  //@Test
   def operation_regex = {
     val NUM = """\d+"""
     val pattern = s"getImage\\(($NUM),($NUM),($NUM),($NUM)\\)"
@@ -245,7 +245,7 @@ Note, order preserved
     Source.fromInputStream(is).getLines foreach println
   }
   
-  @Test
+  //@Test
   def list_bucket = {
     import scala.collection.JavaConversions._
     val s3 = AWSUtils.s3Client.get

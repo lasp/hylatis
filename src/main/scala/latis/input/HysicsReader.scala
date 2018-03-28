@@ -50,7 +50,6 @@ class HysicsReader(dir: String) extends DatasetSource {
     val range = Iterator.range(1, 11)
     
     val samples: Iterator[Sample] = range.flatMap { iy =>
- println(iy)     
       val image: Array[Array[Double]] = readImage(f"img$iy%04d.txt")
 
       val nx = image.length

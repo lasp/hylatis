@@ -8,8 +8,8 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import latis.input.DatasetSource
 import latis.ops.Operation
-import latis.writer.ImageWriter
-import latis.writer.Writer
+import latis.output.ImageWriter
+import latis.output.Writer
 
 class HylatisServer extends HttpServlet {
 

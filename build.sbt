@@ -6,6 +6,7 @@ val latisVersion = "3.0.0-SNAPSHOT"
 val jettyVersion  = "9.4.7.v20170914"
 
 lazy val hylatis = (project in file("."))
+//  .enablePlugins(JettyPlugin)
   .settings(commonSettings)
   .settings(
     name := "latis-hylatis",
@@ -20,7 +21,9 @@ lazy val hylatis = (project in file("."))
       "org.geotools"      % "gt-referencing" % "18.2",
       "org.apache.commons" % "commons-math3" % "3.6.1"
     ),
+    updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
+      "osgeo" at "http://download.osgeo.org/webdav/geotools",
       "Boundless" at "http://repo.boundlessgeo.com/main"
     ),
     assemblyMergeStrategy in assembly := {
@@ -38,7 +41,7 @@ lazy val hylatis = (project in file("."))
       orig.copy(includeScala = false)
     },
     // Enable sbt to find scala files (dataset descriptors) in /src/main/resources/datasets/
-    unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
+    //unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
   )
   
 lazy val commonSettings = compilerFlags ++ Seq(

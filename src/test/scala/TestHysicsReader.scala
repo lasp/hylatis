@@ -6,9 +6,9 @@ import java.io.FileOutputStream
 
 object TestHysicsReader extends App {
   
-  val ds = HysicsReader().getDataset()
-  //val fos = new FileOutputStream("/data/tmp/hysics_geo_cube.asc")
-  //Writer(fos).write(ds)
-  
-  SparkDataFrameWriter.write(ds)
+//  val ds = HysicsReader().getDataset()
+//  //val fos = new FileOutputStream("/data/tmp/hysics_geo_cube.asc")
+//  //Writer(fos).write(ds)
+//  
+//  SparkDataFrameWriter.write(ds)
 }

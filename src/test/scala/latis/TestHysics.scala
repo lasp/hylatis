@@ -3,17 +3,12 @@ package latis
 import org.junit._
 import org.junit.Assert._
 import scala.io.Source
-import latis.reader.AsciiMatrixReader
-import latis.writer.SparkDataFrameWriter
+import latis.input._
+import latis.output._
 import latis.util.SparkUtils
-import latis.reader.HysicsReader
-import latis.metadata.Metadata
+import latis.metadata._
 import latis.data._
-import latis.model._
-import latis.reader.SparkDataFrameAdapter
-import latis.writer._
-import latis.reader.DatasetSource
-import latis.ops.HysicsImageOp
+//import latis.ops.HysicsImageOp
 import latis.ops._
 import java.net.URL
 import java.net.URI
@@ -54,7 +49,7 @@ class TestHysics {
   
   //@Test
   def read_hysics(): Unit = {
-    val reader = HysicsReader()
+    val reader = HysicsLocalReader()
     val ds = reader.getDataset()
     SparkDataFrameWriter.write(ds)
     
@@ -68,7 +63,7 @@ class TestHysics {
   //hysics: 630.87, 531.86, 463.79
   //@Test
   def rgb = {
-    val reader = HysicsReader()
+    val reader = HysicsLocalReader()
     val ds = reader.getDataset()
     SparkDataFrameWriter.write(ds)
     val spark = SparkUtils.getSparkSession
@@ -121,11 +116,11 @@ Note, order preserved
                   //.show
           
     df.createOrReplaceTempView("rgb")
-    val metadata = Metadata("id" -> "rgb")
-    val model = Function(Metadata("id" -> "image"))(
-      Tuple(Integer("y"), Integer("x")),
-      Tuple(Real("R"), Real("G"), Real("B"))
+    val model = FunctionType("image")(
+      TupleType("")(ScalarType("y"), ScalarType("x")),
+      TupleType("")(ScalarType("R"), ScalarType("G"), ScalarType("B"))
     )
+    val metadata = Metadata("id" -> "rgb")(model)
     
     //val sdfa = new SparkDataFrameAdapter(Map("location" -> "rgb"))
 //    val sdfa = SparkDataFrameAdapter(model, table="rgb")
@@ -172,7 +167,7 @@ Note, order preserved
   //@Test
   def image_via_adapter = {
     //load "hysics" data frame in spark
-    val reader = HysicsReader()
+    val reader = HysicsLocalReader()
     val ds = reader.getDataset()
     SparkDataFrameWriter.write(ds)
   
@@ -226,7 +221,7 @@ Note, order preserved
   def file_list = {
     val ds = DatasetSource.fromName("hysics_des_veg_cloud_image_files").getDataset()
     val baseURL = ds.getProperty("baseURL", "")
-    ds foreach {
+    ds.samples foreach {
       case Sample(_, d) => d match { //TODO: can't do nested match on Text here
         case Text(file) => 
           val key = file

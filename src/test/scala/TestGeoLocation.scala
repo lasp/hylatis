@@ -1,19 +1,16 @@
-import org.geotools.referencing.CRS
-import org.geotools.referencing.GeodeticCalculator
-import org.geotools.geometry.jts.JTS
-import com.vividsolutions.jts.geom.Coordinate
-import latis.reader.DatasetSource
-import latis.writer.Writer
-import latis.data._
-import scala.collection.mutable.ArrayBuffer
-import latis.model.Real
-import java.io._
-import org.apache.commons.math3.analysis.interpolation._
+
+
+import scala.math._
+
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction
 import org.apache.commons.math3.fitting.PolynomialCurveFitter
 import org.apache.commons.math3.fitting.WeightedObservedPoint
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction
-import scala.math._
+import org.geotools.referencing.CRS
+import org.geotools.referencing.GeodeticCalculator
+
+import latis.data._
 import latis.input.DatasetSource
+
 
 object TestGeoLocation extends App {
 
@@ -89,7 +86,7 @@ object TestGeoLocation extends App {
   val gpsDataset = DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
   //Writer().write(ds)
   val lonLats: Seq[(Double, Double)] = gpsDataset.samples.toSeq.map {
-    case Sample(time, TupleData(Seq(Real(lat), Real(lon)))) => (lon, lat)
+    case Sample(time, Tuple(Seq(Real(lat), Real(lon)))) => (lon, lat)
   }
 
   //  // Local approximation: distance in degrees, dLon reduced by cos(lat0)
@@ -116,7 +113,7 @@ object TestGeoLocation extends App {
   val points = slopes.toList.zipWithIndex map { p =>
     new WeightedObservedPoint(1, p._2, p._1)
   }
-  import collection.JavaConverters._
+  import scala.collection.JavaConverters._
   val coeffs = fitter.fit(points.asJava)
   val pf = new PolynomialFunction(coeffs)
   val smoothed_slopes = Seq.range(0, points.length).map(pf.value(_))

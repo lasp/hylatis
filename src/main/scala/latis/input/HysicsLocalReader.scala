@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 import latis.Dataset
 import latis.util.HysicsUtils
 
-class HysicsReader(dir: String) extends DatasetSource {
+class HysicsLocalReader(dir: String) extends DatasetSource {
   //TODO: make a Matrix subtype of SampledFunction with matrix semantics
   //TODO: allow value to be any Variable type?
   //TODO: impl as Adapter so we can hand it a model with metadata
@@ -17,14 +17,15 @@ class HysicsReader(dir: String) extends DatasetSource {
   
   val delimiter = "," //TODO: parameterize
   
+  // Define model
   val lonType = ScalarType("longitude")
   val latType = ScalarType("latitude")
   val wavelength = ScalarType("wavelength")
-  val domain = TupleType("")(latType, lonType, wavelength)
+  val domain = TupleType("")(lonType, latType, wavelength)
   val range = ScalarType("value")
   val ftype = FunctionType("f")(domain, range)
   
-  val metadata = Metadata("id" -> "hysics")
+  val metadata = Metadata("id" -> "hysics")(ftype)
   
   private lazy val wavelengths: Array[Double] = {
     val source = Source.fromFile(dir + "wavelength.txt")
@@ -70,15 +71,15 @@ class HysicsReader(dir: String) extends DatasetSource {
     }
 
     //TODO: apply ops?
-    Dataset(ftype, metadata, Function.fromSamples(samples))
+    Dataset(metadata, Function.fromSamples(samples))
   }
 }
 
-object HysicsReader {
+object HysicsLocalReader {
   
-  def apply() = new HysicsReader("/data/hysics/des_veg_cloud/")
+  def apply() = new HysicsLocalReader("/data/hysics/des_veg_cloud/")
 
-  def apply(dir: String): HysicsReader = {
-    new HysicsReader(dir)
+  def apply(dir: String): HysicsLocalReader = {
+    new HysicsLocalReader(dir)
   }
 }

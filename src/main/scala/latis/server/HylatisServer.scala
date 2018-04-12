@@ -59,7 +59,13 @@ class HylatisServer extends HttpServlet {
     //TODO: use parser combinator
       //case PROJECTION.r(name) => Projection(name)
       case SELECTION.r(name, op, value) => Select(name, op, value)
-//      case OPERATION.r(name, args) => (name,args) match {
+      case OPERATION.r(name, args) => (name,args) match {
+        case ("rgbPivot", args) =>
+          val as = args.split(",")
+          val pivotVar = as.head
+          val Array(r,g,b) = as.tail.map(_.toDouble)
+          RGBImagePivot(pivotVar, r, g, b)
+      }
 //        //for testing handling of http errors
 //        case ("httpError", s: String) => throw new HTTPException(s.toInt) 
 //        

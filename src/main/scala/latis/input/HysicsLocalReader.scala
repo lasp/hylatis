@@ -18,10 +18,10 @@ class HysicsLocalReader(dir: String) extends DatasetSource {
   val delimiter = "," //TODO: parameterize
   
   // Define model
-  val lonType = ScalarType("longitude")
-  val latType = ScalarType("latitude")
+  val xType = ScalarType("x")
+  val yType = ScalarType("y")
   val wavelength = ScalarType("wavelength")
-  val domain = TupleType("")(lonType, latType, wavelength)
+  val domain = TupleType("")(xType, yType, wavelength)
   val range = ScalarType("value")
   val ftype = FunctionType("f")(domain, range)
   
@@ -60,7 +60,8 @@ class HysicsLocalReader(dir: String) extends DatasetSource {
         ix <- Iterator.range(0, nx);
         iw <- Iterator.range(0, nw)
       ) yield {
-        val ll = HysicsUtils.indexToGeo(ix, iy)
+        //val ll = HysicsUtils.indexToGeo(ix, iy)
+        val ll = HysicsUtils.indexToXY(ix, iy)
         val lon = Scalar(ll._1)
         val lat = Scalar(ll._2)
         val w = Scalar(wavelengths(iw))

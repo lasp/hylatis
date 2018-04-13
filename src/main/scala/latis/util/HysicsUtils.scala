@@ -17,7 +17,7 @@ object HysicsUtils {
 
   //val nx = 480
   //val ny = 4200
-  val a = -59.00 * Pi / 180.0  //altitude
+  val a = -59.00 * Pi / 180.0  //azimuth (radians clockwise from north)
   val dx = 12.358              //step size along slit
   val dy = 0.92167             //step size between images
   

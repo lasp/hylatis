@@ -16,10 +16,10 @@ class HysicsSparkReader extends AdaptedDatasetSource {
   val uri = new URI("hysics")
   
   // Define model
-  val lonType = ScalarType("longitude")
-  val latType = ScalarType("latitude")
+  val x = ScalarType("x")
+  val y = ScalarType("y")
   val wavelength = ScalarType("wavelength")
-  val domain = TupleType("")(lonType, latType, wavelength)
+  val domain = TupleType("")(x, y, wavelength)
   val range = ScalarType("value")
   val model = FunctionType("f")(domain, range)
   

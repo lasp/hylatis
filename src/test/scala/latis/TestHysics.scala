@@ -240,6 +240,13 @@ Note, order preserved
     Source.fromInputStream(is).getLines foreach println
   }
   
+  //@Test //fails with 403, need to set bucket policies
+  def read_wavelengths_via_http = {
+    val uri = new URI("http://hylatis-hysics-001.s3.amazonaws.com/des_veg_cloud/wavelength.txt")
+    val is = uri.toURL.openStream()
+    Source.fromInputStream(is).getLines foreach println
+  }
+  
   //@Test
   def list_bucket = {
     import scala.collection.JavaConversions._
@@ -247,5 +254,16 @@ Note, order preserved
     val os = s3.listObjects("hylatis-hysics-001").getObjectSummaries
     println(os.length)
     os.foreach(o => println(o.getKey))
+  }
+  
+  @Test
+  def xy_rgb_image = {
+    val reader = HysicsLocalReader()
+    val ds = reader.getDataset()
+    SparkDataFrameWriter.write(ds)
+    
+    val ops = Seq(RGBImagePivot("wavelength", 630.87, 531.86, 463.79))
+    val image = DatasetSource.fromName("hysics").getDataset(ops)
+    ImageWriter("xyRGB.png").write(image)
   }
 }

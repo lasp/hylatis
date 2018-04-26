@@ -48,7 +48,7 @@ class HysicsLocalReader(dir: String) extends DatasetSource {
    */
   def getDataset(operations: Seq[Operation]): Dataset = {
     //val range = Iterator.range(1, 4201)
-    val range = Iterator.range(1, 11)
+val range = Iterator.range(100, 110)
     
     val samples: Iterator[Sample] = range.flatMap { iy =>
       val image: Array[Array[Double]] = readImage(f"img$iy%04d.txt")
@@ -61,7 +61,7 @@ class HysicsLocalReader(dir: String) extends DatasetSource {
         iw <- Iterator.range(0, nw)
       ) yield {
         //val ll = HysicsUtils.indexToGeo(ix, iy)
-        val ll = HysicsUtils.indexToXY(ix, iy)
+        val ll = HysicsUtils.indexToXY(ix, iy) //leave in native Cartesian x/y space
         val lon = Scalar(ll._1)
         val lat = Scalar(ll._2)
         val w = Scalar(wavelengths(iw))

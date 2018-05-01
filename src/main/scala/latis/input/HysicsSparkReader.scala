@@ -25,7 +25,7 @@ class HysicsSparkReader extends AdaptedDatasetSource {
   
   val metadata = Metadata("id" -> "hysics")(model)
   
-  val adapter = SparkDataFrameAdapter(model)
+  val adapter = SparkAdapter(model)
 
 }
 

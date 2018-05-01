@@ -71,8 +71,8 @@ val range = Iterator.range(100, 110)
       }
     }
 
-    //TODO: apply ops?
-    Dataset(metadata, Function.fromSamples(samples))
+    val dataset = Dataset(metadata, Function.fromSamples(samples))
+    operations.foldLeft(dataset)((ds, op) => op(ds))
   }
 }
 

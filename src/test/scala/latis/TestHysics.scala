@@ -256,7 +256,7 @@ Note, order preserved
     os.foreach(o => println(o.getKey))
   }
   
-  @Test
+  //@Test
   def xy_rgb_image = {
     val reader = HysicsLocalReader()
     val ds = reader.getDataset()
@@ -265,5 +265,26 @@ Note, order preserved
     val ops = Seq(RGBImagePivot("wavelength", 630.87, 531.86, 463.79))
     val image = DatasetSource.fromName("hysics").getDataset(ops)
     ImageWriter("xyRGB.png").write(image)
+  }
+  
+  //@Test
+  def rdd_of_samples = {
+    val reader = HysicsLocalReader()
+    val ds = reader.getDataset()
+    new SparkWriter().write(ds)
+    //Writer().write(ds)
+    
+    //val rdds =  SparkUtils.getSparkSession.sparkContext.getPersistentRDDs
+    //Map of some Int to the RDD;  filter on name;  or use getRDDStorageInfo to get Int first?
+    //println(rdds)
+    val ops = Seq(
+      Select("x < -2082")
+     ,Select("x > -2100")
+     ,Select("y > 94")
+     ,Select("y < 95")
+     ,Select("wavelength = 630.87")
+    )
+    val ds2 = HysicsSparkReader().getDataset(ops)
+    Writer().write(ds2)
   }
 }

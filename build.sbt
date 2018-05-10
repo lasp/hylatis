@@ -19,7 +19,8 @@ lazy val hylatis = (project in file("."))
       "org.geotools"      % "gt-epsg-hsql"   % "18.2",
       "org.geotools"      % "gt-api"         % "18.2",
       "org.geotools"      % "gt-referencing" % "18.2",
-      "org.apache.commons" % "commons-math3" % "3.6.1"
+      "org.apache.commons" % "commons-math3" % "3.6.1",
+      "io.findify"       %% "s3mock" % "0.2.4" % "test"
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(

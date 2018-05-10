@@ -14,6 +14,7 @@ import java.net.URL
 import java.net.URI
 import java.io.File
 import latis.util.AWSUtils
+import io.findify.s3mock._
 
 class TestHysics {
   
@@ -257,17 +258,6 @@ Note, order preserved
   }
   
   //@Test
-  def xy_rgb_image = {
-    val reader = HysicsLocalReader()
-    val ds = reader.getDataset()
-    SparkDataFrameWriter.write(ds)
-    
-    val ops = Seq(RGBImagePivot("wavelength", 630.87, 531.86, 463.79))
-    val image = DatasetSource.fromName("hysics").getDataset(ops)
-    ImageWriter("xyRGB.png").write(image)
-  }
-  
-  //@Test
   def rdd_of_samples = {
     val reader = HysicsLocalReader()
     val ds = reader.getDataset()
@@ -287,4 +277,35 @@ Note, order preserved
     val ds2 = HysicsSparkReader().getDataset(ops)
     Writer().write(ds2)
   }
+  
+  //@Test
+  def s3mock = {
+    val s3 = AWSUtils.s3Client.get
+    val is = s3.getObject("hylatis-hysics-001", "des_veg_cloud/wavelength.txt").getObjectContent
+    Source.fromInputStream(is).getLines foreach println
+  }
+  
+  @Test
+  def xy_rgb_image = {
+    val reader = HysicsLocalReader()
+    val ds = reader.getDataset()
+    //SparkDataFrameWriter.write(ds)
+    new SparkWriter().write(ds)
+    
+    val ops = Seq(RGBImagePivot("wavelength", 630.87, 531.86, 463.79))
+    val image = DatasetSource.fromName("hysics").getDataset(ops)
+    ImageWriter("xyRGB.png").write(image)
+  }
+
+}
+
+object TestHysics {
+  
+  private val s3mock: S3Mock = S3Mock(port = 8001, dir = "/data/s3")
+  
+  @BeforeClass
+  def startS3Mock: Unit = s3mock.start
+  
+  @AfterClass
+  def stopS3Mock: Unit = s3mock.stop
 }

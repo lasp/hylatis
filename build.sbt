@@ -5,14 +5,17 @@ val latisVersion = "3.0.0-SNAPSHOT"
 //val jerseyVersion = "1.19.4"
 val jettyVersion  = "9.4.7.v20170914"
 
+lazy val `latis3-beta` = RootProject(file("../latis3-beta"))
+
 lazy val hylatis = (project in file("."))
 //  .enablePlugins(JettyPlugin)
+  .dependsOn(`latis3-beta`)
   .settings(commonSettings)
   .settings(
     name := "latis-hylatis",
     libraryDependencies ++= Seq(
-      "io.latis-data"     %% "latis-core"    % latisVersion,
-      "io.latis-data"     %% "latis-spark"   % latisVersion,
+      // "io.latis-data"     %% "latis-core"    % latisVersion,
+      // "io.latis-data"     %% "latis-spark"   % latisVersion,
       "org.eclipse.jetty" % "jetty-server"   % jettyVersion,
       "org.eclipse.jetty" % "jetty-servlet"  % jettyVersion,
       "org.geotools"      % "gt-main"        % "18.2",

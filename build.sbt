@@ -16,14 +16,16 @@ lazy val hylatis = (project in file("."))
     libraryDependencies ++= Seq(
       // "io.latis-data"     %% "latis-core"    % latisVersion,
       // "io.latis-data"     %% "latis-spark"   % latisVersion,
-      "org.eclipse.jetty" % "jetty-server"   % jettyVersion,
-      "org.eclipse.jetty" % "jetty-servlet"  % jettyVersion,
-      "org.geotools"      % "gt-main"        % "18.2",
-      "org.geotools"      % "gt-epsg-hsql"   % "18.2",
-      "org.geotools"      % "gt-api"         % "18.2",
-      "org.geotools"      % "gt-referencing" % "18.2",
-      "org.apache.commons" % "commons-math3" % "3.6.1",
-      "io.findify"       %% "s3mock" % "0.2.4" % "test"
+      "org.eclipse.jetty"    % "jetty-server"   % jettyVersion,
+      "org.eclipse.jetty"    % "jetty-servlet"  % jettyVersion,
+      "org.geotools"         % "gt-main"        % "18.2",
+      "org.geotools"         % "gt-epsg-hsql"   % "18.2",
+      "org.geotools"         % "gt-api"         % "18.2",
+      "org.geotools"         % "gt-referencing" % "18.2",
+      "org.apache.commons"   % "commons-math3"  % "3.6.1",
+      "io.findify"          %% "s3mock"         % "0.2.4"  % "test",
+      "edu.ucar"            % "cdm"             % "4.6.11",
+      "edu.ucar"            % "httpservices"    % "4.6.11"
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
@@ -47,7 +49,7 @@ lazy val hylatis = (project in file("."))
     // Enable sbt to find scala files (dataset descriptors) in /src/main/resources/datasets/
     //unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
   )
-  
+
 lazy val commonSettings = compilerFlags ++ Seq(
   Compile / compile / wartremoverWarnings ++= Warts.allBut(
     Wart.Any,         // false positives
@@ -76,4 +78,3 @@ lazy val compilerFlags = Seq(
     "-Ywarn-value-discard"
   )
 )
-

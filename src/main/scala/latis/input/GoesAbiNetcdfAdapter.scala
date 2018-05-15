@@ -1,15 +1,9 @@
 package latis.input
 
-import java.net.URL
 import java.net.URI
-import scala.io.Source
-import scala.collection.mutable.ArrayBuffer
 
-import latis.ops._
 import latis.data._
 import latis.metadata._
-import latis.metadata.DataType
-import latis.Dataset
 
 import ucar.nc2._
 

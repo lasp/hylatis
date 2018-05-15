@@ -1,14 +1,9 @@
 package latis.input
 
-import java.net.URL
-import scala.io.Source
-import latis.ops._
-import latis.data._
-import latis.metadata._
-import scala.collection.mutable.ArrayBuffer
-import latis.Dataset
 import java.net.URI
-import latis.input._
+
+import latis.data._
+import latis.metadata._ 
 
 /**
  * Proof of concept to show that a simple model can be constructed to extract GOES radiance data from S3.

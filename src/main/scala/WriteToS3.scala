@@ -1,7 +1,6 @@
 import latis.util.AWSUtils
-import latis.reader.DatasetSource
-import latis.data.Sample
-import latis.model.Text
+import latis.input.DatasetSource
+import latis.data._
 import java.io.File
 import java.net.URI
 
@@ -16,7 +15,7 @@ object WriteToS3 extends App {
     
     val ds = DatasetSource.fromName("hysics_des_veg_cloud_image_files").getDataset()
     val baseURL = ds.getProperty("baseURL", "")
-    ds foreach {
+    ds.samples foreach {
       case Sample(_, d) => d match { //TODO: can't do nested match on Text here
         case Text(file) => 
           val key = file

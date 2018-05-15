@@ -2,15 +2,7 @@ package latis
 
 import org.junit._
 import org.junit.Assert._
-import scala.io.Source
 import latis.input.{GoesAbiNetcdfAdapter, GoesAbiNetcdfReader}
-import latis.output._
-import latis.metadata._
-import latis.data._
-import latis.ops._
-import java.net.URL
-import java.net.URI
-import java.io.File
 
 class TestGoesAbiReader {
   val reader = new GoesAbiNetcdfReader

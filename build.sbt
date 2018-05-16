@@ -30,7 +30,7 @@ lazy val hylatis = (project in file("."))
       "osgeo" at "http://download.osgeo.org/webdav/geotools",
       "Boundless" at "http://repo.boundlessgeo.com/main"
     ),
-    assemblyMergeStrategy in assembly := {
+    assembly / assemblyMergeStrategy := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith ".tsml" => MergeStrategy.first
       case "latis.properties"                            => MergeStrategy.first
@@ -40,7 +40,7 @@ lazy val hylatis = (project in file("."))
     },
     // We can exclude the Scala libraries in the JAR we submit via
     // spark-submit.
-    assemblyOption in assembly := {
+    assembly / assemblyOption := {
       val orig = (assemblyOption in assembly).value
       orig.copy(includeScala = false)
     },

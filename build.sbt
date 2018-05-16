@@ -30,6 +30,7 @@ lazy val hylatis = (project in file("."))
       "osgeo" at "http://download.osgeo.org/webdav/geotools",
       "Boundless" at "http://repo.boundlessgeo.com/main"
     ),
+    assembly / mainClass := Some("latis.server.HylatisServer"),
     assembly / assemblyMergeStrategy := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith ".tsml" => MergeStrategy.first
@@ -44,6 +45,8 @@ lazy val hylatis = (project in file("."))
       val orig = (assemblyOption in assembly).value
       orig.copy(includeScala = false)
     },
+    // Disable tests when assembling.
+    assembly / test := {}
     // Enable sbt to find scala files (dataset descriptors) in /src/main/resources/datasets/
     //unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
   )

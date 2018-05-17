@@ -75,14 +75,16 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
    * Given two colors from a color table and a value between them, return the interpolated color.
    */
   def interpolateColorOfPair(pair: List[(Int, Color)], value: Int) : Option[Color] = {
-    require(pair.head._1 <= value && pair.last._1 > value)
-    val fraction: Double = (value.toDouble - pair.head._1) / (pair.last._1 - pair.head._1)
-    val deltaRed = ((pair.last._2.getRed - pair.head._2.getRed) * fraction).round.toInt
-    val deltaGreen = ((pair.last._2.getGreen - pair.head._2.getGreen) * fraction).round.toInt
-    val deltaBlue = ((pair.last._2.getBlue - pair.head._2.getBlue) * fraction).round.toInt
-    Some(new Color(pair.head._2.getRed + deltaRed,
-              pair.head._2.getGreen + deltaGreen,
-              pair.head._2.getBlue + deltaBlue))
+    if (pair.head._1 <= value && pair.last._1 > value) None
+    else {
+      val fraction: Double = (value.toDouble - pair.head._1) / (pair.last._1 - pair.head._1)
+      val deltaRed = ((pair.last._2.getRed - pair.head._2.getRed) * fraction).round.toInt
+      val deltaGreen = ((pair.last._2.getGreen - pair.head._2.getGreen) * fraction).round.toInt
+      val deltaBlue = ((pair.last._2.getBlue - pair.head._2.getBlue) * fraction).round.toInt
+      Some(new Color(pair.head._2.getRed + deltaRed,
+                pair.head._2.getGreen + deltaGreen,
+                pair.head._2.getBlue + deltaBlue))
+    }
   }
   
   /**

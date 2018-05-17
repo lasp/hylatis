@@ -3,6 +3,7 @@ package latis
 import org.junit._
 import org.junit.Assert._
 import latis.input.{GoesAbiNetcdfAdapter, GoesAbiNetcdfReader}
+import java.awt.Color
 
 class TestGoesAbiReader {
   val reader = new GoesAbiNetcdfReader
@@ -10,30 +11,30 @@ class TestGoesAbiReader {
   
   @Test
   def convertColorToInt: Unit = {
-    val red = adapter.Color(255, 0, 0)
-    val green = adapter.Color(0, 255, 0)
-    val blue = adapter.Color(0, 0, 255)
-    val yellow = adapter.Color(255, 255, 0)
-    val magenta = adapter.Color(255, 0, 255)
-    val cyan = adapter.Color(0, 255, 255)
-    val black = adapter.Color(0, 0, 0)
-    val white = adapter.Color(255, 255, 255)
+    val red = new Color(255, 0, 0, 255)
+    val green = new Color(0, 255, 0, 255)
+    val blue = new Color(0, 0, 255, 255)
+    val yellow = new Color(255, 255, 0, 255)
+    val magenta = new Color(255, 0, 255, 255)
+    val cyan = new Color(0, 255, 255, 255)
+    val black = new Color(0, 0, 0, 255)
+    val white = new Color(255, 255, 255, 255)
     
-    assertEquals(16711680, adapter.colorToInt(red))
-    assertEquals(65280, adapter.colorToInt(green))
-    assertEquals(255, adapter.colorToInt(blue))
-    assertEquals(16776960, adapter.colorToInt(yellow))
-    assertEquals(16711935, adapter.colorToInt(magenta))
-    assertEquals(65535, adapter.colorToInt(cyan))
-    assertEquals(0, adapter.colorToInt(black))
-    assertEquals(16777215, adapter.colorToInt(white))
+    assertEquals(-65536, adapter.colorToInt(red))
+    assertEquals(-16711936, adapter.colorToInt(green))
+    assertEquals(-16776961, adapter.colorToInt(blue))
+    assertEquals(-256, adapter.colorToInt(yellow))
+    assertEquals(-65281, adapter.colorToInt(magenta))
+    assertEquals(-16711681, adapter.colorToInt(cyan))
+    assertEquals(-16777216, adapter.colorToInt(black))
+    assertEquals(-1, adapter.colorToInt(white))
   }
   
   @Test
   def interpolateColor: Unit = {
-    assertEquals(adapter.Color(128, 128, 0), adapter.interpolateColor(adapter.radianceColors, 350) )
-    assertEquals(adapter.Color(0, 255, 0), adapter.interpolateColor(adapter.radianceColors, 400) )
-    assertEquals(adapter.Color(0, 128, 128), adapter.interpolateColor(adapter.radianceColors, 450) )
+    assertEquals(new Color(128, 128, 0, 255), adapter.interpolateColor(adapter.radianceColors, 350) )
+    assertEquals(new Color(0, 255, 0, 255), adapter.interpolateColor(adapter.radianceColors, 400) )
+    assertEquals(new Color(0, 128, 128, 255), adapter.interpolateColor(adapter.radianceColors, 450) )
   }
   
   @Test

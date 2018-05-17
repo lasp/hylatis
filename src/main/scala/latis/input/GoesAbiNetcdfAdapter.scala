@@ -72,17 +72,17 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
   }
   
   /**
-   * Given to colors from a color table and a value between them, return the interpolated color.
+   * Given two colors from a color table and a value between them, return the interpolated color.
    */
-  def interpolateColorOfPair(pair: List[(Int, Color)], value: Int) : Color = {
+  def interpolateColorOfPair(pair: List[(Int, Color)], value: Int) : Option[Color] = {
     require(pair.head._1 <= value && pair.last._1 > value)
     val fraction: Double = (value.toDouble - pair.head._1) / (pair.last._1 - pair.head._1)
     val deltaRed = ((pair.last._2.getRed - pair.head._2.getRed) * fraction).round.toInt
     val deltaGreen = ((pair.last._2.getGreen - pair.head._2.getGreen) * fraction).round.toInt
     val deltaBlue = ((pair.last._2.getBlue - pair.head._2.getBlue) * fraction).round.toInt
-    new Color(pair.head._2.getRed + deltaRed,
+    Some(new Color(pair.head._2.getRed + deltaRed,
               pair.head._2.getGreen + deltaGreen,
-              pair.head._2.getBlue + deltaBlue)
+              pair.head._2.getBlue + deltaBlue))
   }
   
   /**
@@ -97,7 +97,8 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
       val pairs: List[List[(Int, Color)]] = sortedColors.sliding(2).toList
       val enclosingPair = pairs.find(x => x.head._1 <= value && x.last._1 > value)
       enclosingPair match {
-        case Some(pair: List[(Int, Color)]) => interpolateColorOfPair(pair, value)
+        case Some(pair: List[(Int, Color)]) => 
+          interpolateColorOfPair(pair, value).getOrElse(new Color(255, 255, 255))
         case _ => new Color(0, 0, 0)    // should be unreachable
       }
     }

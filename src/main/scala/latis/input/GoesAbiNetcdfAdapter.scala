@@ -31,19 +31,19 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
     val netCDFFile: NetcdfFile = open(netCDFUri)
     val radianceVariable = netCDFFile.findVariable("Rad")
     val radianceData = radianceVariable.read
+    netCDFFile.close()
     
     val as: Array[Data] = Array.range(0, Shape).map(Integer(_))
     val bs: Array[Data] = Array.range(0, Shape).map(Integer(_))
     val vs2d: Array[Array[Data]] = 
-      Array.range(0, Shape).map(i => 
-        Array.range(0, Shape).map(j => {
+      Array.range(0, Shape) map { i => 
+        Array.range(0, Shape) map { j => 
           val radiance = radianceData.getInt(Shape * j + i)
           val colorCorrectedRadiance = colorToInt(interpolateColor(radianceColors, radiance))
           val rad: Data = Integer(colorCorrectedRadiance)
           rad  
         }
-        )
-      )
+    }
 
     new IndexedFunction2D(as, bs, vs2d)
   }

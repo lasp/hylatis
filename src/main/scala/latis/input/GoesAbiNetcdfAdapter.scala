@@ -5,6 +5,8 @@ import java.net.URI
 import latis.data._
 import latis.metadata._
 
+import java.awt.Color
+
 import ucar.nc2._
 
 /**
@@ -14,14 +16,12 @@ import ucar.nc2._
 class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
   val Shape: Int = 5424
   
-  case class Color(red: Int, green: Int, blue: Int)
-  
   val radianceColors = List(
-    (0, Color(255, 255, 255)),
-    (300, Color(255, 0, 0)),
-    (400, Color(0, 255, 0)),
-    (500, Color(0, 0, 255)),
-    (1023, Color(0, 0, 0)))
+    (0, new Color(255, 255, 255)),
+    (300, new Color(255, 0, 0)),
+    (400, new Color(0, 255, 0)),
+    (500, new Color(0, 0, 255)),
+    (1023, new Color(0, 0, 0)))
   
   /**
    * The actual return type is Function2D,
@@ -32,14 +32,14 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
     val radianceVariable = netCDFFile.findVariable("Rad")
     val radianceData = radianceVariable.read
     
-    val as: Array[Data] = Array.range(0, Shape).map(Scalar(_))
-    val bs: Array[Data] = Array.range(0, Shape).map(Scalar(_))
+    val as: Array[Data] = Array.range(0, Shape).map(Integer(_))
+    val bs: Array[Data] = Array.range(0, Shape).map(Integer(_))
     val vs2d: Array[Array[Data]] = 
       Array.range(0, Shape).map(i => 
         Array.range(0, Shape).map(j => {
           val radiance = radianceData.getInt(Shape * j + i)
           val colorCorrectedRadiance = colorToInt(interpolateColor(radianceColors, radiance))
-          val rad: Data = Scalar(colorCorrectedRadiance)
+          val rad: Data = Integer(colorCorrectedRadiance)
           rad  
         }
         )
@@ -68,7 +68,7 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
    * A pure red color RGB(255, 0, 0) = 16,711,680
    */
   def colorToInt(color: Color): Int = {
-    (color.red & 0xFF)<<16 | (color.green & 0xFF) << 8  | (color.blue & 0xFF)
+    (color.getRed & 0xFF)<<16 | (color.getGreen & 0xFF) << 8  | (color.getBlue & 0xFF)
   }
   
   /**
@@ -77,12 +77,12 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
   def interpolateColorOfPair(pair: List[(Int, Color)], value: Int) : Color = {
     require(pair.head._1 <= value && pair.last._1 > value)
     val fraction: Double = (value.toDouble - pair.head._1) / (pair.last._1 - pair.head._1)
-    val deltaRed = ((pair.last._2.red - pair.head._2.red) * fraction).round.toInt
-    val deltaGreen = ((pair.last._2.green - pair.head._2.green) * fraction).round.toInt
-    val deltaBlue = ((pair.last._2.blue - pair.head._2.blue) * fraction).round.toInt
-    Color(pair.head._2.red + deltaRed,
-          pair.head._2.green + deltaGreen,
-          pair.head._2.blue + deltaBlue)
+    val deltaRed = ((pair.last._2.getRed - pair.head._2.getRed) * fraction).round.toInt
+    val deltaGreen = ((pair.last._2.getGreen - pair.head._2.getGreen) * fraction).round.toInt
+    val deltaBlue = ((pair.last._2.getBlue - pair.head._2.getBlue) * fraction).round.toInt
+    new Color(pair.head._2.getRed + deltaRed,
+              pair.head._2.getGreen + deltaGreen,
+              pair.head._2.getBlue + deltaBlue)
   }
   
   /**
@@ -98,7 +98,7 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
       val enclosingPair = pairs.find(x => x.head._1 <= value && x.last._1 > value)
       enclosingPair match {
         case Some(pair: List[(Int, Color)]) => interpolateColorOfPair(pair, value)
-        case _ => Color(0, 0, 0)    // should be unreachable
+        case _ => new Color(0, 0, 0)    // should be unreachable
       }
     }
   }

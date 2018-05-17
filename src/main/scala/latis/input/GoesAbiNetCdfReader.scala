@@ -19,7 +19,7 @@ class GoesAbiNetcdfReader extends AdaptedDatasetSource {
   val range = ScalarType("Rad")
   val model: FunctionType = FunctionType("f")(domain, range)
   
-  val metadata = Metadata("id" -> "goes-16")(model)
+  val metadata = Metadata("id" -> "goes_16")(model)
   
   val adapter = new GoesAbiNetcdfAdapter(model)
   

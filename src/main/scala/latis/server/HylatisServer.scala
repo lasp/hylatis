@@ -10,31 +10,27 @@ import latis.output._
 import latis.input._
 import latis.util.RegEx._
 import java.net.URLDecoder
+import latis.util.LatisProperties
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
 
   override def init(): Unit = {
-    //loadData("ascii2")
-    
+    //TODO: load all datasets in catalog, "cache" to spark
     //load sample Hysics data cube
-    //TODO: need to stream data into spark, union DataFrames
     val reader = HysicsLocalReader()
     val ds = reader.getDataset()
-    SparkDataFrameWriter.write(ds)
+    SparkWriter().write(ds)
   }
 
   override def doGet(
     request: HttpServletRequest,
     response: HttpServletResponse
   ): Unit = {
-    // Making the assumption that the request is just the name of the
-    // dataset without any suffix or query.
-    val datasetName = {
-      val path = request.getPathInfo
-      // Drop the leading "/"
-      path.drop(1)
-    }
+    // path is datasetName.suffix
+    val ss = request.getPathInfo.split('.')
+    val datasetName = ss(0).drop(1) // Drop the leading "/"
+    val suffix = ss(1)
 
     val ops: Seq[Operation] = request.getQueryString match {
       case s: String => s.split("&").map(x => URLDecoder.decode(x, "UTF-8")).map(parseOp(_))
@@ -43,11 +39,9 @@ class HylatisServer extends HttpServlet {
 
     val ds = DatasetSource.fromName(datasetName).getDataset(ops)
 
-    val writer: Writer = {
-      val os = response.getOutputStream
-      //TODO: get writer based on suffix or accepts header
-      Writer(os)
-      //ImageWriter(os, "png")
+    val writer: Writer = suffix match {
+      case "png" => ImageWriter(response.getOutputStream, "png")
+      case _ => Writer(response.getOutputStream)
     }
     writer.write(ds)
 
@@ -75,20 +69,8 @@ class HylatisServer extends HttpServlet {
 //      }
       case _ => throw new UnsupportedOperationException("Failed to parse expression: '" + expression + "'")
       //TODO: log and return None? probably should return error
-    
-//    val NUM = """\d+"""
-//    val pattern = s"getImage\\(($NUM),($NUM),($NUM),($NUM)\\)"
-//    expression.split("&").map {
-//      case pattern.r(x1,x2,y1,y2) => HysicsImageOp(x1.toInt,x2.toInt,y1.toInt,y2.toInt)
-//    }
-    
   }
 
-  private def loadData(name: String): Unit = {
-//    val ds = DatasetSource.fromName(name).getDataset()
-//    //val ds = datasets.ascii.getDataset()
-//    SparkDataFrameWriter.write(ds)
-  }
 }
 
 object HylatisServer {
@@ -99,10 +81,12 @@ object HylatisServer {
     val context = new ServletContextHandler()
     context.setContextPath("/latis-hylatis")
     val handler = context.addServlet(classOf[HylatisServer], "/latis/*")
-    handler.setInitOrder(0)
+    handler.setInitOrder(1)
 
     server.setHandler(context)
     server.start()
     server.join()
+    
+    //TODO: shut down spark
   }
 }

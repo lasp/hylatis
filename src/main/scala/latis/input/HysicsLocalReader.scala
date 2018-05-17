@@ -10,6 +10,7 @@ import latis.Dataset
 import latis.util.HysicsUtils
 import latis.util.AWSUtils
 import java.net.URI
+import latis.util.LatisProperties
 
 class HysicsLocalReader(uri: URI) extends DatasetSource {
   //TODO: make a Matrix subtype of SampledFunction with matrix semantics
@@ -25,13 +26,16 @@ class HysicsLocalReader(uri: URI) extends DatasetSource {
     val md = Metadata("id" -> "image_files")(model)
     
     val base = uri.toString //"s3:/hylatis-hysics-001/des_veg_cloud"
- //   val samples = Iterator.range(1, 4201) map { i =>
-val samples = Iterator.range(1, 51) map { i =>
+    val imageCount = LatisProperties.getOrElse("imageCount", "4200").toInt
+    // Use image Count to compute a stride.
+    val stride: Int = 4200 / imageCount
+    
+    val samples = Iterator.range(1, 4201, stride) map { i =>
       val y = Integer(i)
       val uri = Text(f"${base}/img$i%04d.txt")
       Sample(y, uri)
     }
-    
+
     Dataset(md, Function.fromSamples(samples))
   }
 
@@ -103,36 +107,14 @@ val samples = Iterator.range(1, 51) map { i =>
    *   (y, x, w) -> f
    */
   def getDataset(operations: Seq[Operation]): Dataset = {
-val xops = List(Select("row < 50"))
     val samples: Iterator[Sample] = granuleListDataset.samples.zipWithIndex flatMap {
-      case (Sample(_, Seq(_, Text(uri))), iy) => 
-        MatrixTextReader(new URI(uri)).getDataset(xops).samples map {
+      case (Sample(_, Seq(_, Text(uri))), iy) =>
+        MatrixTextReader(new URI(uri)).getDataset().samples map {
           case Sample(_, Seq(Index(ix), Index(iw), Text(v))) =>
             val (x, y) = HysicsUtils.indexToXY((ix, iy))
             Sample(3, Real(y), Real(x), Real(wavelengths(iw)), Real(v.toDouble))
         }
     }
-    
-//    val samples: Iterator[Sample] = uris.zipWithIndex.flatMap { case (uri, iy) =>
-//      val image: Dataset = MatrixTextReader(uri).getDataset()
-//
-//      val nx = image.length
-//      val nw = wavelengths.length
-//
-//      for (
-//        ix <- Iterator.range(0, nx);
-//        iw <- Iterator.range(0, nw)
-//      ) yield {
-//        //val ll = HysicsUtils.indexToGeo(ix, iy)
-//        val ll = HysicsUtils.indexToXY(ix, iy) //leave in native Cartesian x/y space
-//        val lon = Scalar(ll._1)
-//        val lat = Scalar(ll._2)
-//        val w = Scalar(wavelengths(iw))
-//        val value = Scalar(image(ix)(iw).toDouble)
-//        val domain = Tuple(lon, lat, w)
-//        Sample(domain, value)
-//      }
-//    }
 
     val dataset = Dataset(metadata, Function.fromSamples(samples))
     operations.foldLeft(dataset)((ds, op) => op(ds))
@@ -141,10 +123,10 @@ val xops = List(Select("row < 50"))
 
 object HysicsLocalReader {
   
-  //def apply() = new HysicsLocalReader("/data/hysics/des_veg_cloud/")
-  def apply() = new HysicsLocalReader(URI.create("s3:/hylatis-hysics-001/des_veg_cloud"))
-
-  def apply(s3Base: String): HysicsLocalReader = {
-    new HysicsLocalReader(URI.create(s3Base))
+  def apply() = {
+    val defaultURI = "s3:/hylatis-hysics-001/des_veg_cloud"
+    val uri = LatisProperties.getOrElse("hysics.base.uri", defaultURI)
+    new HysicsLocalReader(URI.create(uri))
   }
+
 }

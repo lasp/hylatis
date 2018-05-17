@@ -285,7 +285,7 @@ Note, order preserved
     Source.fromInputStream(is).getLines foreach println
   }
   
-  @Test
+  //@Test
   def xy_rgb_image = {
     val reader = HysicsLocalReader()
     val ds = reader.getDataset()

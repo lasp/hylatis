@@ -15,13 +15,15 @@ class HysicsSparkReader extends AdaptedDatasetSource {
   // Define DataFrame table as URI
   val uri = new URI("hysics")
   
-  // Define model
-  val x = ScalarType("x")
-  val y = ScalarType("y")
-  val wavelength = ScalarType("wavelength")
-  val domain = TupleType("")(x, y, wavelength)
-  val range = ScalarType("value")
-  val model = FunctionType("f")(domain, range)
+  // (y, x, wavelength) -> irradiance
+  val model = FunctionType("f")(
+    TupleType("")(
+      ScalarType("y"),
+      ScalarType("x"),
+      ScalarType("wavelength")
+    ),
+    ScalarType("irradiance")
+  )
   
   val metadata = Metadata("id" -> "hysics")(model)
   

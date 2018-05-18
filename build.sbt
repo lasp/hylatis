@@ -30,7 +30,7 @@ lazy val hylatis = (project in file("."))
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
       "osgeo" at "http://download.osgeo.org/webdav/geotools",
-      "Boundless" at "http://repo.boundlessgeo.com/main”,
+      "Boundless" at "http://repo.boundlessgeo.com/main",
       "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases"
     ),
     assemblyMergeStrategy in assembly := {

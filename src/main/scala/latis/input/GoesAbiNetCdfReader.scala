@@ -9,10 +9,10 @@ import latis.metadata._
  * Proof of concept to show that a simple model can be constructed to extract GOES radiance data from S3.
  * Reader is not aware of UCAR netcdf dependencies, that is left to the adapter.
  */
-class GoesAbiNetcdfReader extends AdaptedDatasetSource {
-  val uri = new URI("file:///Users/pepf5062/Downloads/AwsTest/OR_ABI-L1b-RadF-M3C16_G16_s20180711200421_e20180711211199_c20180711211258.nc")
-  //val uri = new URI("s3://noaa-goes16/ABI-L1b-RadF/2018/071/12/OR_ABI-L1b-RadF-M3C16_G16_s20180711200421_e20180711211199_c20180711211258.nc")
+class GoesAbiNetcdfReader(netCDFUri: String) extends AdaptedDatasetSource {
+  
   // Define model
+  val uri = new URI(netCDFUri) 
   val x = ScalarType("x")
   val y = ScalarType("y")
   val domain = TupleType("")(y, x)
@@ -31,6 +31,6 @@ class GoesAbiNetcdfReader extends AdaptedDatasetSource {
 
 object GoesAbiNetcdfReader {
   
-  def apply() = new GoesAbiNetcdfReader()
+  def apply(netCDFUri: String) = new GoesAbiNetcdfReader(netCDFUri)
 
 }

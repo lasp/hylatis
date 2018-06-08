@@ -5,9 +5,6 @@ import java.awt.Color
 
 import ucar.nc2._
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
 import latis.data._
 import latis.metadata._
 
@@ -18,8 +15,7 @@ import latis.metadata._
 class GoesAbiNetcdfDisplayAdapter(model: FunctionType) extends Adapter {
   val Shape: Int = 5424
   
-  val logger = LoggerFactory.getLogger("GoesAbiNetcdfAdapter")
-  
+ 
   val radianceColors = List(
     (0, new Color(255, 255, 255, 255)),
     (300, new Color(255, 0, 0, 255)),
@@ -56,11 +52,9 @@ class GoesAbiNetcdfDisplayAdapter(model: FunctionType) extends Adapter {
     * Return a NetcdfFile
     */
   def open(uri: URI): NetcdfFile = {
-    val logger = LoggerFactory.getLogger("Open")
     if (uri.getScheme.startsWith("s3")) {
       val uriExpression = uri.getScheme + "://" + uri.getHost + uri.getPath
       val raf = new ucar.unidata.io.s3.S3RandomAccessFile(uriExpression, 1<<15, 1<<24)
-      println("   raf: " + raf)
       NetcdfFile.open(raf, uriExpression, null, null)
     } else {
       NetcdfFile.open(uri.getScheme + "://" + uri.getPath)

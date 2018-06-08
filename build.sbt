@@ -29,10 +29,10 @@ lazy val hylatis = (project in file("."))
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
-      Resolver.mavenLocal,
       "osgeo" at "http://download.osgeo.org/webdav/geotools",
       "Boundless" at "http://repo.boundlessgeo.com/main",
-      "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases"
+      "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases",
+      "Unidata Snaphots" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-snapshots"
     ),
     assembly / mainClass := Some("latis.server.HylatisServer"),
     assembly / assemblyMergeStrategy := {

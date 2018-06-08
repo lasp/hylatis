@@ -13,9 +13,9 @@ import latis.metadata._
 
 /**
  * Adapter for reading radiance data from GOES files on S3 or from local file system.
- * Current implementation converts radiance values to interpolated colors.
+ * Implementation converts radiance values to interpolated colors.
  */
-class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
+class GoesAbiNetcdfDisplayAdapter(model: FunctionType) extends Adapter {
   val Shape: Int = 5424
   
   val logger = LoggerFactory.getLogger("GoesAbiNetcdfAdapter")
@@ -28,7 +28,7 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
     (1023, new Color(0, 0, 0, 255)))
   
   /**
-   * The actual return type is Function2D,
+   * The actual return type is IndexedFunction2D,
    * which extends Function which itself extends Data.
    */
   def apply(netCDFUri: URI): Data = {

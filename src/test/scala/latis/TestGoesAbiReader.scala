@@ -2,11 +2,11 @@ package latis
 
 import org.junit._
 import org.junit.Assert._
-import latis.input.{GoesAbiNetcdfAdapter, GoesAbiNetcdfReader}
+import latis.input.{GoesAbiNetcdfDisplayAdapter, GoesAbiNetcdfDisplayReader}
 import java.awt.Color
 
 class TestGoesAbiReader {
-  val reader = new GoesAbiNetcdfReader
+  val reader = new GoesAbiNetcdfDisplayReader
   val adapter = reader.adapter
   
   @Test

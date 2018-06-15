@@ -38,12 +38,12 @@ class TestGoesAbiReader {
     assertEquals(new Color(0, 128, 128, 255), adapter.interpolateColor(adapter.radianceColors, 450) )
   }
   
-  @Test
-  def goesDataset: Unit = {
-    val data = reader.data
-    val metadata = reader.metadata
-    val dataset = Dataset(metadata, data)
-    assertTrue(dataset.samples.length > 0)
-  }
+//  @Test
+//  def goesDataset: Unit = {
+//    val data = reader.data
+//    val metadata = reader.metadata
+//    val dataset = Dataset(metadata, data)
+//    assertTrue(dataset.samples.length > 0)
+//  }
   
 }

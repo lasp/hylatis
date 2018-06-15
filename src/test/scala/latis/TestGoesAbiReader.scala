@@ -6,7 +6,8 @@ import latis.input.{GoesAbiNetcdfDisplayAdapter, GoesAbiNetcdfDisplayReader}
 import java.awt.Color
 
 class TestGoesAbiReader {
-  val reader = new GoesAbiNetcdfDisplayReader
+  val reader = 
+    new GoesAbiNetcdfDisplayReader("s3://noaa-goes16/ABI-L1b-RadF/2018/071/12/OR_ABI-L1b-RadF-M3C16_G16_s20180711200421_e20180711211199_c20180711211258.nc")
   val adapter = reader.adapter
   
   @Test

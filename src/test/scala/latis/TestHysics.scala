@@ -296,6 +296,41 @@ Note, order preserved
     val image = DatasetSource.fromName("hysics").getDataset(ops)
     ImageWriter("xyRGB.png").write(image)
   }
+  
+  @Test
+  def bulk_load = {
+    val reader = HysicsGranuleListReader() // hysics_image_files
+    val ds = reader.getDataset()
+    //Writer().write(ds)
+    new SparkWriter().write(ds)
+    
+    val ops: Seq[Operation] = Seq(
+      Select("iy < 10")
+      /*
+       * TODO: URI => (ix, iw) -> f  compose?
+       *   that is just the adapter.apply
+       * or map function over entire samples
+       */
+      , HysicsImageReaderOperation()
+      /*
+       * TODO: Select only works if uncurried, so do it first
+       * TODO: uncurry doesn't flatten domain type so we have (y,(x,w)) which confuses the writer
+       *   should uncurry flatten the type or should writer be more forgiving?
+       *   seems like we should preserve type for things like GeoLocation or Vector tuples
+       *   review writer in context of new flattened Sample
+       *   
+       * hysics_image_files.png?iy<10&read()&uncurry()&ix<10&rgbPivot("iw", 100, 200, 300)
+       */
+      , Uncurry()
+      , Select("ix < 10")
+      , RGBImagePivot("iw", 100, 200, 300)
+    )
+    val image = HysicsSparkReader().getDataset(ops)
+    //Writer().write(sds)
+    //sds.samples foreach println
+    //val image = DatasetSource.fromName("hysics").getDataset(ops)
+    ImageWriter("indexRGB.png").write(image)
+  }
 
 }
 

@@ -10,22 +10,29 @@ import latis.Dataset
 import latis.util.HysicsUtils
 import java.net.URI
 
-class HysicsSparkReader extends AdaptedDatasetSource {
+/**
+ * 
+ * uri is the name of the cached RDD
+ */
+//case class HysicsSparkReader(uri: URI) extends AdaptedDatasetSource {
+case class HysicsSparkReader() extends AdaptedDatasetSource {
+  //TODO: dynamic loading not working with args
   
-  // Define DataFrame table as URI
-  val uri = new URI("hysics")
+  val uri = new URI("hysics_image_files")
   
-  // (y, x, wavelength) -> irradiance
-  val model = FunctionType("f")(
-    TupleType("")(
-      ScalarType("y"),
-      ScalarType("x"),
-      ScalarType("wavelength")
+//  // (y, x, wavelength) -> irradiance
+  val model = FunctionType(
+    TupleType(
+      ScalarType("iy"),
+      ScalarType("ix"),
+      ScalarType("iw")
     ),
     ScalarType("irradiance")
   )
-  
-  val metadata = Metadata("id" -> "hysics")(model)
+//  val model = FunctionType(
+//    ScalarType("iy"),
+//    ScalarType("uri")
+//  )
   
   val adapter = SparkAdapter(model)
 
@@ -33,6 +40,6 @@ class HysicsSparkReader extends AdaptedDatasetSource {
 
 object HysicsSparkReader {
   
-  def apply() = new HysicsSparkReader()
+  //def apply() = new HysicsSparkReader(new URI("hysics_image_files"))
 
 }

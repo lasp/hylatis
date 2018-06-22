@@ -18,7 +18,7 @@ class HylatisServer extends HttpServlet {
   override def init(): Unit = {
     //TODO: load all datasets in catalog, "cache" to spark
     //load sample Hysics data cube
-    val reader = HysicsLocalReader()
+    val reader = HysicsGranuleListReader() // hysics_image_files
     val ds = reader.getDataset()
     SparkWriter().write(ds)
   }
@@ -59,6 +59,8 @@ class HylatisServer extends HttpServlet {
           val pivotVar = as.head
           val Array(r,g,b) = as.tail.map(_.toDouble)
           RGBImagePivot(pivotVar, r, g, b)
+        case ("uncurry", _) => Uncurry()
+        case ("read", _) => HysicsImageReaderOperation()
       }
 //        //for testing handling of http errors
 //        case ("httpError", s: String) => throw new HTTPException(s.toInt) 

@@ -30,7 +30,7 @@ class GoesAbiNetcdfMultiChannelReader(netCDFUriFiles: List[String]) extends Adap
   val range = ScalarType("Rad")
   val model: FunctionType = FunctionType("f")(domain, range)
   
-  val metadata = Metadata("id" -> "goes_16_multi_channel")(model)
+  override val metadata = Metadata("id" -> "goes_16_multi_channel")(model)
   
   val adapter = new GoesAbiNetcdfAdapter(model)
   

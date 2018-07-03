@@ -1,6 +1,8 @@
 ThisBuild / organization := "lasp"
 ThisBuild / scalaVersion := "2.11.8"
 
+val artifactory = "http://web-artifacts.lasp.colorado.edu/artifactory/"
+
 val latisVersion = "3.0.0-SNAPSHOT"
 //val jerseyVersion = "1.19.4"
 val jettyVersion  = "9.4.7.v20170914"
@@ -14,24 +16,26 @@ lazy val hylatis = (project in file("."))
   .settings(
     name := "latis-hylatis",
     libraryDependencies ++= Seq(
-      // "io.latis-data"     %% "latis-core"    % latisVersion,
-      // "io.latis-data"     %% "latis-spark"   % latisVersion,
-      "org.eclipse.jetty"    % "jetty-server"   % jettyVersion,
-      "org.eclipse.jetty"    % "jetty-servlet"  % jettyVersion,
-      "org.geotools"         % "gt-main"        % "18.2",
-      "org.geotools"         % "gt-epsg-hsql"   % "18.2",
-      "org.geotools"         % "gt-api"         % "18.2",
-      "org.geotools"         % "gt-referencing" % "18.2",
-      "org.apache.commons"   % "commons-math3"  % "3.6.1",
-      "io.findify"          %% "s3mock"         % "0.2.4"  % "test",
-      "edu.ucar"            % "cdm"             % "4.6.11",
-      "edu.ucar"            % "httpservices"    % "4.6.11"
+      // "io.latis-data"           %% "latis-core"     % latisVersion,
+      // "io.latis-data"           %% "latis-spark"    % latisVersion,
+      "org.eclipse.jetty"           % "jetty-server"   % jettyVersion,
+      "org.eclipse.jetty"           % "jetty-servlet"  % jettyVersion,
+      "org.geotools"                % "gt-main"        % "18.2",
+      "org.geotools"                % "gt-epsg-hsql"   % "18.2",
+      "org.geotools"                % "gt-api"         % "18.2",
+      "org.geotools"                % "gt-referencing" % "18.2",
+      "org.apache.commons"          % "commons-math3"  % "3.6.1",
+      "io.findify"                 %% "s3mock"         % "0.2.4"  % "test",
+      "edu.ucar"                    % "cdm" 		       % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
+      "edu.ucar"                    % "httpservices" 	 % "5.0.0-SNAPSHOT"
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
       "osgeo" at "http://download.osgeo.org/webdav/geotools",
       "Boundless" at "http://repo.boundlessgeo.com/main",
-      "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases"
+      "Artifactory External Snapshots" at artifactory + "ext-snapshot-local",
+      "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases",
+      "Unidata Snaphots" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-snapshots"
     ),
     assembly / mainClass := Some("latis.server.HylatisServer"),
     assembly / assemblyMergeStrategy := {

@@ -2,11 +2,12 @@ package latis
 
 import org.junit._
 import org.junit.Assert._
-import latis.input.{GoesAbiNetcdfAdapter, GoesAbiNetcdfReader}
+import latis.input.{GoesAbiNetcdfDisplayAdapter, GoesAbiNetcdfDisplayReader}
 import java.awt.Color
 
 class TestGoesAbiReader {
-  val reader = new GoesAbiNetcdfReader
+  val reader = 
+    new GoesAbiNetcdfDisplayReader("s3://noaa-goes16/ABI-L1b-RadF/2018/071/12/OR_ABI-L1b-RadF-M3C16_G16_s20180711200421_e20180711211199_c20180711211258.nc")
   val adapter = reader.adapter
   
   @Test
@@ -37,12 +38,12 @@ class TestGoesAbiReader {
     assertEquals(new Color(0, 128, 128, 255), adapter.interpolateColor(adapter.radianceColors, 450) )
   }
   
-  @Test
-  def goesDataset: Unit = {
-    val data = reader.data
-    val metadata = reader.metadata
-    val dataset = Dataset(metadata, data)
-    assertTrue(dataset.samples.length > 0)
-  }
+//  @Test
+//  def goesDataset: Unit = {
+//    val data = reader.data
+//    val metadata = reader.metadata
+//    val dataset = Dataset(metadata, data)
+//    assertTrue(dataset.samples.length > 0)
+//  }
   
 }

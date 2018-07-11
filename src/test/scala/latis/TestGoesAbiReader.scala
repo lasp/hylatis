@@ -1,18 +1,28 @@
 package latis
 
+import io.findify.s3mock._
 import org.junit._
 import org.junit.Assert._
-import latis.input.{GoesAbiNetcdfDisplayAdapter, GoesAbiNetcdfDisplayReader, GoesGranuleListReader}
+import scala.io.Source
+import latis.input._
 import latis.output._
+import latis.util.AWSUtils
+import latis.util.SparkUtils
+import latis.metadata._
+import latis.data._
+import latis.ops._
+import java.net.URL
+import java.net.URI
+import java.io.File
 import java.awt.Color
-import io.findify.s3mock._
+
 
 class TestGoesAbiReader {
   val uri = "file:///Users/pepf5062/Downloads/AwsTest/OR_ABI-L1b-RadF-M3C16_G16_s20180711200421_e20180711211199_c20180711211258.nc"
   val reader = new GoesAbiNetcdfDisplayReader(uri)
   val adapter = reader.adapter
   
-  @Test
+  //@Test
   def convertColorToInt: Unit = {
     val red = new Color(255, 0, 0, 255)
     val green = new Color(0, 255, 0, 255)
@@ -33,7 +43,7 @@ class TestGoesAbiReader {
     assertEquals(-1, adapter.colorToInt(white))
   }
   
-  @Test
+  //@Test
   def interpolateColor: Unit = {
     assertEquals(new Color(128, 128, 0, 255), adapter.interpolateColor(adapter.radianceColors, 350) )
     assertEquals(new Color(0, 255, 0, 255), adapter.interpolateColor(adapter.radianceColors, 400) )
@@ -50,36 +60,25 @@ class TestGoesAbiReader {
   
   @Test
   def bulk_load = {
+    println("Start Test")
     val reader = GoesGranuleListReader()
+    println("reader: " + reader)
     val ds = reader.getDataset()
+    println("ds: " + ds)
     new SparkWriter().write(ds)
     
-    /*val ops: Seq[Operation] = Seq(
-      Select("iy < 10")
-      /*
-       * TODO: URI => (ix, iw) -> f  compose?
-       *   that is just the adapter.apply
-       * or map function over entire samples
-       */
-      , HysicsImageReaderOperation()
-      /*
-       * TODO: Select only works if uncurried, so do it first
-       * TODO: uncurry doesn't flatten domain type so we have (y,(x,w)) which confuses the writer
-       *   should uncurry flatten the type or should writer be more forgiving?
-       *   seems like we should preserve type for things like GeoLocation or Vector tuples
-       *   review writer in context of new flattened Sample
-       *   
-       * hysics_image_files.png?iy<10&read()&uncurry()&ix<10&rgbPivot("iw", 100, 200, 300)
-       */
+    println("now create an ops")
+    val ops: Seq[Operation] = Seq(
+      GoesImageReaderOperation()
       , Uncurry()
-      , Select("ix < 10")
-      , RGBImagePivot("iw", 100, 200, 300)
+      , TransposeWavelengthWithPosition()
+      , RGBImagePivot("wavelength", 300, 500, 700)
     )
-    val image = HysicsSparkReader().getDataset(ops)
-    //Writer().write(sds)
-    //sds.samples foreach println
-    //val image = DatasetSource.fromName("hysics").getDataset(ops)
-    ImageWriter("indexRGB.png").write(image)*/
+    println("ops defined, let's create an image")
+    val image: Dataset = GoesSparkReader().getDataset(ops)
+    println("Image created")
+    Writer().write(image)
+    ImageWriter("GoesCompositeRGB.png").write(image)
   }
   
 }

@@ -14,23 +14,21 @@ import latis.util.LatisProperties
 
 case class GoesGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   
+  val wavelengths = Map(0 -> 300, 1 -> 500, 2 -> 700)
+  
   val model = FunctionType(
     ScalarType("wavelength"),
     ScalarType("uri")
   )
    
-  override def metadata = Metadata("id" -> "goes_image_file")(model)
+  override def metadata = Metadata("id" -> "goes_image_files")(model)
     
   def adapter: Adapter = new Adapter() {
     def apply(uri: URI): Data = {
-      val base = uri.toString //"s3:/hylatis-hysics-001/des_veg_cloud"
-      //val imageCount = LatisProperties.getOrElse("imageCount", "4200").toInt
-      // Use image count to compute a stride.
-      val stride: Int = 1 //4200 / imageCount
-    
-      val samples = Iterator.range(1, 4201, stride) map { i =>
-        val y = Integer(i)
-        val uri = Text(f"${base}/img$i%04d.txt")
+      val base = uri.toString //"s3:/goes-001"
+      val samples = Iterator.range(0, 3) map { i =>
+        val y = Integer(wavelengths(i))
+        val uri = Text(f"${base}/goes$i%04d.nc")
         Sample(y, uri)
       }
 
@@ -43,8 +41,8 @@ case class GoesGranuleListReader(uri: URI) extends AdaptedDatasetSource {
 object GoesGranuleListReader {
   
   def apply() = {
-    val defaultURI = "s3:/hylatis-hysics-001/des_veg_cloud"
-    val uri = LatisProperties.getOrElse("hysics.base.uri", defaultURI)
+    val defaultURI = "s3:/goes-001"
+    val uri = LatisProperties.getOrElse("goes.base.uri", defaultURI)
     new GoesGranuleListReader(URI.create(uri))
   }
 

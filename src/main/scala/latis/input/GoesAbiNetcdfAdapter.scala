@@ -11,7 +11,7 @@ import latis.metadata._
 /**
  * Adapter for reading radiance data from GOES files on S3 or from local file system.
  */
-class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
+case class GoesAbiNetcdfAdapter(model: DataType) extends Adapter {
   val Shape: Int = 5424
   
   /**

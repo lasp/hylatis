@@ -21,7 +21,7 @@ class GoesAbiNetcdfReader(netCDFUri: String) extends AdaptedDatasetSource {
   
   override val metadata = Metadata("id" -> "goes_16")(model)
   
-  val adapter = new GoesAbiNetcdfAdapter(model)
+  val adapter = new GoesAbiNetcdfAdapter()
   
   val data: Data = adapter.apply(uri)
   

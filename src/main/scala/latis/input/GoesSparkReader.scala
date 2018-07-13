@@ -1,13 +1,8 @@
 package latis.input
 
-import java.net.URL
 import scala.io.Source
-import latis.ops._
-import latis.data._
 import latis.metadata._
-import scala.collection.mutable.ArrayBuffer
 import latis.Dataset
-import latis.util.HysicsUtils
 import java.net.URI
 
 /**

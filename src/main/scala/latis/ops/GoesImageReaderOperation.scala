@@ -14,7 +14,7 @@ case class GoesImageReaderOperation() extends MapOperation {
   
   def makeMapFunction(model: DataType): Sample => Sample = (s: Sample) => {
     
-    val adapter = GoesAbiNetcdfAdapter(model) // reuse for each sample //TODO: consider concurrency issues
+    val adapter = GoesAbiNetcdfAdapter() // reuse for each sample //TODO: consider concurrency issues
     //TODO: use HysicsImageReader to get Dataset with the desired model?
     
     s match {

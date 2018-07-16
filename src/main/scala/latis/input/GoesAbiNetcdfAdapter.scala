@@ -15,7 +15,8 @@ case class GoesAbiNetcdfAdapter() extends Adapter {
   val Shape: Int = 5424
   //val ScaleFactor = 1        // full resolution
   //val ScaleFactor = 226      // shrink the number of points in each dimension by this multiplier
-  val ScaleFactor = 4
+  //val ScaleFactor = 4
+  val ScaleFactor = 6
   //val ScaleFactor = 12
   //val ScaleFactor = 24
   //val ScaleFactor = 48

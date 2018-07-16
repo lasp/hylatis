@@ -60,24 +60,17 @@ class TestGoesAbiReader {
   
   @Test
   def bulk_load = {
-    println("Start Test")
     val reader = GoesGranuleListReader()
-    println("reader: " + reader)
     val ds = reader.getDataset()
-    println("ds: " + ds)
     new SparkWriter().write(ds)
     
-    println("now create an ops")
     val ops: Seq[Operation] = Seq(
       GoesImageReaderOperation()
       , Uncurry()
       , TransposeWavelengthWithPosition()
       , RGBImagePivot("wavelength", 300, 500, 700)
     )
-    println("ops defined, let's create an image")
     val image: Dataset = GoesSparkReader().getDataset(ops)
-    println("Image created")
-    Writer().write(image)
     ImageWriter("GoesCompositeRGB.png").write(image)
   }
   

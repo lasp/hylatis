@@ -11,18 +11,17 @@ import java.net.URI
  */
 //case class GoesSparkReader(uri: URI) extends AdaptedDatasetSource {
 case class GoesSparkReader() extends AdaptedDatasetSource {
-  //TODO: dynamic loading not working with args
   
   val uri = new URI("goes_image_files")
   
-// (y, x, wavelength) -> rad
+// (y, x, wavelength) -> Rad
   val model = FunctionType(
     TupleType(
       ScalarType("y"),
       ScalarType("x"),
       ScalarType("wavelength")
     ),
-    ScalarType("rad")
+    ScalarType("Rad")
   )
   
   val adapter = SparkAdapter(model)

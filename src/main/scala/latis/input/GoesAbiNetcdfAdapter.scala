@@ -13,7 +13,9 @@ import latis.metadata._
  */
 case class GoesAbiNetcdfAdapter() extends Adapter {
   val Shape: Int = 5424
-  val ScaleFactor = 226      // shrink the number of points in each dimension by this multiplier
+  //val ScaleFactor = 1        // full resolution
+  //val ScaleFactor = 226      // shrink the number of points in each dimension by this multiplier
+  val ScaleFactor = 4
   //val ScaleFactor = 12
   //val ScaleFactor = 24
   //val ScaleFactor = 48
@@ -25,7 +27,6 @@ case class GoesAbiNetcdfAdapter() extends Adapter {
    * which extends Function which itself extends Data.
    */
   def apply(netCDFUri: URI): Data = {
-    println(s"GoesAbiNetcdfAdapter is called with $netCDFUri")
     val netCDFFile: NetcdfFile = open(netCDFUri)
     val radianceVariable = netCDFFile.findVariable("Rad")
     val radianceData = radianceVariable.read
@@ -36,7 +37,7 @@ case class GoesAbiNetcdfAdapter() extends Adapter {
     val vs2d: Array[Array[Data]] = 
       Array.range(0, Shape / ScaleFactor) map { i => 
         Array.range(0, Shape/ ScaleFactor) map { j => 
-          val radiance = radianceData.getInt((Shape * j  + i) + ScaleFactor)
+          val radiance = radianceData.getInt((Shape * j  + i) * ScaleFactor)
           val rad: Data = Integer(radiance)
           rad  
         }

@@ -14,7 +14,13 @@ import latis.metadata._
  */
 class GoesAbiNetcdfDisplayAdapter(model: FunctionType) extends Adapter {
   val Shape: Int = 5424
-  
+  val ScaleFactor = 1          // full resolution
+  //val ScaleFactor = 226      // shrink the number of points in each dimension by this multiplier
+  //val ScaleFactor = 12
+  //val ScaleFactor = 24
+  //val ScaleFactor = 48
+  //val ScaleFactor = 113
+  //val ScaleFactor = 452
  
   val radianceColors = List(
     (0, new Color(255, 255, 255, 255)),
@@ -33,12 +39,12 @@ class GoesAbiNetcdfDisplayAdapter(model: FunctionType) extends Adapter {
     val radianceData = radianceVariable.read
     netCDFFile.close()
     
-    val as: Array[Data] = Array.range(0, Shape).map(Integer(_))
-    val bs: Array[Data] = Array.range(0, Shape).map(Integer(_))
+    val as: Array[Data] = Array.range(0, Shape / ScaleFactor).map(Integer(_))
+    val bs: Array[Data] = Array.range(0, Shape / ScaleFactor).map(Integer(_))
     val vs2d: Array[Array[Data]] = 
-      Array.range(0, Shape) map { i => 
-        Array.range(0, Shape) map { j => 
-          val radiance = radianceData.getInt(Shape * j + i)
+      Array.range(0, Shape / ScaleFactor) map { i => 
+        Array.range(0, Shape / ScaleFactor) map { j => 
+          val radiance = radianceData.getInt((Shape * j  + i) * ScaleFactor)
           val colorCorrectedRadiance = colorToInt(interpolateColor(radianceColors, radiance))
           val rad: Data = Integer(colorCorrectedRadiance)
           rad  

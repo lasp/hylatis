@@ -29,13 +29,13 @@ case class GoesImageReaderOperation() extends MapOperation {
     }
   }
   
-  // wavelength -> (x, y) -> rad
+  // wavelength -> (x, y) -> Rad
   override def applyToModel(model: DataType): DataType = {
     FunctionType(
       ScalarType("wavelength"),
       FunctionType(
         TupleType(ScalarType("x"), ScalarType("y")),
-        ScalarType("rad")
+        ScalarType("Rad")
       )
     )
   }

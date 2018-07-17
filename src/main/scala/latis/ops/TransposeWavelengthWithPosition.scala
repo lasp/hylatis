@@ -9,10 +9,9 @@ import latis.metadata._
  * In Summary wavelength -> (x, y) -> Rad will become (x, y) -> wavelength -> Rad
  */
 case class TransposeWavelengthWithPosition() extends MapOperation {
-  def makeMapFunction(model: DataType): Sample => Sample = (s: Sample) => {
-    s match {
+  
+  def makeMapFunction(model: DataType): Sample => Sample = {
       case Sample(n, ns) => Sample(n, transpose(ns))
-    }
   }
 
   def transpose(data: Seq[Data]): Seq[Data] = data match {

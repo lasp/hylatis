@@ -22,6 +22,7 @@ case class GoesAbiNetcdfAdapter() extends Adapter {
   //val ScaleFactor = 48
   //val ScaleFactor = 113
   //val ScaleFactor = 452
+  val scaledShape = Shape / ScaleFactor
   
   /**
    * The actual return type is IndexedFunction2D,
@@ -33,16 +34,11 @@ case class GoesAbiNetcdfAdapter() extends Adapter {
     val radianceData = radianceVariable.read
     netCDFFile.close()
     
-    val as: Array[Data] = Array.range(0, Shape / ScaleFactor).map(Integer(_))
-    val bs: Array[Data] = Array.range(0, Shape / ScaleFactor).map(Integer(_))
-    val vs2d: Array[Array[Data]] = 
-      Array.range(0, Shape / ScaleFactor) map { i => 
-        Array.range(0, Shape/ ScaleFactor) map { j => 
-          val radiance = radianceData.getInt((Shape * j  + i) * ScaleFactor)
-          val rad: Data = Integer(radiance)
-          rad  
-        }
-    }
+    val as: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
+    val bs: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
+    val vs2d: Array[Array[Data]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
+      
+    def getRadiance(i: Int, j: Int) = Integer(radianceData.getInt((Shape * j  + i) * ScaleFactor))
 
     new IndexedFunction2D(as, bs, vs2d)
   }

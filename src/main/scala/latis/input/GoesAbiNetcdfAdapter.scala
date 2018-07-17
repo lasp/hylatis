@@ -36,9 +36,9 @@ case class GoesAbiNetcdfAdapter() extends Adapter {
     
     val as: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
     val bs: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
-    val vs2d: Array[Array[Data]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
-      
+    
     def getRadiance(i: Int, j: Int) = Integer(radianceData.getInt((Shape * j  + i) * ScaleFactor))
+    val vs2d: Array[Array[Data]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
 
     new IndexedFunction2D(as, bs, vs2d)
   }

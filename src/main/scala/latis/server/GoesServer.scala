@@ -13,10 +13,7 @@ import java.net.URLDecoder
 import latis.util.LatisProperties
 
 class GoesServer extends HttpServlet {
-  //TODO: make catalog of datasets from *completed* spark datasets
-
   override def init(): Unit = {
-    //TODO: load all datasets in catalog, "cache" to spark
     val reader = GoesGranuleListReader() 
     val ds = reader.getDataset()
     SparkWriter().write(ds)
@@ -58,6 +55,7 @@ class GoesServer extends HttpServlet {
           RGBImagePivot(pivotVar, r, g, b)
         case ("uncurry", _) => Uncurry()
         case ("read", _) => GoesImageReaderOperation()
+        case ("transpose", _) => TransposeWavelengthWithPosition()
       }
 //        //for testing handling of http errors
 //        case ("httpError", s: String) => throw new HTTPException(s.toInt) 
@@ -67,7 +65,6 @@ class GoesServer extends HttpServlet {
 //        case (_, null) => Operation(name)
 //      }
       case _ => throw new UnsupportedOperationException("Failed to parse expression: '" + expression + "'")
-      //TODO: log and return None? probably should return error
   }
 
 }
@@ -85,7 +82,5 @@ object GoesServer {
     server.setHandler(context)
     server.start()
     server.join()
-    
-    //TODO: shut down spark
   }
 }

@@ -32,7 +32,7 @@ class GoesAbiNetcdfMultiChannelReader(netCDFUriFiles: List[String]) extends Adap
   
   override val metadata = Metadata("id" -> "goes_16_multi_channel")(model)
   
-  val adapter = new GoesAbiNetcdfAdapter(model)
+  val adapter = new GoesAbiNetcdfAdapter()
   
   val data: Data = joinDataFromMultipleFiles(colorMap)
   

@@ -11,8 +11,18 @@ import latis.metadata._
 /**
  * Adapter for reading radiance data from GOES files on S3 or from local file system.
  */
-class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
+case class GoesAbiNetcdfAdapter() extends Adapter {
   val Shape: Int = 5424
+  //val ScaleFactor = 1        // full resolution
+  //val ScaleFactor = 226      // shrink the number of points in each dimension by this multiplier
+  //val ScaleFactor = 4
+  val ScaleFactor = 6
+  //val ScaleFactor = 12
+  //val ScaleFactor = 24
+  //val ScaleFactor = 48
+  //val ScaleFactor = 113
+  //val ScaleFactor = 452
+  val scaledShape = Shape / ScaleFactor
   
   /**
    * The actual return type is IndexedFunction2D,
@@ -24,16 +34,11 @@ class GoesAbiNetcdfAdapter(model: FunctionType) extends Adapter {
     val radianceData = radianceVariable.read
     netCDFFile.close()
     
-    val as: Array[Data] = Array.range(0, Shape).map(Integer(_))
-    val bs: Array[Data] = Array.range(0, Shape).map(Integer(_))
-    val vs2d: Array[Array[Data]] = 
-      Array.range(0, Shape) map { i => 
-        Array.range(0, Shape) map { j => 
-          val radiance = radianceData.getInt(Shape * j + i)
-          val rad: Data = Integer(radiance)
-          rad  
-        }
-    }
+    val as: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
+    val bs: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
+    
+    def getRadiance(i: Int, j: Int) = Integer(radianceData.getInt((Shape * j  + i) * ScaleFactor))
+    val vs2d: Array[Array[Data]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
 
     new IndexedFunction2D(as, bs, vs2d)
   }

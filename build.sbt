@@ -27,7 +27,8 @@ lazy val hylatis = (project in file("."))
       "org.apache.commons"          % "commons-math3"  % "3.6.1",
       "io.findify"                 %% "s3mock"         % "0.2.4"  % "test",
       "edu.ucar"                    % "cdm" 		       % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
-      "edu.ucar"                    % "httpservices" 	 % "5.0.0-SNAPSHOT"
+      "edu.ucar"                    % "httpservices" 	 % "5.0.0-SNAPSHOT",
+      "org.apache.spark"           %% "spark-sql"      % "2.2.0"  % Provided
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
@@ -37,11 +38,12 @@ lazy val hylatis = (project in file("."))
       "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases",
       "Unidata Snaphots" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-snapshots"
     ),
-    assembly / mainClass := Some("latis.server.HylatisServer"),
+    assembly / mainClass := Some("latis.server.GoesServer"),
     assembly / assemblyMergeStrategy := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith ".tsml" => MergeStrategy.first
       case "latis.properties"                            => MergeStrategy.first
+      case PathList("META-INF", "jdom-info.xml")         => MergeStrategy.discard
       case x =>
         val strategy = (assemblyMergeStrategy in assembly).value
         strategy(x)

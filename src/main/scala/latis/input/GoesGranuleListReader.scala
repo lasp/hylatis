@@ -41,7 +41,7 @@ case class GoesGranuleListReader(uri: URI) extends AdaptedDatasetSource {
 object GoesGranuleListReader {
   
   def apply() = {
-    val defaultURI = "s3:/goes-001"
+    val defaultURI = "s3://goes-001"
     val uri = LatisProperties.getOrElse("goes.base.uri", defaultURI)
     new GoesGranuleListReader(URI.create(uri))
   }

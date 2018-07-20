@@ -28,7 +28,7 @@ lazy val hylatis = (project in file("."))
       "io.findify"                 %% "s3mock"         % "0.2.4"  % "test",
       "edu.ucar"                    % "cdm" 		       % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
       "edu.ucar"                    % "httpservices" 	 % "5.0.0-SNAPSHOT",
-      "org.apache.spark"           %% "spark-sql"      % "2.2.0"  % Provided
+      "org.apache.spark"           %% "spark-sql"      % "2.2.0"
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(

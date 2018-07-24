@@ -322,11 +322,11 @@ Note, order preserved
        * hysics_image_files.png?iy<10&read()&uncurry()&ix<10&rgbPivot("iw", 100, 200, 300)
        */
       , Uncurry()
-      , Select("ix < 10")
+      , Select("ix >= 479")
       , RGBImagePivot("iw", 100, 200, 300)
     )
     val image = HysicsSparkReader().getDataset(ops)
-    //Writer().write(sds)
+    //Writer().write(image)
     //sds.samples foreach println
     //val image = DatasetSource.fromName("hysics").getDataset(ops)
     ImageWriter("indexRGB.png").write(image)

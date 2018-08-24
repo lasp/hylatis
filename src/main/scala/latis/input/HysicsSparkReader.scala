@@ -1,26 +1,17 @@
 package latis.input
 
-import java.net.URL
-import scala.io.Source
-import latis.ops._
-import latis.data._
-import latis.metadata._
-import scala.collection.mutable.ArrayBuffer
-import latis.Dataset
-import latis.util.HysicsUtils
 import java.net.URI
 
+import latis.metadata._
+
 /**
- * 
- * uri is the name of the cached RDD
+ * Expects RDD to be cached in SparkUtil cache.
+ * HylatisServer init creates the RDD.
  */
-//case class HysicsSparkReader(uri: URI) extends AdaptedDatasetSource {
 case class HysicsSparkReader() extends AdaptedDatasetSource {
-  //TODO: dynamic loading not working with args
   
-  val uri = new URI("hysics_image_files")
+  val uri = new URI("hysics")
   
-//  // (y, x, wavelength) -> irradiance
   val model = FunctionType(
     TupleType(
       ScalarType("iy"),
@@ -29,17 +20,7 @@ case class HysicsSparkReader() extends AdaptedDatasetSource {
     ),
     ScalarType("irradiance")
   )
-//  val model = FunctionType(
-//    ScalarType("iy"),
-//    ScalarType("uri")
-//  )
   
   val adapter = SparkAdapter(model)
-
-}
-
-object HysicsSparkReader {
-  
-  //def apply() = new HysicsSparkReader(new URI("hysics_image_files"))
 
 }

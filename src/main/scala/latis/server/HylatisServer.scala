@@ -11,16 +11,31 @@ import latis.input._
 import latis.util.RegEx._
 import java.net.URLDecoder
 import latis.util.LatisProperties
+import latis.Dataset
+import latis.metadata._
+import latis.util.SparkUtils._
+import latis.util.SparkUtils
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
 
   override def init(): Unit = {
-    //TODO: load all datasets in catalog, "cache" to spark
-    //load sample Hysics data cube
+    //TODO: load all datasets in catalog
+    
+    // Load the granule list dataset into spark
     val reader = HysicsGranuleListReader() // hysics_image_files
     val ds = reader.getDataset()
-    SparkWriter().write(ds)
+    
+    val sc = getSparkSession.sparkContext
+    var rdd = sc.parallelize(ds.samples.toSeq)
+    
+    // Load data from each granule
+    rdd = rdd.map(HysicsImageReaderOperation().makeMapFunction(null))
+    // Uncurry the dataset: (iy, ix, iw) -> irradiance
+    rdd = rdd.flatMap(Uncurry().makeMapFunction(null))
+    // Store RDD in local cache
+    SparkUtils.cacheRDD("hysics", rdd)
+    //Note: "hysics" is mapped to the HysicsSparkReader which will use this RDD
   }
 
   override def doGet(

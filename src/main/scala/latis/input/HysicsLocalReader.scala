@@ -124,7 +124,7 @@ class HysicsLocalReader(uri: URI) extends DatasetSource {
 object HysicsLocalReader {
   
   def apply() = {
-    val defaultURI = "s3:/hylatis-hysics-001/des_veg_cloud"
+    val defaultURI = "s3://hylatis-hysics-001/des_veg_cloud"
     val uri = LatisProperties.getOrElse("hysics.base.uri", defaultURI)
     new HysicsLocalReader(URI.create(uri))
   }

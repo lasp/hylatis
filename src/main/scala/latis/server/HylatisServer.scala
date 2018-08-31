@@ -36,6 +36,9 @@ class HylatisServer extends HttpServlet {
     // Store RDD in local cache
     SparkUtils.cacheRDD("hysics", rdd)
     //Note: "hysics" is mapped to the HysicsSparkReader which will use this RDD
+    
+    //Tell spark to cache it so it doesn't recompute the RDD
+    rdd.cache()
   }
 
   override def doGet(

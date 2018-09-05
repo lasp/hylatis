@@ -24,9 +24,9 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   def adapter: Adapter = new Adapter() {
     def apply(uri: URI): Data = {
       val base = uri.toString //"s3:/hylatis-hysics-001/des_veg_cloud"
-      //val imageCount = LatisProperties.getOrElse("imageCount", "4200").toInt
+      val imageCount = LatisProperties.getOrElse("imageCount", "4200").toInt
       // Use image count to compute a stride.
-      val stride: Int = 1 //4200 / imageCount
+      val stride: Int = 4200 / imageCount
     
       val samples = Iterator.range(1, 4201, stride) map { i =>
         val y = Integer(i)

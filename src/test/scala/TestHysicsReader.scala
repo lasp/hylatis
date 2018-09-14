@@ -6,7 +6,7 @@ import java.io.FileOutputStream
 
 object TestHysicsReader extends App {
   
-  val ds = HysicsLocalReader().getDataset()
+  //val ds = HysicsLocalReader().getDataset()
   
   /*
    * TODO: put on regular lon,lat grid

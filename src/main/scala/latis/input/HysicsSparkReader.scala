@@ -3,6 +3,7 @@ package latis.input
 import java.net.URI
 
 import latis.metadata._
+import latis.model._
 
 /**
  * Expects RDD to be cached in SparkUtil cache.
@@ -12,13 +13,13 @@ case class HysicsSparkReader() extends AdaptedDatasetSource {
   
   val uri = new URI("hysics")
   
-  val model = FunctionType(
-    TupleType(
-      ScalarType("iy"),
-      ScalarType("ix"),
-      ScalarType("iw")
+  val model = Function(
+    Tuple(
+      Scalar("iy"),
+      Scalar("ix"),
+      Scalar("wavelength")
     ),
-    ScalarType("irradiance")
+    Scalar("irradiance")
   )
   
   val adapter = SparkAdapter(model)

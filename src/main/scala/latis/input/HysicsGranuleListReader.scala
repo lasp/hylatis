@@ -6,20 +6,23 @@ import latis.ops._
 import latis.data._
 import latis.metadata._
 import scala.collection.mutable.ArrayBuffer
-import latis.Dataset
+import latis.model._
 import latis.util.HysicsUtils
-import latis.util.AWSUtils
+//import latis.util.AWSUtils
 import java.net.URI
 import latis.util.LatisProperties
 
 case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   
-  val model = FunctionType(
-    ScalarType("iy"),
-    ScalarType("uri")
+  val model = Function(
+    Metadata("foo" -> "bar"),
+    Scalar("iy"),
+    Scalar("uri")
   )
    
-  override def metadata = Metadata("id" -> "hysics_image_files")(model)
+  override def metadata = Metadata(
+    "id" -> "hysics_image_files"
+  )
     
   def adapter: Adapter = new Adapter() {
     def apply(uri: URI): Data = {
@@ -29,12 +32,12 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
       val stride: Int = 4200 / imageCount
     
       val samples = Iterator.range(1, 4201, stride) map { i =>
-        val y = Integer(i)
+        val y = Index(i)
         val uri = Text(f"${base}/img$i%04d.txt")
-        Sample(y, uri)
+        Sample(1, Array(y, uri)) //TODO: Sample(domain, range)
       }
 
-      Function.fromSamples(samples)
+      StreamingFunction(samples)
     }
   }
   

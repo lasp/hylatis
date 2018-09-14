@@ -11,7 +11,7 @@ import latis.input._
 import latis.util.RegEx._
 import java.net.URLDecoder
 import latis.util.LatisProperties
-import latis.Dataset
+import latis.model._
 import latis.metadata._
 import latis.util.SparkUtils._
 import latis.util.SparkUtils
@@ -19,6 +19,8 @@ import latis.util.SparkUtils
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
 
+  // http://localhost:8090/latis-hylatis/latis/hysics.png?rgbPivot(wavelength, 630.87, 531.86, 463.79)
+  
   override def init(): Unit = {
     //TODO: load all datasets in catalog
     
@@ -26,7 +28,7 @@ class HylatisServer extends HttpServlet {
     val reader = HysicsGranuleListReader() // hysics_image_files
     val ds = reader.getDataset()
     
-    val sc = getSparkSession.sparkContext
+    val sc = sparkContext
     var rdd = sc.parallelize(ds.samples.toSeq)
     
     // Load data from each granule

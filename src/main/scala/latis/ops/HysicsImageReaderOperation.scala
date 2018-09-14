@@ -1,15 +1,17 @@
 package latis.ops
 
-import latis._
 import latis.data._
 import latis.metadata._
+import latis.model._
 import java.net.URI
-import latis.input.MatrixTextAdapter
+//import latis.input.MatrixTextAdapter
 import latis.util._
 import latis.input.URIResolver
 import scala.io.Source
 import latis.input.DatasetSource
 import latis.input.HysicsImageReader
+import latis.data.Text
+import latis.data.Index
 
 /**
  * Operation on a granule list dataset to get data for each URI.
@@ -31,7 +33,7 @@ case class HysicsImageReaderOperation() extends MapOperation {
       source.close
       data
     }
-    SparkUtils.getSparkSession.sparkContext.broadcast(wavelengths) //TODO: add util?
+    SparkUtils.sparkContext.broadcast(wavelengths) //TODO: add util?
   }
   
   /**
@@ -54,7 +56,7 @@ case class HysicsImageReaderOperation() extends MapOperation {
           val image = HysicsImageReader(new URI(uri)).getDataset() // (ix, iw) -> irradiance
           //replace iw with wavelength values
           val samples = image.samples map {
-            case Sample(2, Seq(ix, Index(iw), f)) => Sample(2, Seq(ix, Real(ws(iw)), f))
+            case Sample(2, Array(ix, Index(iw), f)) => Sample(2, Array(ix, ScalarData.fromValue(ws(iw)), f)) //TODO: support Sample(Int, Data*)
           }
           //make Function data for these samples: (ix, wavelength) -> irradiance
           val fd = StreamingFunction(samples)
@@ -66,11 +68,11 @@ case class HysicsImageReaderOperation() extends MapOperation {
   
   // iy -> (ix, wavelength) -> irradiance
   override def applyToModel(model: DataType): DataType = {
-    FunctionType(
-      ScalarType("iy"),
-      FunctionType(
-        TupleType(ScalarType("ix"), ScalarType("wavelength")),
-        ScalarType("irradiance")
+    Function(
+      Scalar("iy"),
+      Function(
+        Tuple(Scalar("ix"), Scalar("wavelength")),
+        Scalar("irradiance")
       )
     )
   }

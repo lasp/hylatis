@@ -4,6 +4,7 @@
 import latis.ops._
 import latis.data._
 import latis.metadata._
+import latis.model._
 import java.net.URI
 import latis.util.HysicsUtils
 
@@ -22,9 +23,10 @@ case class HysicsImageReader(uri: URI) extends AdaptedDatasetSource {
 //  )
   
    // (ix, iw) -> irradiance
-  def model = FunctionType(
-    TupleType(ScalarType("ix"), ScalarType("iw")),
-    ScalarType("irradiance")
+  def model = Function(
+    Metadata(),
+    Tuple(Metadata(), Scalar("ix"), Scalar("iw")),
+    Scalar("irradiance")
   )
       
    

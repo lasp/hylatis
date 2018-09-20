@@ -9,6 +9,7 @@ import latis.output._
 import latis.util.AWSUtils
 import latis.util.SparkUtils
 import latis.metadata._
+import latis.model._
 import latis.data._
 import latis.ops._
 import java.net.URL
@@ -54,8 +55,8 @@ class TestGoesAbiReader {
   def goesDataset: Unit = {
     val data = reader.data
     val metadata = reader.metadata
-    val dataset = Dataset(metadata, data)
-    assertTrue(dataset.samples.length > 0)    // explicitly calling samples may cause heap to overflow
+    //val dataset = Dataset(metadata, data)
+    assertTrue(data.samples.length > 0)    // explicitly calling samples may cause heap to overflow
   }
   
   @Test

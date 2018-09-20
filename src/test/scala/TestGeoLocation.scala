@@ -86,7 +86,8 @@ object TestGeoLocation extends App {
   val gpsDataset = DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
   //Writer().write(ds)
   val lonLats: Seq[(Double, Double)] = gpsDataset.samples.toSeq.map {
-    case Sample(_, Array(_, Real(lat), Real(lon))) => (lon, lat)
+    //case Sample(_, Array(_, Real(lat), Real(lon))) => (lon, lat)
+    case (_, RangeData(lat: Double, lon: Double)) => (lon, lat)
   }
 
   //  // Local approximation: distance in degrees, dLon reduced by cos(lat0)

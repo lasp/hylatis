@@ -86,25 +86,24 @@ case class Uncurry() extends Operation {
   def makeMapFunction(model: DataType): Sample => Seq[Sample] = {
     //TODO: Iterator?
     (s: Sample) => s match {
-      case Sample(n, dts) => 
-        val (ds, rs) = dts.splitAt(n)
+      case Sample(ds, rs) => 
+        //TODO: more convenient extraction? Sample(ds, rs)?
         //TODO: recurse for deeper nested functions
         //TODO: allow function in tuple
         rs.head match {
           case SampledFunction(samples) => samples.toSeq map {
-            case Sample(n2, dts) =>
-              val (ds2, rs2) = dts.splitAt(n2)
-              Sample(n + n2, ds ++ ds2 ++ rs2)
+            case Sample(ds2, rs2) =>
+              Sample(ds ++ ds2, rs2)
           }
-          case _: Data => Seq(s) //no-op if range is not a Function
+          case _ => Seq(s) //no-op if range is not a Function
         }
     }
   }
     
-  override def applyToData(ds: Dataset): Data = {
+  override def applyToData(ds: Dataset): SampledFunction = {
     val f = makeMapFunction(ds.model)
     val samples = ds.samples.flatMap(f)
-    //TODO: replicate orig Function impl
+    //TODO: replicate orig Function impl?
     StreamingFunction(samples)
   }
 }

@@ -10,7 +10,7 @@ trait IterativeAdapter[R] extends Adapter {
   
   def parseRecord(r: R): Option[Sample]
   
-  def apply(uri: URI): Data = 
+  def apply(uri: URI): SampledFunction = 
     StreamingFunction(recordIterator(uri).flatMap(parseRecord(_)))
 
 }

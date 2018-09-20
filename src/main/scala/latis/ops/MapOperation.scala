@@ -22,7 +22,7 @@ trait MapOperation extends Operation {
    * Default to no-op.
    * TODO: make sure we get the original model
    */
-  override def applyToData(ds: Dataset): Data = {
+  override def applyToData(ds: Dataset): SampledFunction = {
     val f = makeMapFunction(ds.model)
     val samples = ds.samples.map(f)
     //TODO: replicate orig Function impl

@@ -20,8 +20,7 @@ object SparkUtils {
     
     // Register Kryo serializable classes
     sconf.registerKryoClasses(Array(
-      classOf[latis.data.ScalarData[_]],
-      classOf[latis.data.DoubleData]
+//      classOf[latis.data.ScalarData[_]]
     ))
     
     new SparkContext(sconf)

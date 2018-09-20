@@ -1,7 +1,7 @@
 package latis.input
 
 import latis.ops.Operation
-import latis.data.Data
+import latis.data.SampledFunction
 import java.net.URI
 
 trait Adapter {
@@ -21,7 +21,7 @@ trait Adapter {
    * 
    */
   
-  def apply(uri: URI): Data
+  def apply(uri: URI): SampledFunction
   
   def handleOperation(op: Operation): Boolean = false
   

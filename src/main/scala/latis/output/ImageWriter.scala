@@ -48,10 +48,10 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val cols = mutable.Set[Any]()
     val buffer = mutable.ArrayBuffer[Int]()
     dataset.samples foreach {
-      case Sample(2, Array(ScalarData(row), ScalarData(col), ScalarData(v))) =>
+      case (DomainData(row, col), RangeData(v: Double)) => //TODO: don't assume Double, extract double with Number match?
         rows += row
         cols += col
-        buffer += v.asInstanceOf[Double].toInt  //TODO: add data types for extraction
+        buffer += v.toInt 
     }
 
     val width = cols.size
@@ -71,13 +71,13 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val rb = mutable.ArrayBuffer[Double]()
     val gb = mutable.ArrayBuffer[Double]()
     val bb = mutable.ArrayBuffer[Double]()
-    dataset.samples foreach { // ScalarData, Index, Text
-      case Sample(2, Array(ScalarData(row), ScalarData(col), ScalarData(r), ScalarData(g), ScalarData(b))) =>
+    dataset.samples foreach {
+      case (DomainData(row, col), RangeData(r: String, g: String, b: String)) => //TODO: extract double with Number match?
         rows += row
         cols += col
-        rb += Math.max(0, r.asInstanceOf[String].toDouble)
-        gb += Math.max(0, g.asInstanceOf[String].toDouble)
-        bb += Math.max(0, b.asInstanceOf[String].toDouble)
+        rb += Math.max(0, r.toDouble)
+        gb += Math.max(0, g.toDouble)
+        bb += Math.max(0, b.toDouble)
     }
 
     val width = cols.size

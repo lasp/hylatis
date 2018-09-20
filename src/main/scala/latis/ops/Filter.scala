@@ -16,15 +16,12 @@ trait Filter extends Operation {
   
   def makePredicate(model: DataType): Sample => Boolean
   
-  override def applyToData(ds: Dataset): Data = {
+  override def applyToData(ds: Dataset): SampledFunction = {
     //TODO: ds.filter(this)?
     
     val predicate = makePredicate(ds.model)
     
-    val samples = ds.data match {
-      case SampledFunction(samples) => samples.filter(predicate)
-      case _ => ??? //TODO: scalar or tuple
-    }
+    val samples = ds.samples.filter(predicate)
     
     //TODO: reconcile "length"
     //TODO: preserve the Function data class used? Function.filter?

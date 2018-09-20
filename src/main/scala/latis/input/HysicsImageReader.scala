@@ -24,8 +24,7 @@ case class HysicsImageReader(uri: URI) extends AdaptedDatasetSource {
   
    // (ix, iw) -> irradiance
   def model = Function(
-    Metadata(),
-    Tuple(Metadata(), Scalar("ix"), Scalar("iw")),
+    Tuple(Scalar("ix"), Scalar("iw")),
     Scalar("irradiance")
   )
       

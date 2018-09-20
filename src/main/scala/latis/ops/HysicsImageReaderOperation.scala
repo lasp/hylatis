@@ -10,8 +10,6 @@ import latis.input.URIResolver
 import scala.io.Source
 import latis.input.DatasetSource
 import latis.input.HysicsImageReader
-import latis.data.Text
-import latis.data.Index
 
 /**
  * Operation on a granule list dataset to get data for each URI.
@@ -50,19 +48,17 @@ case class HysicsImageReaderOperation() extends MapOperation {
       //TODO: use model to determine sample value for URI
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
-      case Sample(n, ds) => ds(n) match {
-        case Text(uri) => 
-          val ws = bcWavelengths.value
-          val image = HysicsImageReader(new URI(uri)).getDataset() // (ix, iw) -> irradiance
-          //replace iw with wavelength values
-          val samples = image.samples map {
-            case Sample(2, Array(ix, Index(iw), f)) => Sample(2, Array(ix, ScalarData.fromValue(ws(iw)), f)) //TODO: support Sample(Int, Data*)
-          }
-          //make Function data for these samples: (ix, wavelength) -> irradiance
-          val fd = StreamingFunction(samples)
-           
-          Sample(n, ds.take(n) :+ fd) // iy -> (ix, wavelength) -> irradiance
-      }
+      case (domain, RangeData(uri: String)) =>
+        val ws = bcWavelengths.value
+        val image = HysicsImageReader(new URI(uri)).getDataset() // (ix, iw) -> irradiance
+        //replace iw with wavelength values
+        val samples = image.samples map {
+          case (DomainData(ix, iw: Int), range) => (DomainData(ix, ws(iw)), range)
+        }
+        //make Function data for these samples: (ix, wavelength) -> irradiance
+        val fd = StreamingFunction(samples)
+
+        (domain, RangeData(fd))
     }
   }
   

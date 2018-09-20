@@ -80,12 +80,12 @@ case class Select(vname: String, operator: String, value: String) extends Filter
     val index: Int = model.getScalars.indexWhere(_.id == vname)
     //TODO: Use model to make Scalar Data for the given "value"
     //  assume double values for now
-    val valueAsScalar: ScalarData[Double] = DoubleData(value.toDouble)
     
-    (sample: Sample) => {
-      val c = sample.data(index) compare valueAsScalar  //assumes uncurried
-      val b = isValid(c)
-      b
+    (sample: Sample) => sample match {
+      case Sample(ds, rs) =>
+        val vs = ds ++ rs
+        val c = ScalarOrdering.compare(vs(index), value)  //assumes uncurried
+        isValid(c)
     }
   }
   

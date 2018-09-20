@@ -31,7 +31,7 @@ trait Operation {
    * Default to no-op.
    * TODO: make sure we get the original model
    */
-  def applyToData(ds: Dataset): Data = ds.data
+  def applyToData(ds: Dataset): SampledFunction = ds.data
   
   /**
    * Provide new Metadata resulting from this Operation.

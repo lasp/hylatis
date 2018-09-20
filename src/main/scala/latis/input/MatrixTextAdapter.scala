@@ -4,7 +4,6 @@ import latis.data._
 import latis.metadata._
 import java.io._
 import java.net.URI
-import latis.data.Text
 
 /**
  * Read a text file which represents a matrix. 
@@ -18,14 +17,14 @@ import latis.data.Text
 case class MatrixTextAdapter(config: AsciiAdapter.Config) extends Adapter {
 
   //TODO: manage resource
-  def apply(uri: URI): Data = {
+  def apply(uri: URI): SampledFunction = {
     val is = URIResolver.resolve(uri).getStream //TODO: getReader? getLines?
     val reader = new BufferedReader(new InputStreamReader(is))
     val delimiter = config.delimiter
 
     import collection.JavaConverters._
     val lines: Array[String] = reader.lines.iterator.asScala.toArray
-    val arrays: Array[Array[Data]] = lines.map(_.split(delimiter).map(Text(_).asInstanceOf[Data])) //TODO: avoid cast
+    val arrays: Array[Array[RangeData]] = lines.map(_.split(delimiter).map(RangeData(_))) //TODO: avoid cast
     ArrayFunction2D(arrays)
   }
 }

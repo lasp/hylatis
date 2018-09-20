@@ -7,12 +7,13 @@ import ucar.nc2._
 
 import latis.data._
 import latis.metadata._
+import latis.model._
 
 /**
  * Adapter for reading radiance data from GOES files on S3 or from local file system.
  * Implementation converts radiance values to interpolated colors.
  */
-class GoesAbiNetcdfDisplayAdapter(model: FunctionType) extends Adapter {
+class GoesAbiNetcdfDisplayAdapter(model: Function) extends Adapter {
   val Shape: Int = 5424
   val ScaleFactor = 1          // full resolution
   //val ScaleFactor = 226      // shrink the number of points in each dimension by this multiplier
@@ -33,21 +34,20 @@ class GoesAbiNetcdfDisplayAdapter(model: FunctionType) extends Adapter {
    * The actual return type is IndexedFunction2D,
    * which extends Function which itself extends Data.
    */
-  def apply(netCDFUri: URI): Data = {
+  def apply(netCDFUri: URI): SampledFunction = {
     val netCDFFile: NetcdfFile = open(netCDFUri)
     val radianceVariable = netCDFFile.findVariable("Rad")
     val radianceData = radianceVariable.read
     netCDFFile.close()
     
-    val as: Array[Data] = Array.range(0, Shape / ScaleFactor).map(Integer(_))
-    val bs: Array[Data] = Array.range(0, Shape / ScaleFactor).map(Integer(_))
-    val vs2d: Array[Array[Data]] = 
+    val as: Array[Any] = Array.range(0, Shape / ScaleFactor).map(x => x)
+    val bs: Array[Any] = Array.range(0, Shape / ScaleFactor).map(x => x)
+    val vs2d: Array[Array[Any]] = 
       Array.range(0, Shape / ScaleFactor) map { i => 
         Array.range(0, Shape / ScaleFactor) map { j => 
-          val radiance = radianceData.getInt((Shape * j  + i) * ScaleFactor)
-          val colorCorrectedRadiance = colorToInt(interpolateColor(radianceColors, radiance))
-          val rad: Data = Integer(colorCorrectedRadiance)
-          rad  
+          val radiance: Int = radianceData.getInt((Shape * j  + i) * ScaleFactor)
+          val colorCorrectedRadiance: Any = colorToInt(interpolateColor(radianceColors, radiance))
+          colorCorrectedRadiance
         }
     }
 

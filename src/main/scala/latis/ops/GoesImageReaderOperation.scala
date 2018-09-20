@@ -1,6 +1,6 @@
 package latis.ops
 
-import latis._
+import latis.model._
 import latis.input._
 import latis.data._
 import latis.metadata._
@@ -21,21 +21,19 @@ case class GoesImageReaderOperation() extends MapOperation {
       //TODO: use model to determine sample value for URI
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
-      case Sample(n, ds) => ds(n) match {
-        case Text(u) => 
-          val data = adapter(new URI(u))
-          Sample(n, ds.take(n) :+ data)
-      }
+      case (domain, RangeData(uri: String)) =>
+        val data = adapter(new URI(uri))
+        (domain, RangeData(data))
     }
   }
   
   // wavelength -> (x, y) -> Rad
   override def applyToModel(model: DataType): DataType = {
-    FunctionType(
-      ScalarType("wavelength"),
-      FunctionType(
-        TupleType(ScalarType("x"), ScalarType("y")),
-        ScalarType("Rad")
+    Function(
+      Scalar("wavelength"),
+      Function(
+        Tuple(Scalar("x"), Scalar("y")),
+        Scalar("Rad")
       )
     )
   }

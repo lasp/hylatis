@@ -4,7 +4,7 @@ import java.net.URI
 
 import latis.data._
 import latis.metadata._ 
-import latis.Dataset
+import latis.model._
 
 /**
  * Proof of concept to show that 3 GOES netcdf files can be combined into a single dataset.
@@ -23,35 +23,36 @@ class GoesAbiNetcdfMultiChannelReader(netCDFUriFiles: List[String]) extends Adap
   // Define model
   // (y, x, wavelength) -> Rad
   val uri = new URI("") 
-  val x = ScalarType("x")
-  val y = ScalarType("y")
-  val wavelength = ScalarType("wavelength")
-  val domain = TupleType("")(y, x, wavelength)      // y and x are intentionally reversed
-  val range = ScalarType("Rad")
-  val model: FunctionType = FunctionType("f")(domain, range)
+  val x = Scalar("x")
+  val y = Scalar("y")
+  val wavelength = Scalar("wavelength")
+  val domain = Tuple(y, x, wavelength)      // y and x are intentionally reversed
+  val range = Scalar("Rad")
+  val model: Function = Function(domain, range)
   
-  override val metadata = Metadata("id" -> "goes_16_multi_channel")(model)
+  override val metadata = Metadata("id" -> "goes_16_multi_channel")
   
   val adapter = new GoesAbiNetcdfAdapter()
   
-  val data: Data = joinDataFromMultipleFiles(colorMap)
+  val data: SampledFunction = joinDataFromMultipleFiles(colorMap)
   
   /**
    * Iterate across the supplied list of URIs to combine radiance data at different wavelengths.
    * Assume the files are in RGB order.
    */
-  def joinDataFromMultipleFiles(colorMap: Map[String, Double]): Data = {
+  def joinDataFromMultipleFiles(colorMap: Map[String, Double]): SampledFunction = {
     val samples = for {
       (netCDFUri, wavelength) <- colorMap
       goesReader = new GoesAbiNetcdfReader(netCDFUri)
       data = goesReader.data
-      dataset = Dataset(goesReader.metadata, data)
+      dataset = Dataset(goesReader.metadata, model, data)
       sample <- dataset.samples
-      Sample(count, Seq(i, j, radiance)) = sample
-    } yield Sample(3, i, j, Real(wavelength), radiance)
+      //Sample(count, Seq(i, j, radiance)) = sample
+      (DomainData(i, j), RangeData(radiance)) = sample
+    } yield (DomainData(i, j, wavelength), RangeData(radiance))
+    //Sample(3, i, j, Real(wavelength), radiance)
     
-    val dataSet = Dataset(metadata, Function.fromSamples(samples.iterator))
-    dataSet.data
+    StreamingFunction(samples.iterator)
   }
 }
 

@@ -28,17 +28,17 @@ case class GoesAbiNetcdfAdapter() extends Adapter {
    * The actual return type is IndexedFunction2D,
    * which extends Function which itself extends Data.
    */
-  def apply(netCDFUri: URI): Data = {
+  def apply(netCDFUri: URI): SampledFunction = {
     val netCDFFile: NetcdfFile = open(netCDFUri)
     val radianceVariable = netCDFFile.findVariable("Rad")
     val radianceData = radianceVariable.read
     netCDFFile.close()
     
-    val as: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
-    val bs: Array[Data] = Array.tabulate(scaledShape)(Integer(_))
+    val as: Array[Any] = Array.tabulate(scaledShape)(x => x)
+    val bs: Array[Any] = Array.tabulate(scaledShape)(x => x)
     
-    def getRadiance(i: Int, j: Int) = Integer(radianceData.getInt((Shape * j  + i) * ScaleFactor))
-    val vs2d: Array[Array[Data]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
+    def getRadiance(i: Int, j: Int): Int = radianceData.getInt((Shape * j  + i) * ScaleFactor)
+    val vs2d: Array[Array[Any]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
 
     new IndexedFunction2D(as, bs, vs2d)
   }

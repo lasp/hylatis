@@ -2,7 +2,7 @@ package latis.input
 
 import scala.io.Source
 import latis.metadata._
-import latis.Dataset
+import latis.model._
 import java.net.URI
 
 /**
@@ -15,13 +15,13 @@ case class GoesSparkReader() extends AdaptedDatasetSource {
   val uri = new URI("goes_image_files")
   
 // (y, x, wavelength) -> Rad
-  val model = FunctionType(
-    TupleType(
-      ScalarType("y"),
-      ScalarType("x"),
-      ScalarType("wavelength")
+  val model = Function(
+    Tuple(
+      Scalar("y"),
+      Scalar("x"),
+      Scalar("wavelength")
     ),
-    ScalarType("Rad")
+    Scalar("Rad")
   )
   
   val adapter = SparkAdapter(model)

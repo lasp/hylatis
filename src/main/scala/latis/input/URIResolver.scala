@@ -2,9 +2,15 @@ package latis.input
 
 import java.net.URI
 
+
 object URIResolver {
   //TODO: move to NetUtils?
   
+  /**
+   * Given a URI, e.g. for a data source location, use the scheme
+   * to create a StreamSource that can provide an InputStream for
+   * that resource.
+   */
   def resolve(uri: URI): StreamSource = uri.getScheme match {
     //TODO: get property resolver.foo.class
     case "s3" =>
@@ -17,7 +23,9 @@ object URIResolver {
       src.getOrElse {
         throw new RuntimeException("Invalid S3 URI")
       }
+    
     case url => UrlStreamSource(uri.toURL)
+    //TODO: sanity check that the URL is valid
   }
   
 }

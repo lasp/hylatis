@@ -9,6 +9,8 @@ import java.io.InputStream
 trait StreamSource {
   
   def getStream: InputStream
+  //TODO: handle error, Option or Try?
+  //TODO: auto closable 
   
   //TODO: getLines?
   

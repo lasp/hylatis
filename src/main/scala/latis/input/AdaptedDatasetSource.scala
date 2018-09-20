@@ -11,40 +11,44 @@ import java.net.URI
 trait AdaptedDatasetSource extends DatasetSource {
   
   /**
-   * Location of the data source.
+   * Resolvable identifier of the data source.
    */
   def uri: URI
   
   /**
    * Global metadata.
+   * Use the path of the URI by default.
    */
   def metadata: Metadata = Metadata("id" -> uri.getPath)
   
   /**
-   * Data model including metadata.
+   * Data model for the Dataset.
    */
   def model: DataType
   
   /**
-   * Adapter to provide Data from the data source.
+   * Adapter to provide data from the data source.
    */
   def adapter: Adapter
   
   /**
    * Predefined Operations to be applied to the Dataset.
+   * Default to none.
    */
-  def processingInstructions: Seq[Operation] = Seq.empty
+  def operations: Seq[Operation] = Seq.empty
   
   /**
    * Construct a Dataset by delegating to the Adapter.
-   * Offer the processing instructions and given operations to the adapter
-   * to apply then apply the rest.
+   * Offer the pre-defined and given operations to the adapter
+   * to apply then apply the rest. Since Adapters only supply
+   * data, operations that they handle will also be applied to 
+   * the model here.
    */
   def getDataset(ops: Seq[Operation]): Dataset = {
     // Offer the operations to the adapter to handle. 
     // Partition by what it handles.
     val (handledOps, unhandledOps) = 
-      (processingInstructions ++ ops).partition(adapter.handleOperation(_))
+      (operations ++ ops).partition(adapter.handleOperation(_))
     
     // Apply the Adapter to the given resource to get the Data.
     val data = adapter(uri)

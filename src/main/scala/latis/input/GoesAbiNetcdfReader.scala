@@ -4,6 +4,7 @@ import java.net.URI
 
 import latis.data._
 import latis.metadata._ 
+import latis.model._ 
 
 /**
  * Proof of concept to show that a simple model can be constructed to extract GOES radiance data from S3.
@@ -13,17 +14,17 @@ class GoesAbiNetcdfReader(netCDFUri: String) extends AdaptedDatasetSource {
   
   // Define model
   val uri = new URI(netCDFUri) 
-  val x = ScalarType("x")
-  val y = ScalarType("y")
-  val domain = TupleType("")(y, x)      // y and x are intentionally reversed
-  val range = ScalarType("Rad")
-  val model: FunctionType = FunctionType("f")(domain, range)
+  val x = Scalar("x")
+  val y = Scalar("y")
+  val domain = Tuple(y, x)      // y and x are intentionally reversed
+  val range = Scalar("Rad")
+  val model: Function = Function(domain, range)
   
-  override val metadata = Metadata("id" -> "goes_16")(model)
+  override val metadata = Metadata("id" -> "goes_16")
   
   val adapter = new GoesAbiNetcdfAdapter()
   
-  val data: Data = adapter.apply(uri)
+  val data: SampledFunction = adapter.apply(uri)
   
 }
 

@@ -6,7 +6,7 @@ import latis.ops._
 import latis.data._
 import latis.metadata._
 import scala.collection.mutable.ArrayBuffer
-import latis.Dataset
+import latis.model._
 import latis.util.HysicsUtils
 import latis.util.AWSUtils
 import java.net.URI
@@ -16,23 +16,23 @@ case class GoesGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   
   val wavelengths = Map(0 -> 300, 1 -> 500, 2 -> 700)
   
-  val model = FunctionType(
-    ScalarType("wavelength"),
-    ScalarType("uri")
+  val model = Function(
+    Scalar("wavelength"),
+    Scalar("uri")
   )
    
-  override def metadata = Metadata("id" -> "goes_image_files")(model)
+  override def metadata = Metadata("id" -> "goes_image_files")
     
   def adapter: Adapter = new Adapter() {
-    def apply(uri: URI): Data = {
+    def apply(uri: URI): SampledFunction = {
       val base = uri.toString //"s3:/goes-001"
       val samples = Iterator.range(0, 3) map { i =>
-        val y = Integer(wavelengths(i))
-        val uri = Text(f"${base}/goes$i%04d.nc")
-        Sample(y, uri)
+        val y = wavelengths(i)
+        val uri = f"${base}/goes$i%04d.nc"
+        (DomainData(y), RangeData(uri))
       }
 
-      Function.fromSamples(samples)
+      StreamingFunction(samples)
     }
   }
   

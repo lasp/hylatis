@@ -7,28 +7,30 @@ val latisVersion = "3.0.0-SNAPSHOT"
 //val jerseyVersion = "1.19.4"
 val jettyVersion  = "9.4.7.v20170914"
 
-lazy val `latis3-beta` = RootProject(file("../latis3-beta"))
+//lazy val `latis3-core` = RootProject(file("../latis3"))
+lazy val `latis3-core` = ProjectRef(file("../latis3"), "core")
 
 lazy val hylatis = (project in file("."))
 //  .enablePlugins(JettyPlugin)
-  .dependsOn(`latis3-beta`)
+  .dependsOn(`latis3-core`)
   .settings(commonSettings)
   .settings(
     name := "latis-hylatis",
     libraryDependencies ++= Seq(
-      // "io.latis-data"           %% "latis-core"     % latisVersion,
-      // "io.latis-data"           %% "latis-spark"    % latisVersion,
-      "org.eclipse.jetty"           % "jetty-server"   % jettyVersion,
-      "org.eclipse.jetty"           % "jetty-servlet"  % jettyVersion,
-      "org.geotools"                % "gt-main"        % "18.2",
-      "org.geotools"                % "gt-epsg-hsql"   % "18.2",
-      "org.geotools"                % "gt-api"         % "18.2",
-      "org.geotools"                % "gt-referencing" % "18.2",
-      "org.apache.commons"          % "commons-math3"  % "3.6.1",
-      "io.findify"                 %% "s3mock"         % "0.2.4"  % "test",
-      "edu.ucar"                    % "cdm" 		       % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
-      "edu.ucar"                    % "httpservices" 	 % "5.0.0-SNAPSHOT",
-      "org.apache.spark"           %% "spark-sql"      % "2.2.0"
+      // "io.latis-data"           %% "latis-core"      % latisVersion,
+      // "io.latis-data"           %% "latis-spark"     % latisVersion,
+      "org.eclipse.jetty"           % "jetty-server"    % jettyVersion,
+      "org.eclipse.jetty"           % "jetty-servlet"   % jettyVersion,
+      "org.geotools"                % "gt-main"         % "18.2",
+      "org.geotools"                % "gt-epsg-hsql"    % "18.2",
+      "org.geotools"                % "gt-api"          % "18.2",
+      "org.geotools"                % "gt-referencing"  % "18.2",
+      "org.apache.commons"          % "commons-math3"   % "3.6.1",
+      "io.findify"                 %% "s3mock"          % "0.2.4"  % "test",
+      "edu.ucar"                    % "cdm" 		    % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
+      "edu.ucar"                    % "httpservices"    % "5.0.0-SNAPSHOT",
+      "org.apache.spark"           %% "spark-sql"       % "2.2.0",
+      "com.amazonaws"               % "aws-java-sdk-s3" % "1.11.275",
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(

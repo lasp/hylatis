@@ -13,6 +13,7 @@ import java.net.URLDecoder
 import latis.util.LatisProperties
 import latis.model._
 import latis.metadata._
+import latis.util.StreamUtils._
 import latis.util.SparkUtils._
 import latis.util.SparkUtils
 
@@ -29,12 +30,13 @@ class HylatisServer extends HttpServlet {
     val ds = reader.getDataset()
     
     val sc = sparkContext
-    var rdd = sc.parallelize(ds.samples.toSeq)
+    var rdd = sc.parallelize(ds.samples.compile.toVector.unsafeRunSync())
     
     // Load data from each granule
     rdd = rdd.map(HysicsImageReaderOperation().makeMapFunction(null))
     // Uncurry the dataset: (iy, ix, iw) -> irradiance
-    rdd = rdd.flatMap(Uncurry().makeMapFunction(null))
+    val f = Uncurry().makeMapFunction(null) andThen unsafeStreamToSeq
+    rdd = rdd.flatMap(f)
     // Store RDD in local cache
     SparkUtils.cacheRDD("hysics", rdd)
     //Note: "hysics" is mapped to the HysicsSparkReader which will use this RDD
@@ -61,7 +63,7 @@ class HylatisServer extends HttpServlet {
 
     val writer: Writer = suffix match {
       case "png" => ImageWriter(response.getOutputStream, "png")
-      case _ => Writer(response.getOutputStream)
+      case _ => new Writer(response.getOutputStream)
     }
     writer.write(ds)
 

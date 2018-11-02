@@ -6,7 +6,6 @@ import latis.model._
 import java.net.URI
 //import latis.input.MatrixTextAdapter
 import latis.util._
-import latis.input.URIResolver
 import scala.io.Source
 import latis.input.DatasetSource
 import latis.input.HysicsImageReader
@@ -25,7 +24,8 @@ case class HysicsImageReaderOperation() extends MapOperation {
       val defaultURI = "s3://hylatis-hysics-001/des_veg_cloud"
       val uri = new URI(LatisProperties.getOrElse("hysics.base.uri", defaultURI))
       val wuri = URI.create(s"${uri.toString}/wavelength.txt")
-      val is = URIResolver.resolve(wuri).getStream
+      //TODO: fs2 Stream: val is = NetUtils.resolve(wuri).getStream
+      val is = uri.toURL.openStream
       val source = Source.fromInputStream(is)
       val data = source.getLines().next.split(",").map(_.toDouble)
       source.close
@@ -56,7 +56,7 @@ case class HysicsImageReaderOperation() extends MapOperation {
           case (DomainData(ix, iw: Int), range) => (DomainData(ix, ws(iw)), range)
         }
         //make Function data for these samples: (ix, wavelength) -> irradiance
-        val fd = StreamingFunction(samples)
+        val fd = StreamFunction(samples)
 
         (domain, RangeData(fd))
     }

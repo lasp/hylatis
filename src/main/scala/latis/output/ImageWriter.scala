@@ -2,6 +2,7 @@ package latis.output
 
 import latis.model._
 import latis.data._
+import latis.util.StreamUtils._
 import scala.collection._
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
@@ -47,7 +48,7 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val rows = mutable.Set[Any]()
     val cols = mutable.Set[Any]()
     val buffer = mutable.ArrayBuffer[Int]()
-    dataset.samples foreach {
+    unsafeStreamToSeq(dataset.samples) foreach {
       case (DomainData(row, col), RangeData(v: Double)) => //TODO: don't assume Double, extract double with Number match?
         rows += row
         cols += col
@@ -71,7 +72,7 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val rb = mutable.ArrayBuffer[Double]()
     val gb = mutable.ArrayBuffer[Double]()
     val bb = mutable.ArrayBuffer[Double]()
-    dataset.samples foreach {
+    unsafeStreamToSeq(dataset.samples) foreach {
       case (DomainData(row, col), RangeData(r: String, g: String, b: String)) => //TODO: extract double with Number match?
         rows += row
         cols += col

@@ -29,7 +29,7 @@ case class HysicsImageReader(uri: URI) extends AdaptedDatasetSource {
   )
       
    
-  def adapter: Adapter = MatrixTextAdapter()
+  def adapter: Adapter = new MatrixTextAdapter(TextAdapter.Config(), model)
   
 
 //  override def processingInstructions: Seq[Operation] = {

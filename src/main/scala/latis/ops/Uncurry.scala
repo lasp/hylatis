@@ -4,6 +4,8 @@ import latis.model._
 import latis.metadata._
 import latis.data._
 import scala.collection.mutable.ArrayBuffer
+import fs2._
+import cats.effect.IO
 
 /**
  * Given a Dataset with potentially nested Functions, undo the nesting.
@@ -82,20 +84,17 @@ case class Uncurry() extends Operation {
    *  can't use MapOperation?
    *  make a function to flatMap over RDD
    */
-  // 
-  def makeMapFunction(model: DataType): Sample => Seq[Sample] = {
-    //TODO: Iterator?
+  def makeMapFunction(model: DataType): Sample => Stream[IO, Sample] = {
     (s: Sample) => s match {
       case Sample(ds, rs) => 
-        //TODO: more convenient extraction? Sample(ds, rs)?
         //TODO: recurse for deeper nested functions
         //TODO: allow function in tuple
         rs.head match {
-          case SampledFunction(samples) => samples.toSeq map {
+          case SampledFunction(samples) => samples map {
             case Sample(ds2, rs2) =>
               Sample(ds ++ ds2, rs2)
           }
-          case _ => Seq(s) //no-op if range is not a Function
+          case _ => Stream.emit(s) //no-op if range is not a Function
         }
     }
   }
@@ -104,6 +103,6 @@ case class Uncurry() extends Operation {
     val f = makeMapFunction(ds.model)
     val samples = ds.samples.flatMap(f)
     //TODO: replicate orig Function impl?
-    StreamingFunction(samples)
+    StreamFunction(samples)
   }
 }

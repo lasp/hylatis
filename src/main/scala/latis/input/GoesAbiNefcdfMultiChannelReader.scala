@@ -41,18 +41,19 @@ class GoesAbiNetcdfMultiChannelReader(netCDFUriFiles: List[String]) extends Adap
    * Assume the files are in RGB order.
    */
   def joinDataFromMultipleFiles(colorMap: Map[String, Double]): SampledFunction = {
-    val samples = for {
-      (netCDFUri, wavelength) <- colorMap
-      goesReader = new GoesAbiNetcdfReader(netCDFUri)
-      data = goesReader.data
-      dataset = Dataset(goesReader.metadata, model, data)
-      sample <- dataset.samples
-      //Sample(count, Seq(i, j, radiance)) = sample
-      (DomainData(i, j), RangeData(radiance)) = sample
-    } yield (DomainData(i, j, wavelength), RangeData(radiance))
-    //Sample(3, i, j, Real(wavelength), radiance)
-    
-    StreamingFunction(samples.iterator)
+//    val samples = for {
+//      (netCDFUri, wavelength) <- colorMap
+//      goesReader = new GoesAbiNetcdfReader(netCDFUri)
+//      data = goesReader.data
+//      dataset = Dataset(goesReader.metadata, model, data)
+//      sample <- dataset.samples
+//      //Sample(count, Seq(i, j, radiance)) = sample
+//      (DomainData(i, j), RangeData(radiance)) = sample
+//    } yield (DomainData(i, j, wavelength), RangeData(radiance))
+//    //Sample(3, i, j, Real(wavelength), radiance)
+//    
+//    StreamFunction(samples.iterator)
+    ??? //TODO: need
   }
 }
 

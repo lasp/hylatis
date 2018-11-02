@@ -25,6 +25,6 @@ trait Filter extends Operation {
     
     //TODO: reconcile "length"
     //TODO: preserve the Function data class used? Function.filter?
-    StreamingFunction(samples)
+    StreamFunction(samples)
   }
 }

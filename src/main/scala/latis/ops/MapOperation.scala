@@ -26,7 +26,7 @@ trait MapOperation extends Operation {
     val f = makeMapFunction(ds.model)
     val samples = ds.samples.map(f)
     //TODO: replicate orig Function impl
-    StreamingFunction(samples)
+    StreamFunction(samples)
   }
   
 }

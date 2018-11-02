@@ -1,6 +1,8 @@
 package latis.input
 
 import java.net.URL
+import fs2._
+import cats.effect.IO
 import scala.io.Source
 import latis.ops._
 import latis.data._
@@ -26,13 +28,13 @@ case class GoesGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   def adapter: Adapter = new Adapter() {
     def apply(uri: URI): SampledFunction = {
       val base = uri.toString //"s3:/goes-001"
-      val samples = Iterator.range(0, 3) map { i =>
+      val samples: Stream[IO, Sample] = Stream.range(0, 3) map { i =>
         val y = wavelengths(i)
         val uri = f"${base}/goes$i%04d.nc"
         (DomainData(y), RangeData(uri))
       }
 
-      StreamingFunction(samples)
+      StreamFunction(samples)
     }
   }
   

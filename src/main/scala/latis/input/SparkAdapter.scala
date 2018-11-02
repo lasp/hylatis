@@ -8,12 +8,35 @@ import latis.util.SparkUtils
 import org.apache.spark.rdd.RDD
 import scala.collection.mutable.ArrayBuffer
 import latis.ops._
+import fs2._
+import cats.effect.IO
 
-case class SparkAdapter(model: DataType) extends IterativeAdapter[Sample] {
+
+case class SparkAdapter(model: DataType) extends StreamingAdapter[Sample] {
   
-  def recordIterator(uri: URI): Iterator[Sample] = getRDD(uri).toLocalIterator
+  def recordStream(uri: URI): Stream[IO, Sample] = Stream.fromIterator[IO, Sample](getRDD(uri).toLocalIterator)
   
   def parseRecord(record: Sample): Option[Sample] = Option(record)
+  
+  /*
+   * TODO: encapsulate RDD as a SampledFunction
+   * impl the FunctionalAlgebra
+   * SparkAdapter then only needs to return the RDD wrapped as an RddFunction
+   * then we don't need to handle ops here
+   *   but ops on SampledFunction vs Dataset
+   * ops on dataset
+   *   delegate to SampledFunction
+   *   do what the subclass can do then get the Stream and apply the rest
+   *   who orchestrates that? DatasetSource? getDataset(ops)
+   * ops on existing dataset
+   *   also impl algebra by delegating to SampledFunction?
+   * or should all this abstraction be at the Dataset level instead of SampledFunction?
+   *   SF has no metadata
+   *   Dataset[F](md, model, data:F) ?
+   * who makes the functions for map, filter...?
+   *   Operation? also has access to model, get position of "a" for selection
+   *   
+   */
   
   def getRDD(uri: URI): RDD[Sample] = {
     var rdd = SparkUtils.getRDD(uri.getPath).getOrElse(???).asInstanceOf[RDD[Sample]]
@@ -28,8 +51,8 @@ case class SparkAdapter(model: DataType) extends IterativeAdapter[Sample] {
       case mo: MapOperation =>
         rdd = rdd.map(mo.makeMapFunction(model))
         
-      case uc: Uncurry =>
-        rdd = rdd.flatMap(uc.makeMapFunction(model))
+//      case uc: Uncurry =>
+//        rdd = rdd.flatMap(uc.makeMapFunction(model))
         
       case RGBImagePivot(vid, r, g, b) =>
         val colors = Set(r,g,b)
@@ -46,19 +69,20 @@ case class SparkAdapter(model: DataType) extends IterativeAdapter[Sample] {
         val agg: (DomainData, Iterable[Sample]) => Sample = (data: DomainData, samples: Iterable[Sample]) => {
           //samples should be spectral samples at the same pixel
           //after groupBy: (row, column); (row, column, w) -> f
-          val ss = samples map {
+          val ss = samples.toVector map {
             case Sample(ds, rs) => Sample(ds.drop(2), rs)  // w -> f
           }
-          (data, RangeData(StreamingFunction(ss.iterator))) // (row, column) -> w -> f
+          val stream: Stream[IO, Sample] = Stream.eval(IO(ss)).flatMap(Stream.emits(_))
+          (data, RangeData(StreamFunction(stream))) // (row, column) -> w -> f
         }
           
         val pivot: Sample => Sample = (sample: Sample) => sample match {
           // (row, column) -> w -> f  =>  (row, column) -> (r, g, b)
           // assumes 3 wavelength values have been previously selected
-          case (domain, RangeData(SampledFunction(it))) =>
+          case (domain, RangeData(SampledFunction(ss))) =>
             // Create (r,g,b) tuple from spectrum
             // pivot  w -> f  =>  (r, g, b)
-            val colors: Seq[Any] = it.toVector map {
+            val colors = ss.compile.toVector.unsafeRunSync() map {
               case (_, RangeData(d)) => d
             }
             
@@ -83,8 +107,9 @@ case class SparkAdapter(model: DataType) extends IterativeAdapter[Sample] {
   /**
    * Handle all Operations, for now.
    */
-  override def handleOperation(op: Operation): Boolean = {
-    ops += op
-    true
-  }
+//TODO: handle ops
+//  override def handleOperation(op: Operation): Boolean = {
+//    ops += op
+//    true
+//  }
 }

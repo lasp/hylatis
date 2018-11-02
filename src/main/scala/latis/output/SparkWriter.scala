@@ -2,6 +2,7 @@ package latis.output
 
 import latis.model._
 import latis.util.SparkUtils._
+import latis.util.StreamUtils._
 import latis.data.Sample
 import org.apache.spark.rdd.RDD
 import scala.collection.mutable.ArrayBuffer
@@ -36,7 +37,8 @@ case class SparkWriter() {
 //    } 
 
     //TODO: note, we had to force in both places with "count" for this to show up in storage (http://localhost:4040/storage/)
-    val rdd = sc.parallelize(dataset.samples.toSeq)
+    val samples = unsafeStreamToSeq(dataset.samples) //unsafe
+    val rdd = sc.parallelize(samples)
     rdd.count()
     // Cache this RDD in memory for later use.
     rdd.cache.setName(dataset.id).count()

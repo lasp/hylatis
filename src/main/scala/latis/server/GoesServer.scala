@@ -33,11 +33,11 @@ class GoesServer extends HttpServlet {
       case _ => Seq.empty
     }
 
-    val ds = DatasetSource.fromName(datasetName).getDataset(ops)
+    val ds = ??? //DatasetSource.fromName(datasetName).getDataset(ops)
 
     val writer: Writer = suffix match {
       case "png" => ImageWriter(response.getOutputStream, "png")
-      case _ => Writer(response.getOutputStream)
+      case _ => new Writer(response.getOutputStream)
     }
     writer.write(ds)
 

@@ -11,6 +11,8 @@ import latis.util.HysicsUtils
 //import latis.util.AWSUtils
 import java.net.URI
 import latis.util.LatisProperties
+import fs2._
+import cats.effect.IO
 
 case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   
@@ -31,12 +33,12 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
       // Use image count to compute a stride.
       val stride: Int = 4200 / imageCount
     
-      val samples = Iterator.range(1, 4201, stride) map { i =>
+      val samples: Stream[IO, Sample] = Stream.range(1, 4201, stride) map { i =>
         val uri = f"${base}/img$i%04d.txt"
         (DomainData(i), RangeData(uri))
       }
 
-      StreamingFunction(samples)
+      StreamFunction(samples)
     }
   }
   

@@ -4,6 +4,7 @@ import latis.metadata._
 import latis.model._
 import latis.data._
 import java.net.URI
+import latis.util.HylatisPartitioner
 import latis.util.SparkUtils
 import org.apache.spark.rdd.RDD
 import scala.collection.mutable.ArrayBuffer
@@ -66,8 +67,9 @@ case class SparkAdapter(model: DataType) extends IterativeAdapter[Sample] {
         }
         
         implicit val ord = DomainOrdering
+        val p = new HylatisPartitioner(4)
         rdd = rdd.filter(colorFilter)
-                 .groupBy(groupByFunction)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
+                 .groupBy(groupByFunction, p)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
                  .map(p => agg(p._1, p._2))
                  .map(pivot) //TODO: can we use spark pivot?
                  .sortBy(_._1) //(DomainOrdering) 

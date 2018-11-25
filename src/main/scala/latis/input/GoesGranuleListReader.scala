@@ -31,7 +31,7 @@ case class GoesGranuleListReader(uri: URI) extends AdaptedDatasetSource {
       val samples: Stream[IO, Sample] = Stream.range(0, 3) map { i =>
         val y = wavelengths(i)
         val uri = f"${base}/goes$i%04d.nc"
-        (DomainData(y), RangeData(uri))
+        Sample(DomainData(y), RangeData(uri))
       }
 
       StreamFunction(samples)

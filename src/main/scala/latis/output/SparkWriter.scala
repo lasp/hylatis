@@ -37,7 +37,7 @@ case class SparkWriter() {
 //    } 
 
     //TODO: note, we had to force in both places with "count" for this to show up in storage (http://localhost:4040/storage/)
-    val samples = unsafeStreamToSeq(dataset.samples) //unsafe
+    val samples = unsafeStreamToSeq(dataset.data.streamSamples) //unsafe
     val rdd = sc.parallelize(samples)
     rdd.count()
     // Cache this RDD in memory for later use.

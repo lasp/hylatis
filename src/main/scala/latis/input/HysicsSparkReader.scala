@@ -8,6 +8,8 @@ import latis.model._
 /**
  * Expects RDD to be cached in SparkUtil cache.
  * HylatisServer init creates the RDD.
+ * 
+ * Obsolete? we now cache data to RddFunction
  */
 case class HysicsSparkReader() extends AdaptedDatasetSource {
   
@@ -22,6 +24,6 @@ case class HysicsSparkReader() extends AdaptedDatasetSource {
     Scalar("irradiance")
   )
   
-  val adapter = SparkAdapter(model)
+  val adapter = SparkAdapter()
 
 }

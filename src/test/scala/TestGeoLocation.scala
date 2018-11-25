@@ -87,9 +87,9 @@ object TestGeoLocation extends App {
   // Read GPS locations for center of each slit image
   val gpsDataset: Dataset = ??? // DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
   //Writer().write(ds)
-  val lonLats: Seq[(Double, Double)] = unsafeStreamToSeq(gpsDataset.samples).map {
+  val lonLats: Seq[(Double, Double)] = unsafeStreamToSeq(gpsDataset.data.streamSamples).map {
     //case Sample(_, Array(_, Real(lat), Real(lon))) => (lon, lat)
-    case (_, RangeData(lat: Double, lon: Double)) => (lon, lat)
+    case Sample(_, RangeData(lat: Double, lon: Double)) => (lon, lat)
   }
 
   //  // Local approximation: distance in degrees, dLon reduced by cos(lat0)

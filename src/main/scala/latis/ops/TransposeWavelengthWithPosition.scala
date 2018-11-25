@@ -9,10 +9,10 @@ import latis.model._
  * and returns a dataset with the wavelength as the 3rd domain variable, after x and y.
  * In Summary wavelength -> (x, y) -> Rad will become (x, y) -> wavelength -> Rad
  */
-case class TransposeWavelengthWithPosition() extends MapOperation {
+case class TransposeWavelengthWithPosition() extends Operation {
   
   def makeMapFunction(model: DataType): Sample => Sample = {
-    case (DomainData(w, x, y), range) => (DomainData(x, y, w), range)
+    case Sample(DomainData(w, x, y), range) => Sample(DomainData(x, y, w), range)
     //case Sample(n, ns) => Sample(n, transpose(ns))
   }
 

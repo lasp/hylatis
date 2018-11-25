@@ -16,6 +16,8 @@ import latis.metadata._
 import latis.util.StreamUtils._
 import latis.util.SparkUtils._
 import latis.util.SparkUtils
+import latis.data.RddFunction
+import latis.util.CacheManager
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
@@ -25,24 +27,11 @@ class HylatisServer extends HttpServlet {
   override def init(): Unit = {
     //TODO: load all datasets in catalog
     
-    // Load the granule list dataset into spark
-    val reader = HysicsGranuleListReader() // hysics_image_files
-    val ds = reader.getDataset()
+    //This will load the hysics cube: (iy, ix, w) -> f
+    //  and cache it in a RddFunction with the latis dataset
+    //  cached as "hysics"
+    HysicsReader().getDataset(Seq.empty)
     
-    val sc = sparkContext
-    var rdd = sc.parallelize(ds.samples.compile.toVector.unsafeRunSync())
-    
-    // Load data from each granule
-    rdd = rdd.map(HysicsImageReaderOperation().makeMapFunction(null))
-    // Uncurry the dataset: (iy, ix, iw) -> irradiance
-    val f = Uncurry().makeMapFunction(null) andThen unsafeStreamToSeq
-    rdd = rdd.flatMap(f)
-    // Store RDD in local cache
-    SparkUtils.cacheRDD("hysics", rdd)
-    //Note: "hysics" is mapped to the HysicsSparkReader which will use this RDD
-    
-    //Tell spark to cache it so it doesn't recompute the RDD
-    rdd.cache()
   }
 
   override def doGet(
@@ -59,7 +48,8 @@ class HylatisServer extends HttpServlet {
       case _ => Seq.empty
     }
 
-    val ds = DatasetSource.fromName(datasetName).getDataset(ops)
+     //DatasetSource.fromName(datasetName).getDataset(ops)
+ val ds =  CacheManager.getDataset(datasetName).get //cached during init
 
     val writer: Writer = suffix match {
       case "png" => ImageWriter(response.getOutputStream, "png")
@@ -74,7 +64,7 @@ class HylatisServer extends HttpServlet {
   def parseOp(expression: String): Operation =  expression match {
     //TODO: use parser combinator
       //case PROJECTION.r(name) => Projection(name)
-      case SELECTION.r(name, op, value) => Select(name, op, value)
+      case SELECTION.r(name, op, value) => Selection(name, op, value)
       case OPERATION.r(name, args) => (name,args) match {
         case ("rgbPivot", args) =>
           val as = args.split(",")
@@ -104,7 +94,7 @@ object HylatisServer {
 
     val context = new ServletContextHandler()
     context.setContextPath("/latis-hylatis")
-    val handler = context.addServlet(classOf[HylatisServer], "/latis/*")
+    val handler = context.addServlet(classOf[HylatisServer], "/dap/*")
     handler.setInitOrder(1)
 
     server.setHandler(context)

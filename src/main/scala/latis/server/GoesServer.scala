@@ -16,7 +16,7 @@ class GoesServer extends HttpServlet {
   override def init(): Unit = {
     val reader = GoesGranuleListReader() 
     val ds = reader.getDataset()
-    SparkWriter().write(ds)
+//    SparkWriter().write(ds)
   }
 
   override def doGet(
@@ -46,7 +46,7 @@ class GoesServer extends HttpServlet {
   }
   
   def parseOp(expression: String): Operation =  expression match {
-      case SELECTION.r(name, op, value) => Select(name, op, value)
+      case SELECTION.r(name, op, value) => Selection(name, op, value)
       case OPERATION.r(name, args) => (name,args) match {
         case ("rgbPivot", args) =>
           val as = args.split(",")

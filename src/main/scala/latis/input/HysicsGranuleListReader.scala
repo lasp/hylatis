@@ -17,9 +17,8 @@ import cats.effect.IO
 case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   
   val model = Function(
-    Metadata("foo" -> "bar"),
-    Scalar("iy"),
-    Scalar("uri")
+    Scalar(Metadata("iy") + ("type" -> "int")),
+    Scalar(Metadata("uri") + ("type" -> "string"))
   )
    
   override def metadata = Metadata(
@@ -35,7 +34,7 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
     
       val samples: Stream[IO, Sample] = Stream.range(1, 4201, stride) map { i =>
         val uri = f"${base}/img$i%04d.txt"
-        (DomainData(i), RangeData(uri))
+        Sample(DomainData(i), RangeData(uri))
       }
 
       StreamFunction(samples)

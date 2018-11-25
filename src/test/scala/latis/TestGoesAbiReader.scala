@@ -16,6 +16,8 @@ import java.net.URL
 import java.net.URI
 import java.io.File
 import java.awt.Color
+import latis.ops.Operation
+import latis.ops.Uncurry
 
 
 class TestGoesAbiReader {
@@ -63,7 +65,7 @@ class TestGoesAbiReader {
   def bulk_load = {
     val reader = GoesGranuleListReader()
     val ds = reader.getDataset()
-    new SparkWriter().write(ds)
+//    new SparkWriter().write(ds)
     
     val ops: Seq[Operation] = Seq(
       GoesImageReaderOperation()

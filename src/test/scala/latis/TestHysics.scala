@@ -15,6 +15,8 @@ import java.net.URI
 import java.io.File
 import latis.util.AWSUtils
 import io.findify.s3mock._
+import latis.ops.Operation
+import latis.ops.Uncurry
 
 class TestHysics {
   
@@ -297,39 +299,30 @@ class TestHysics {
 //    ImageWriter("xyRGB.png").write(image)
 //  }
   
-  //@Test
+  @Test
   def bulk_load = {
-    val reader = HysicsGranuleListReader() // hysics_image_files
-    val ds = reader.getDataset()
-    //Writer().write(ds)
-    new SparkWriter().write(ds)
+    // (iy, ix, wavelength) -> irradiance
+    val hysics = HysicsReader().getDataset(Seq.empty)
     
-    val ops: Seq[Operation] = Seq(
-      Select("iy < 10")
-      /*
-       * TODO: URI => (ix, iw) -> f  compose?
-       *   that is just the adapter.apply
-       * or map function over entire samples
-       */
-      , HysicsImageReaderOperation()
-      /*
-       * TODO: Select only works if uncurried, so do it first
-       * TODO: uncurry doesn't flatten domain type so we have (y,(x,w)) which confuses the writer
-       *   should uncurry flatten the type or should writer be more forgiving?
-       *   seems like we should preserve type for things like GeoLocation or Vector tuples
-       *   review writer in context of new flattened Sample
-       *   
-       * hysics_image_files.png?iy<10&read()&uncurry()&ix<10&rgbPivot("iw", 100, 200, 300)
-       */
-      , Uncurry()
-      , Select("ix >= 479")
-      , RGBImagePivot("iw", 100, 200, 300)
+    val ops1: Seq[Operation] = Seq(
+      Selection("ix >= 478"),
+      Contains("wavelength", 630.87, 531.86, 463.79)
     )
-    val image = HysicsSparkReader().getDataset(ops)
+//memoize for groupBy, for now
+val ds1 = ops1.foldLeft(hysics)((ds, op) => op(ds)).unsafeForce
+    
+    val ops2: Seq[Operation] = Seq(
+      GroupBy("ix", "iy")
+    , Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))
+    , XYTransform()
+    )
+    //val image = HysicsSparkReader().getDataset(ops)
     //Writer().write(image)
     //sds.samples foreach println
     //val image = DatasetSource.fromName("hysics").getDataset(ops)
-    ImageWriter("indexRGB.png").write(image)
+    val image = ops2.foldLeft(ds1)((ds, op) => op(ds))
+    Writer.write(image)
+    //ImageWriter("indexRGB.png").write(image)
   }
 
 }
@@ -338,9 +331,9 @@ object TestHysics {
   
   private val s3mock: S3Mock = S3Mock(port = 8001, dir = "/data/s3")
   
-  @BeforeClass
+  //@BeforeClass
   def startS3Mock: Unit = s3mock.start
   
-  @AfterClass
+  //@AfterClass
   def stopS3Mock: Unit = s3mock.stop
 }

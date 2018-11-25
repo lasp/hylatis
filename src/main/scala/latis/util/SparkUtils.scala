@@ -26,13 +26,13 @@ object SparkUtils {
     new SparkContext(sconf)
   }
       
-  def getRDD(name: String): Option[RDD[_]] = {
-    //getSparkSession.sparkContext.getPersistentRDDs.map(_._2).find(_.name == name)
-    rddCache.get(name)
-  }
-  
-  
-  def cacheRDD(name: String, rdd: RDD[_]) = rddCache += (name -> rdd)
-  
-  private val rddCache = scala.collection.mutable.Map[String, RDD[_]]()
+  //hopefully not needed now that we are using RddFunction to handle the RDD.
+//  def getRDD(name: String): Option[RDD[_]] = {
+//    //getSparkSession.sparkContext.getPersistentRDDs.map(_._2).find(_.name == name)
+//    rddCache.get(name)
+//  }
+//  
+//  def cacheRDD(name: String, rdd: RDD[_]) = rddCache += (name -> rdd)
+//  
+//  private val rddCache = scala.collection.mutable.Map[String, RDD[_]]()
 }

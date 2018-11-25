@@ -24,7 +24,7 @@ case class GoesSparkReader() extends AdaptedDatasetSource {
     Scalar("Rad")
   )
   
-  val adapter = SparkAdapter(model)
+  val adapter = SparkAdapter()
 
 }
 

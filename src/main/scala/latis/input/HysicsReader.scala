@@ -10,12 +10,43 @@ import latis.util.HysicsUtils
 import latis.util.AWSUtils
 import java.net.URI
 import latis.util.LatisProperties
+import latis.model.Dataset
+import latis.util.CacheManager
 
 /**
- * No longer used. We now load the granule list dataset into spark
- * then apply HysicsImageReaderOperation and others (see HylatisServer.init).
+ * Read the Hysics granule list dataset, cache it into Spark,
+ * and apply operation to read and structure the data.
+ * Cache the LaTiS Dataset in memory so we don't have to reload 
+ * it into spark each time.
  */
-//class HysicsReader(uri: URI) extends DatasetSource {
+case class HysicsReader() extends DatasetSource {
+  /*
+   * TODO: can this one not cache to RDD?
+   * use cache="rdd" property?
+   */
+  
+  def getDataset(ops: Seq[Operation]): Dataset = {
+    // Load the granule list dataset into spark
+    val reader = HysicsGranuleListReader() // hysics_image_files
+    // iy -> uri
+    val ds = reader.getDataset().copy(metadata = Metadata("hysics"))
+//.cache(RddFunction) //include this to memoize data in the form of a Spark RDD
+    
+    val allOps = List(
+      HysicsImageReaderOperation(), // Load data from each granule
+      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance
+    ) ++ ops
+    
+    // Apply Operations
+    val ds2 = allOps.foldLeft(ds)((ds, op) => op(ds))
+    
+    //cache in memory
+    CacheManager.cacheDataset(ds2)
+    
+    ds2
+  }
+  
+}
 //  //TODO: make a Matrix subtype of SampledFunction with matrix semantics
 //  //TODO: allow value to be any Variable type?
 //  //TODO: impl as Adapter so we can hand it a model with metadata

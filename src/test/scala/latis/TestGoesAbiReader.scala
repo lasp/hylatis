@@ -61,21 +61,21 @@ class TestGoesAbiReader {
 //    assertTrue(data.samples.length > 0)    // explicitly calling samples may cause heap to overflow
   }
   
-  @Test
-  def bulk_load = {
-    val reader = GoesGranuleListReader()
-    val ds = reader.getDataset()
-//    new SparkWriter().write(ds)
-    
-    val ops: Seq[Operation] = Seq(
-      GoesImageReaderOperation()
-      , Uncurry()
-      , TransposeWavelengthWithPosition()
-      , RGBImagePivot("wavelength", 300, 500, 700)
-    )
-    val image: Dataset = GoesSparkReader().getDataset(ops)
-    ImageWriter("GoesCompositeRGB.png").write(image)
-  }
+//  @Test
+//  def bulk_load = {
+//    val reader = GoesGranuleListReader()
+//    val ds = reader.getDataset()
+////    new SparkWriter().write(ds)
+//    
+//    val ops: Seq[Operation] = Seq(
+//      GoesImageReaderOperation()
+//      , Uncurry()
+//      , TransposeWavelengthWithPosition()
+//      , RGBImagePivot("wavelength", 300, 500, 700)
+//    )
+//    val image: Dataset = GoesSparkReader().getDataset(ops)
+//    ImageWriter("GoesCompositeRGB.png").write(image)
+//  }
   
 }
 

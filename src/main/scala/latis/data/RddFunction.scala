@@ -4,6 +4,7 @@ import latis.util.SparkUtils._
 import org.apache.spark.rdd.RDD
 import fs2._
 import cats.effect.IO
+import latis.util.HylatisPartitioner
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
@@ -55,13 +56,18 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
       Sample(data, RangeData(SampledFunction.fromSeq(ss))) // (ix, iy) -> w -> f
     }
         
-    RddFunction(
- //TODO: need diff partitioner
-      rdd.groupBy(groupByFunction)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
-         .map(p => agg(p._1, p._2))
-    )
+    val partitioner = new HylatisPartitioner(4)
+    val rdd2 = rdd.groupBy(groupByFunction, partitioner)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
+                  .map(p => agg(p._1, p._2))
+    
+    /*
+     * TODO: we got the new samples but they are not grouped, nor sorted
+     * is this due to no equals/hashCode for DomainData (Array[Any])?
+     */
+                  
+    RddFunction(rdd2)
   }
-
+  
 }
 
 object RddFunction extends FunctionFactory {

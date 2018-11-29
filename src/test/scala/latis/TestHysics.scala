@@ -308,8 +308,8 @@ class TestHysics {
       Selection("ix >= 478")
       , Contains("wavelength", 630.87, 531.86, 463.79)
       , GroupBy("ix", "iy")
-   //   , Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))
-   //   , XYTransform()
+      , Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))
+      , XYTransform()
     )
     
     //val image = DatasetSource.fromName("hysics").getDataset(ops)

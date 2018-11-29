@@ -4,25 +4,25 @@ import org.apache.spark.Partitioner
 
 // Only need to partition after the groupBy:
 //
-// (y, x) -> w -> f
+// (x, y) -> w -> f
 
 class HylatisPartitioner(partitions: Int) extends Partitioner {
 
-  val nx: Int = 480
+  val nx: Int = 2 //480
   // imageCount samples the images rather than taking the first N
-  val ny: Int = 4200
+  val ny: Int = 2 //4200
 
   override def numPartitions: Int = partitions
 
   override def getPartition(key: Any): Int = key match {
-    case d: Array[_] if d.length == 2 =>
-      val x: Integer = d(1).asInstanceOf[Integer]
-      val y: Integer = d(0).asInstanceOf[Integer]
+    case d: Seq[_] if d.length == 2 =>
+      val x: Integer = d(0).asInstanceOf[Integer]
+      val y: Integer = d(1).asInstanceOf[Integer]
 
-      val nPerPartition = nx * ny / numPartitions
-      val i = x + nx * y
+      val nPerPartition = (nx * ny).toDouble / numPartitions
+      val i = y + ny * x  //TODO: need indexOf?
 
-      i / nPerPartition
+      ((i).toDouble / nPerPartition).toInt
     case _ => throw new RuntimeException(
       "Unsupported domain type."
     )

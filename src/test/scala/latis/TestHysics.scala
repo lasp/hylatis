@@ -305,15 +305,13 @@ class TestHysics {
     val hysics = HysicsReader().getDataset(Seq.empty)
     
     val ops: Seq[Operation] = Seq(
-      Selection("ix >= 478"),
-      Contains("wavelength", 630.87, 531.86, 463.79),
-      GroupBy("ix", "iy")
-   //   Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))
-  //    XYTransform()
+      Selection("ix >= 478")
+      , Contains("wavelength", 630.87, 531.86, 463.79)
+      , GroupBy("ix", "iy")
+   //   , Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))
+   //   , XYTransform()
     )
-    //val image = HysicsSparkReader().getDataset(ops)
-    //Writer().write(image)
-    //sds.samples foreach println
+    
     //val image = DatasetSource.fromName("hysics").getDataset(ops)
     val image = ops.foldLeft(hysics)((ds, op) => op(ds))
     Writer.write(image)

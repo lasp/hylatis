@@ -56,13 +56,25 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
       Sample(data, RangeData(SampledFunction.fromSeq(ss))) // (ix, iy) -> w -> f
     }
         
-    val partitioner = new HylatisPartitioner(4)
-    val rdd2 = rdd.groupBy(groupByFunction, partitioner)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
+    //val partitioner = new HylatisPartitioner(4)
+    implicit val ordering = DomainOrdering
+    val rdd2 = rdd.groupBy(groupByFunction)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
                   .map(p => agg(p._1, p._2))
+                  .sortBy(s => s.domain)
+                  
+//  println(partitioner.numPartitions)
+//  println(partitioner.getPartition(Seq(478,1)))
+//  println(partitioner.getPartition(Seq(478,2101)))
+//  println(partitioner.getPartition(Seq(479,1)))
+//  println(partitioner.getPartition(Seq(479,2101)))
     
     /*
-     * TODO: we got the new samples but they are not grouped, nor sorted
-     * is this due to no equals/hashCode for DomainData (Array[Any])?
+     * TODO: samples not sorted even with our partitioner
+     * can we sort without shuffling if we use our partitioner?
+     * what if more samples than partitions?
+     * See OrderedRDDFunctions sortByKey
+     * our partitioner should keep partitions ordered
+     * sort within each partition - no shuffling?
      */
                   
     RddFunction(rdd2)

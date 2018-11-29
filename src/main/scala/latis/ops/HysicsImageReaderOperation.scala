@@ -41,7 +41,7 @@ case class HysicsImageReaderOperation() extends Operation {
    */
   def makeMapFunction(model: DataType): Sample => Sample = {
     //Read and broadcast the wavelength values
-    val bcWavelengths = broadcastWavelengths()
+//    val bcWavelengths = broadcastWavelengths()
     
     //Define function to map URIs to data samples
     (sample: Sample) => sample match {
@@ -50,8 +50,8 @@ case class HysicsImageReaderOperation() extends Operation {
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
       case Sample(domain, RangeData(uri: String)) =>
-        val ws = bcWavelengths.value
- //val ws = wavelengths
+ //       val ws = bcWavelengths.value
+ val ws = wavelengths
         val image = HysicsImageReader(new URI(uri)).getDataset() // (ix, iw) -> irradiance
         
         //replace iw with wavelength values: (ix, wavelength) -> irradiance

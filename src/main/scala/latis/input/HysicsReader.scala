@@ -30,7 +30,8 @@ case class HysicsReader() extends DatasetSource {
     val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
     val ds = reader.getDataset().copy(metadata = Metadata("hysics"))
-      .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
+      .unsafeForce
+ //     .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
     
     val allOps = List(
       HysicsImageReaderOperation(), // Load data from each granule

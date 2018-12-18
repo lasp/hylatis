@@ -30,7 +30,7 @@ case class HysicsReader() extends DatasetSource {
     val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
     val ds = reader.getDataset().copy(metadata = Metadata("hysics"))
-      .unsafeForce
+      .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
  //     .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
     
     val allOps = List(

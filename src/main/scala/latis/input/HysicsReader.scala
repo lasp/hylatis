@@ -20,19 +20,24 @@ import latis.util.CacheManager
  * it into spark each time.
  */
 case class HysicsReader() extends DatasetSource {
-  /*
-   * TODO: can this one not cache to RDD?
-   * use cache="rdd" property?
-   */
   
   def getDataset(ops: Seq[Operation]): Dataset = {
     // Load the granule list dataset into spark
     val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
     val ds = reader.getDataset().copy(metadata = Metadata("hysics"))
-      .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
- //     .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
+ //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
+      .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
     
+    /*
+     * TODO:
+     * define granule list dataset (fdml?)
+     * optional property: cache="rdd"
+     * encode these ops
+     * 
+     * read wavelength dataset here (now in HysicsImageReaderOperation) and join
+     */
+      
     val allOps = List(
       HysicsImageReaderOperation(), // Load data from each granule
       Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance

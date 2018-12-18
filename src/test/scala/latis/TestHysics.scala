@@ -305,10 +305,10 @@ class TestHysics {
     val hysics = HysicsReader().getDataset(Seq.empty)
     
     val ops: Seq[Operation] = Seq(
-      Selection("ix >= 478")
+      Selection("ix >= 470")
       , Contains("wavelength", 630.87, 531.86, 463.79)
       , GroupBy("ix", "iy")
-      , Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))
+      , Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))  //TODO: evaluate w -> f
       , XYTransform()
     )
     

@@ -54,6 +54,32 @@ case class HysicsImageReaderOperation() extends Operation {
  val ws = wavelengths
         val image = HysicsImageReader(new URI(uri)).getDataset() // (ix, iw) -> irradiance
         
+        /*
+         * TODO: use a join to replace iw with w
+         * iw -> f  <join>  iw -> w  =>  w -> f
+         * regular join: iw -> (f, w)
+         *   could then groupBy(w)
+         * Compose?
+         *   reverse bijective Function: w -> iw
+         *   iw -> f  <compose>  w -> iw  =>  w -> f
+         *   trickier when embedded in more complex Function
+         *     need to curry
+         *     apply to nested function
+         * Substitute? 
+         *   via evaluation
+         *   seems easier to implement
+         *   not quite the right semantics?
+         *     "substitute/replace iw with w" 
+         * could leave data in index coords and use 
+         * 
+         * 
+         * Broadcast as cache
+         * read wavelength dataset
+         * cache="broadcast"
+         * BroadcastFunction(samples: Seq[Sample]) extends MemoizedFunction
+         * does it help?
+         *   
+         */
         //replace iw with wavelength values: (ix, wavelength) -> irradiance
 //TODO: use operation, update model
         val sf = image.data map {

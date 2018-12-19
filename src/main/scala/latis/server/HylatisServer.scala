@@ -66,11 +66,11 @@ class HylatisServer extends HttpServlet {
       //case PROJECTION.r(name) => Projection(name)
       case SELECTION.r(name, op, value) => Selection(name, op, value)
       case OPERATION.r(name, args) => (name,args) match {
-        case ("rgbPivot", args) =>
-          val as = args.split(",")
-          val pivotVar = as.head
-          val Array(r,g,b) = as.tail.map(_.toDouble)
-          RGBImagePivot(pivotVar, r, g, b)
+//        case ("rgbPivot", args) =>
+//          val as = args.split(",")
+//          val pivotVar = as.head
+//          val Array(r,g,b) = as.tail.map(_.toDouble)
+//          RGBImagePivot(pivotVar, r, g, b)
         case ("uncurry", _) => Uncurry()
         case ("read", _) => HysicsImageReaderOperation()
       }

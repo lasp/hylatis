@@ -304,7 +304,7 @@ class TestHysics {
     // (iy, ix, wavelength) -> irradiance
     val hysics = HysicsReader().getDataset(Seq.empty)
     
-    val ops: Seq[Operation] = Seq(
+    val ops: Seq[UnaryOperation] = Seq(
       Selection("ix >= 470")
       , Contains("wavelength", 630.87, 531.86, 463.79)
       , GroupBy("ix", "iy")
@@ -314,8 +314,8 @@ class TestHysics {
     
     //val image = DatasetSource.fromName("hysics").getDataset(ops)
     val image = ops.foldLeft(hysics)((ds, op) => op(ds))
-    Writer.write(image)
-    //ImageWriter("indexRGB.png").write(image)
+    //Writer.write(image)
+    ImageWriter("indexRGB.png").write(image)
   }
 
 }

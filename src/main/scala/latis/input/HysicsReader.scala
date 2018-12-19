@@ -21,7 +21,7 @@ import latis.util.CacheManager
  */
 case class HysicsReader() extends DatasetSource {
   
-  def getDataset(ops: Seq[Operation]): Dataset = {
+  def getDataset(ops: Seq[UnaryOperation]): Dataset = {
     // Load the granule list dataset into spark
     val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
@@ -30,17 +30,24 @@ case class HysicsReader() extends DatasetSource {
       .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
     
     /*
+     * TODO: read wavelength dataset here (now in HysicsImageReaderOperation) and substitute
+     * what about order implications since iw is a domain variable
+     */
+    val wuri = new URI("file:/data/hysics/des_veg_cloud/wavelength.txt")
+    val wds = HysicsWavelengthsReader(wuri).getDataset(Seq.empty)
+    //TODO: cache to spark via broadcast?
+      
+    /*
      * TODO:
      * define granule list dataset (fdml?)
      * optional property: cache="rdd"
      * encode these ops
-     * 
-     * read wavelength dataset here (now in HysicsImageReaderOperation) and join
      */
       
-    val allOps = List(
+    val allOps: Seq[UnaryOperation] = Seq(
       HysicsImageReaderOperation(), // Load data from each granule
-      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance
+      Uncurry(),  // Uncurry the dataset: (iy, ix, iw) -> irradiance
+      Substitution2(wds) //replace wavelength index with wavelength value
     ) ++ ops
     
     // Apply Operations

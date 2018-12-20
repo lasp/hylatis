@@ -12,7 +12,7 @@ class TestWavelengths {
   
   @Test
   def read = {
-    val ds = HysicsWavelengthsReader(new URI("file:/data/hysics/des_veg_cloud/wavelength.txt")).getDataset(Seq.empty)
+    val ds = HysicsWavelengthsReader(new URI("s3://hylatis-hysics-001/des_veg_cloud/wavelength.txt")).getDataset(Seq.empty)
     //Writer.write(ds)
     val z = ds match {
       case Dataset(_,_,sf) => sf(DomainData(0,631)) match {

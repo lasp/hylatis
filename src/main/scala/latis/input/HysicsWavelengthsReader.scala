@@ -18,14 +18,6 @@ case class HysicsWavelengthsReader(uri: URI) extends AdaptedDatasetSource {
   override def metadata = Metadata(
     "id" -> "hysics_wavelengths"
   )
-  
-  override def operations: Seq[UnaryOperation] = Seq(
-    //Projection("iw","wavelength") //TODO: need to replace "row" with index
-      /*
-       * TODO: slice (partially evaluate) at row=0
-       * implement BijectiveFunction?
-       */
-  )
     
   def adapter: Adapter = new Adapter() {
     def apply(uri: URI): SampledFunction = {
@@ -36,5 +28,4 @@ case class HysicsWavelengthsReader(uri: URI) extends AdaptedDatasetSource {
       ArrayFunction1D(data)
     }
   }
-  //new MatrixTextAdapter(TextAdapter.Config(), model)
 }

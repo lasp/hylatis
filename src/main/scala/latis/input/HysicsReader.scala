@@ -20,6 +20,17 @@ import latis.util.CacheManager
  * it into spark each time.
  */
 case class HysicsReader() extends DatasetSource {
+  /*
+   * TODO: replace this with an FDML file
+   * model the granule list in FDML
+   * use dataset ref
+   * cache to rdd
+   * the rest as operations
+   * 
+   * define wavelength dataset in FDML
+   * cache to broadcast?
+   * use binary Substitution operation
+   */
   
   def getDataset(ops: Seq[UnaryOperation]): Dataset = {
     // Load the granule list dataset into spark
@@ -29,11 +40,8 @@ case class HysicsReader() extends DatasetSource {
  //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
       .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
     
-    /*
-     * TODO: read wavelength dataset here (now in HysicsImageReaderOperation) and substitute
-     * what about order implications since iw is a domain variable
-     */
     val wuri = new URI("file:/data/hysics/des_veg_cloud/wavelength.txt")
+    //val wuri = new URI("s3://hylatis-hysics-001/des_veg_cloud/wavelength.txt")
     val wds = HysicsWavelengthsReader(wuri).getDataset(Seq.empty)
     //TODO: cache to spark via broadcast?
       
@@ -46,17 +54,21 @@ case class HysicsReader() extends DatasetSource {
       
     val allOps: Seq[UnaryOperation] = Seq(
       HysicsImageReaderOperation(), // Load data from each granule
-      Uncurry(),  // Uncurry the dataset: (iy, ix, iw) -> irradiance
-      Substitution2(wds) //replace wavelength index with wavelength value
+      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance
+      //Substitution2(wds) //replace wavelength index with wavelength value
     ) ++ ops
     
     // Apply Operations
     val ds2 = allOps.foldLeft(ds)((ds, op) => op(ds))
     
-    //cache in memory
-    CacheManager.cacheDataset(ds2)
+    // Substitue wavelength values
+    val ds3 = Substitution()(ds2, wds)
     
-    ds2
+    //cache in memory
+    //TODO: is orig granule dataset in cache from caching to RDD?
+    CacheManager.cacheDataset(ds3)
+    
+    ds3
   }
   
 }

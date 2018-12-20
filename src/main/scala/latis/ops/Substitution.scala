@@ -44,7 +44,7 @@ case class Substitution() extends BinaryOperation {
     // from evaluating ds2 with the value of the matching variable in ds1
     val f: Sample => Sample = (s: Sample) => {
       val v1 = s.getValue(pos).get //TODO: assumes variable exists and is not in a nested Function
-      val v2 = sf(DomainData(v1)).unsafeForce.head.range //evaluate new value
+      val v2 = sf(DomainData(v1)).unsafeForce.head.range.head //evaluate new value
       s.updateValue(pos, v2)
     }
     

@@ -3,11 +3,15 @@ package latis.ops
 import latis.model._
 import latis.data._
 
+/**
+ * Replace a variable in a Dataset by using it to evaluate another Dataset.
+ */
 case class Substitution() extends BinaryOperation {
-  //TODO: or UnaryOpertaion constructed with Function to substitute
-  //  via partial application?
   //TODO: explore consequences of complex types
   //  this generally assumes ds2 is scalars a -> b but could be any type
+  //TODO: require that ds2 range is ordered (monotonic) if replacing a domain value
+  //TODO: if ds1 is memoized, evaluate with the entire domain set?
+  //TODO: support aliases? or construct with id to replace?
   
   /**
    * Apply second Dataset to the first replacing the variable matching the domain
@@ -24,20 +28,20 @@ case class Substitution() extends BinaryOperation {
   
   
   def applyToData(ds1: Dataset, ds2: Dataset): SampledFunction = {
-    // Get the dt2 domain variable id and range variable
+    // Get the dt2 domain variable id
     val vid = ds2.model match {
-      case Function(d, r) => d.id
+      case Function(d, _) => d.id
       case _ => ??? //TODO invalid dataset type for ds2
     }
     
-    // Get the sample path of the ds2 domain variable in ds1.
-    // Assume that it is not in a nested Function.
+    // Get the sample position of the ds2 domain variable in ds1.
+    //TODO: support nested Functions.
     val pos: SamplePosition = ds1.model.getPath(vid) match {
       case Some(p) => p.head
       case None => ??? //error, variable not found in ds1
     }
     
-    // Get the SampledFunction of ds2
+    // Get the SampledFunction of ds2 to be used for evaluation
     val sf = ds2.data
     
     // Make a function to modify a ds1 Sample by replacing the value
@@ -48,8 +52,10 @@ case class Substitution() extends BinaryOperation {
       s.updateValue(pos, v2)
     }
     
+    // Apply the substitution function to original data
     ds1.data.map(f)
   }
+  
   
   def applyToModel(dt1: DataType, dt2: DataType): DataType = {
     //TODO: error if no variable in dt1 matching dt2 domain
@@ -57,12 +63,11 @@ case class Substitution() extends BinaryOperation {
     // Get the dt2 domain variable id and range variable
     val (vid, range) = dt2 match {
       case Function(d, r) => (d.id, r)
-      case _ => ??? //TODO invalid dataset type for ds2
+      case _ => ??? //TODO invalid dataset type for ds2, shouldn't happen
     }
     
     // Traverse dt1 and replace the type matching the dt2 domain
     // with the new type from the dt2 range.
-    //TODO: support aliases?
     dt1 map {
       case dt if (dt.id == vid) => range  //replace matching variable
       case dt => dt  //no match, keep original variable

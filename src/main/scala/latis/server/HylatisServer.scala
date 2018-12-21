@@ -43,13 +43,14 @@ class HylatisServer extends HttpServlet {
     val datasetName = ss(0).drop(1) // Drop the leading "/"
     val suffix = ss(1)
 
-    val ops: Seq[Operation] = request.getQueryString match {
+    val ops: Seq[UnaryOperation] = request.getQueryString match {
       case s: String => s.split("&").map(x => URLDecoder.decode(x, "UTF-8")).map(parseOp(_))
       case _ => Seq.empty
     }
 
      //DatasetSource.fromName(datasetName).getDataset(ops)
- val ds =  CacheManager.getDataset(datasetName).get //cached during init
+val ds0 =  CacheManager.getDataset(datasetName).get //cached during init
+val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
 
     val writer: Writer = suffix match {
       case "png" => ImageWriter(response.getOutputStream, "png")
@@ -61,7 +62,7 @@ class HylatisServer extends HttpServlet {
     response.flushBuffer()
   }
   
-  def parseOp(expression: String): Operation =  expression match {
+  def parseOp(expression: String): UnaryOperation =  expression match {
     //TODO: use parser combinator
       //case PROJECTION.r(name) => Projection(name)
       case SELECTION.r(name, op, value) => Selection(name, op, value)

@@ -55,7 +55,6 @@ case class HysicsReader() extends DatasetSource {
     val allOps: Seq[UnaryOperation] = Seq(
       HysicsImageReaderOperation(), // Load data from each granule
       Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance
-      //Substitution2(wds) //replace wavelength index with wavelength value
     ) ++ ops
     
     // Apply Operations

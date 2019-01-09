@@ -10,12 +10,107 @@ import latis.util.HysicsUtils
 import latis.util.AWSUtils
 import java.net.URI
 import latis.util.LatisProperties
+import latis.model.Dataset
+import latis.util.CacheManager
 
 /**
- * No longer used. We now load the granule list dataset into spark
- * then apply HysicsImageReaderOperation and others (see HylatisServer.init).
+ * Read the Hysics granule list dataset, cache it into Spark,
+ * and apply operation to read and structure the data.
+ * Cache the LaTiS Dataset in memory so we don't have to reload 
+ * it into spark each time.
  */
-//class HysicsReader(uri: URI) extends DatasetSource {
+case class HysicsReader() extends DatasetSource {
+  /*
+   * TODO: replace this with an FDML file
+   * model the granule list in FDML
+   * use dataset ref
+   * cache to spark
+   * the rest as operations
+   * 
+   * define wavelength dataset in FDML
+   * cache to broadcast?
+   * use binary Substitution operation
+   * 
+   * apply iy selection before reader op
+   * but not when caching the cube
+   * 
+   * need to "cache" RDD once we have the cube so we don't recompute it
+   * need call to parallelize before ops but cache after
+   * define cache=spark on both datasets
+   * if data is already RddFunction, call cache on it
+   *   how do we do that generically?
+   *   or always call cache on RDD after set of operations
+   *     CompositeOperation? instead of folding
+   *       AST with binary ops...?
+   *     as part of getDataset(ops) for adapter?
+   * Seems like we need one dataset to do both
+   *   how to specify to parallelize early?
+   *   define as operation?
+   */
+  
+  def getDataset(ops: Seq[UnaryOperation]): Dataset = {
+    // Load the granule list dataset into spark
+    val reader = HysicsGranuleListReader() // hysics_image_files
+    // iy -> uri
+    val ds = reader.getDataset().copy(metadata = Metadata("hysics")) //TODO: rename
+ //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
+      .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
+      // only need to parallelize here
+      
+      /*
+       * cache/force/memoize
+       * if we do this (suck in all data and release source) we presumably want to reuse it
+       * thus "cache" seems reasonable
+       * include adding it to CacheManager
+       * instruction in fdml?
+       *   adapter property?
+       *   operation?
+       * caching is not a dataset descriptor issue
+       * more of a service instance concern
+       * but optimal type of cache can be dataset specific
+       * 
+       * also want to cache resulting "hysics" cube
+       * don't rename it here
+       * 
+       * could caching to memory work via *registering*  new dataset?
+       *   the first place it looks to resolve a dataset name is the cache
+       *   use backup locations if cache is expired, re-cache
+       */
+    
+    //val wuri = new URI("file:/data/hysics/des_veg_cloud/wavelength.txt")
+    val defaultBase = "s3://hylatis-hysics-001/des_veg_cloud"
+    val base = LatisProperties.getOrElse("hysics.base.uri", defaultBase)
+    val wuri = new URI(s"$base/wavelength.txt")
+    val wds = HysicsWavelengthsReader(wuri).getDataset(Seq.empty)
+    //TODO: cache to spark via broadcast?
+      
+    /*
+     * TODO:
+     * define granule list dataset (fdml?)
+     * optional property: cache="rdd"
+     * encode these ops
+     */
+      
+    val allOps: Seq[UnaryOperation] = Seq(
+      HysicsImageReaderOperation(), // Load data from each granule
+      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance
+    ) ++ ops
+    
+    // Apply Operations
+    val ds2 = allOps.foldLeft(ds)((ds, op) => op(ds))
+    
+    // Substitue wavelength values: (iy, ix, wavelength) -> irradiance
+    val ds3 = Substitution()(ds2, wds)
+    
+    //cache in memory
+    //TODO: is orig granule dataset in cache from caching to RDD?
+    //TODO: call RDD cache so we don't recompute
+    CacheManager.cacheDataset(ds3)
+    
+    ds3
+  }
+  
+}
 //  //TODO: make a Matrix subtype of SampledFunction with matrix semantics
 //  //TODO: allow value to be any Variable type?
 //  //TODO: impl as Adapter so we can hand it a model with metadata

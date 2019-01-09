@@ -11,13 +11,21 @@ import latis.util.HysicsUtils
 //import latis.util.AWSUtils
 import java.net.URI
 import latis.util.LatisProperties
+import fs2._
+import cats.effect.IO
 
+/**
+ * This reader provides a sequence of Hysics image file URLs:
+ *   i -> uri
+ * The URI used to construct this reader is the base URL to the 
+ * directory/bucket where the Hysics images files live.
+ * The files are named "img0001.txt" through "img4200.txt".
+ */
 case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
   
   val model = Function(
-    Metadata("foo" -> "bar"),
-    Scalar("iy"),
-    Scalar("uri")
+    Scalar(Metadata("iy") + ("type" -> "int")),  //TODO: use "i" or "index" then rename as needed
+    Scalar(Metadata("uri") + ("type" -> "string"))
   )
    
   override def metadata = Metadata(
@@ -29,14 +37,15 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
       val base = uri.toString //"s3:/hylatis-hysics-001/des_veg_cloud"
       val imageCount = LatisProperties.getOrElse("imageCount", "4200").toInt
       // Use image count to compute a stride.
+      //TODO: use more suitable operations instead of this property
       val stride: Int = 4200 / imageCount
     
-      val samples = Iterator.range(1, 4201, stride) map { i =>
+      val samples: Stream[IO, Sample] = Stream.range(1, 4201, stride) map { i =>
         val uri = f"${base}/img$i%04d.txt"
-        (DomainData(i), RangeData(uri))
+        Sample(DomainData(i), RangeData(uri))
       }
 
-      StreamingFunction(samples)
+      StreamFunction(samples)
     }
   }
   

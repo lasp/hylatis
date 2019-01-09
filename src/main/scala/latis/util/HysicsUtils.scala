@@ -48,6 +48,7 @@ object HysicsUtils {
    * Function to transform spatial indices to x/y coordinates.
    */
   val indexToXY = (ij: (Int,Int)) => (x(ij._1), y(ij._2))
+  //val indexToXY: (Int, Int) => (Double, Double) = (i: Int, j: Int) => (x(i), y(j))  //can't compose
   
   /**
    * Make a function to transform a spatial x/y coordinate to an x/y coordinate system

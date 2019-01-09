@@ -24,12 +24,15 @@ case class HysicsImageReader(uri: URI) extends AdaptedDatasetSource {
   
    // (ix, iw) -> irradiance
   def model = Function(
-    Tuple(Scalar("ix"), Scalar("iw")),
-    Scalar("irradiance")
+    Tuple(
+      Scalar(Metadata("ix") + ("type" -> "int")), 
+      Scalar(Metadata("wavelength") + ("type" -> "double"))
+    ),
+    Scalar(Metadata("irradiance") + ("type" -> "double"))
   )
-      
-   
-  def adapter: Adapter = MatrixTextAdapter()
+
+
+  def adapter: Adapter = new MatrixTextAdapter(TextAdapter.Config(), model)
   
 
 //  override def processingInstructions: Seq[Operation] = {

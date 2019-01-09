@@ -2,6 +2,7 @@ package latis.output
 
 import latis.model._
 import latis.data._
+import latis.util.StreamUtils._
 import scala.collection._
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
@@ -47,8 +48,8 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val rows = mutable.Set[Any]()
     val cols = mutable.Set[Any]()
     val buffer = mutable.ArrayBuffer[Int]()
-    dataset.samples foreach {
-      case (DomainData(row, col), RangeData(v: Double)) => //TODO: don't assume Double, extract double with Number match?
+    unsafeStreamToSeq(dataset.data.streamSamples) foreach {
+      case Sample(DomainData(row, col), RangeData(v: Double)) => //TODO: don't assume Double, extract double with Number match?
         rows += row
         cols += col
         buffer += v.toInt 
@@ -71,13 +72,13 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val rb = mutable.ArrayBuffer[Double]()
     val gb = mutable.ArrayBuffer[Double]()
     val bb = mutable.ArrayBuffer[Double]()
-    dataset.samples foreach {
-      case (DomainData(row, col), RangeData(r: String, g: String, b: String)) => //TODO: extract double with Number match?
+    unsafeStreamToSeq(dataset.data.streamSamples) foreach {
+      case Sample(DomainData(row, col), RangeData(r: Double, g: Double, b: Double)) =>
         rows += row
         cols += col
-        rb += Math.max(0, r.toDouble)
-        gb += Math.max(0, g.toDouble)
-        bb += Math.max(0, b.toDouble)
+        rb += Math.max(0, r)
+        gb += Math.max(0, g)
+        bb += Math.max(0, b)
     }
 
     val width = cols.size

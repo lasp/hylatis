@@ -27,10 +27,12 @@ lazy val hylatis = (project in file("."))
       "org.geotools"                % "gt-referencing"  % "18.2",
       "org.apache.commons"          % "commons-math3"   % "3.6.1",
       "io.findify"                 %% "s3mock"          % "0.2.4"  % "test",
-      "edu.ucar"                    % "cdm" 		    % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
+      "edu.ucar"                    % "cdm" 		       % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
       "edu.ucar"                    % "httpservices"    % "5.0.0-SNAPSHOT",
       "org.apache.spark"           %% "spark-sql"       % "2.2.0",
       "com.amazonaws"               % "aws-java-sdk-s3" % "1.11.275",
+      "co.fs2"                     %% "fs2-core"        % "1.0.0",
+      "co.fs2"                     %% "fs2-io"          % "1.0.0",
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
@@ -81,6 +83,7 @@ lazy val compilerFlags = Seq(
     "-deprecation",
     "-encoding", "utf-8",
     "-feature",
+    "-language:higherKinds"
   ),
   Compile / compile / scalacOptions ++= Seq(
     "-unchecked",

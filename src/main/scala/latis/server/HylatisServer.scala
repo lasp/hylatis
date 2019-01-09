@@ -13,8 +13,11 @@ import java.net.URLDecoder
 import latis.util.LatisProperties
 import latis.model._
 import latis.metadata._
+import latis.util.StreamUtils._
 import latis.util.SparkUtils._
 import latis.util.SparkUtils
+import latis.data.RddFunction
+import latis.util.CacheManager
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
@@ -24,23 +27,11 @@ class HylatisServer extends HttpServlet {
   override def init(): Unit = {
     //TODO: load all datasets in catalog
     
-    // Load the granule list dataset into spark
-    val reader = HysicsGranuleListReader() // hysics_image_files
-    val ds = reader.getDataset()
+    //This will load the hysics cube: (iy, ix, w) -> f
+    //  and cache it in a RddFunction with the latis dataset
+    //  cached as "hysics"
+    HysicsReader().getDataset(Seq.empty)
     
-    val sc = sparkContext
-    var rdd = sc.parallelize(ds.samples.toSeq)
-    
-    // Load data from each granule
-    rdd = rdd.map(HysicsImageReaderOperation().makeMapFunction(null))
-    // Uncurry the dataset: (iy, ix, iw) -> irradiance
-    rdd = rdd.flatMap(Uncurry().makeMapFunction(null))
-    // Store RDD in local cache
-    SparkUtils.cacheRDD("hysics", rdd)
-    //Note: "hysics" is mapped to the HysicsSparkReader which will use this RDD
-    
-    //Tell spark to cache it so it doesn't recompute the RDD
-    rdd.cache()
   }
 
   override def doGet(
@@ -52,16 +43,18 @@ class HylatisServer extends HttpServlet {
     val datasetName = ss(0).drop(1) // Drop the leading "/"
     val suffix = ss(1)
 
-    val ops: Seq[Operation] = request.getQueryString match {
+    val ops: Seq[UnaryOperation] = request.getQueryString match {
       case s: String => s.split("&").map(x => URLDecoder.decode(x, "UTF-8")).map(parseOp(_))
       case _ => Seq.empty
     }
 
-    val ds = DatasetSource.fromName(datasetName).getDataset(ops)
+     //DatasetSource.fromName(datasetName).getDataset(ops)
+val ds0 =  CacheManager.getDataset(datasetName).get //cached during init
+val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
 
     val writer: Writer = suffix match {
       case "png" => ImageWriter(response.getOutputStream, "png")
-      case _ => Writer(response.getOutputStream)
+      case _ => new Writer(response.getOutputStream)
     }
     writer.write(ds)
 
@@ -69,10 +62,10 @@ class HylatisServer extends HttpServlet {
     response.flushBuffer()
   }
   
-  def parseOp(expression: String): Operation =  expression match {
+  def parseOp(expression: String): UnaryOperation =  expression match {
     //TODO: use parser combinator
       //case PROJECTION.r(name) => Projection(name)
-      case SELECTION.r(name, op, value) => Select(name, op, value)
+      case SELECTION.r(name, op, value) => Selection(name, op, value)
       case OPERATION.r(name, args) => (name,args) match {
         case ("rgbPivot", args) =>
           val as = args.split(",")
@@ -102,7 +95,7 @@ object HylatisServer {
 
     val context = new ServletContextHandler()
     context.setContextPath("/latis-hylatis")
-    val handler = context.addServlet(classOf[HylatisServer], "/latis/*")
+    val handler = context.addServlet(classOf[HylatisServer], "/dap/*")
     handler.setInitOrder(1)
 
     server.setHandler(context)

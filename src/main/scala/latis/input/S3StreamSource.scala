@@ -22,3 +22,17 @@ case class S3StreamSource(bucket: String, key: String) extends StreamSource {
     readInputStream(fis, 4096, ec)
   }
 }
+
+object S3StreamSource {
+  
+  /**
+   * Construct from s3 URI of the form:
+   *   s3://<bucket>/<key>
+   */
+  def apply(uri: URI): S3StreamSource = {
+    //TODO: assert that the scheme is "s3"
+    val bucket = uri.getHost
+    val key = uri.getPath.stripPrefix("/")
+    S3StreamSource(bucket, key)
+  }
+}

@@ -31,8 +31,7 @@ case class HysicsImageReader(uri: URI) extends AdaptedDatasetSource {
     Scalar(Metadata("irradiance") + ("type" -> "double"))
   )
 
-      
-   
+
   def adapter: Adapter = new MatrixTextAdapter(TextAdapter.Config(), model)
   
 

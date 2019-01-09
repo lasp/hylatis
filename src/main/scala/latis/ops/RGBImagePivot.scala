@@ -6,13 +6,23 @@ import latis.model._
 
 /**
  * Given a dataset of the form:
- *   (x, y, pivotVar) -> v
+ *   (y, x, pivotVar) -> v
  * and values of the pivot variable that correspond to colors red, green, anf blue,
  * make an image dataset of the form:
  *   (x, y) -> (red, green, blue)
- * 
+ * Note the transformed domain.
  */
-case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Double) extends Operation {
+case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Double) extends UnaryOperation {
+  
+  override def apply(ds: Dataset): Dataset = {
+    val ops = Seq(
+      Contains(pivotVar, red, green, blue)
+      , GroupBy("ix", "iy")
+      , Pivot(Vector(red, green, blue), Vector("r","g","b"))  //TODO: evaluate w -> f
+    )
+    
+    ops.foldLeft(ds)((ds, op) => op(ds))
+  }
   
   /*
    * TODO: break into basic ops
@@ -107,19 +117,19 @@ case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Dou
 //                 .map(pivot) //TODO: can we use spark pivot?
 //                 .sortBy(_._1) //(DomainOrdering) 
   
-  override def applyToModel(model: DataType): DataType = {
-    model match {
-      case Function(tt: Tuple, v) =>
-        //TODO: preserve tuple properties?
-        //TODO: allow pivotVar to be other than "c"
-        val (x, y) = tt.elements match { //assume flattened
-          case Seq(a, b, _) => (a, b)
-        }
-        val r = Scalar("red")
-        val g = Scalar("green")
-        val b = Scalar("blue")
-        Function(Metadata(), Tuple(x,y), Tuple(Metadata("id" -> "color"), r, g, b))
-    }
-  }
+//  override def applyToModel(model: DataType): DataType = {
+//    model match {
+//      case Function(tt: Tuple, v) =>
+//        //TODO: preserve tuple properties?
+//        //TODO: allow pivotVar to be other than "c"
+//        val (x, y) = tt.elements match { //assume flattened
+//          case Seq(a, b, _) => (a, b)
+//        }
+//        val r = Scalar("red")
+//        val g = Scalar("green")
+//        val b = Scalar("blue")
+//        Function(Metadata(), Tuple(x,y), Tuple(Metadata("id" -> "color"), r, g, b))
+//    }
+//  }
 
 }

@@ -18,14 +18,14 @@ case class HysicsWavelengthsReader(uri: URI) extends AdaptedDatasetSource {
   override def metadata = Metadata(
     "id" -> "hysics_wavelengths"
   )
-    
-  def adapter: Adapter = new Adapter() {
-    def apply(uri: URI): SampledFunction = {
-      val is = uri.toURL.openStream
-      val source = Source.fromInputStream(is)
-      val data = source.getLines().next.split(",").map(s => RangeData(s.toDouble))
-      source.close
-      ArrayFunction1D(data)
+  
+  /**
+   * Use the matrix adapter but override it to keep just the first row.
+   */
+  def adapter: Adapter = new MatrixTextAdapter(TextAdapter.Config(), model) {
+    override def apply(uri: URI): SampledFunction = super.apply(uri) match {
+      case ArrayFunction2D(data2d) => ArrayFunction1D(data2d(0))
     }
   }
+  
 }

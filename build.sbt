@@ -1,17 +1,17 @@
 ThisBuild / organization := "lasp"
-ThisBuild / scalaVersion := "2.11.8"
+ThisBuild / scalaVersion := "2.12.8"
 
 val artifactory = "http://web-artifacts.lasp.colorado.edu/artifactory/"
 
-val latisVersion = "3.0.0-SNAPSHOT"
-//val jerseyVersion = "1.19.4"
-val jettyVersion  = "9.4.7.v20170914"
+val latisVersion    = "3.0.0-SNAPSHOT"
+val sparkVersion    = "2.4.0"
+val jettyVersion    = "9.4.11.v20180605"
+val geotoolsVersion = "20.2"
+val fs2Version      = "1.0.2"
 
-//lazy val `latis3-core` = RootProject(file("../latis3"))
 lazy val `latis3-core` = ProjectRef(file("../latis3"), "core")
 
 lazy val hylatis = (project in file("."))
-//  .enablePlugins(JettyPlugin)
   .dependsOn(`latis3-core`)
   .settings(commonSettings)
   .settings(
@@ -21,18 +21,18 @@ lazy val hylatis = (project in file("."))
       // "io.latis-data"           %% "latis-spark"     % latisVersion,
       "org.eclipse.jetty"           % "jetty-server"    % jettyVersion,
       "org.eclipse.jetty"           % "jetty-servlet"   % jettyVersion,
-      "org.geotools"                % "gt-main"         % "18.2",
-      "org.geotools"                % "gt-epsg-hsql"    % "18.2",
-      "org.geotools"                % "gt-api"          % "18.2",
-      "org.geotools"                % "gt-referencing"  % "18.2",
+      "org.geotools"                % "gt-main"         % geotoolsVersion,
+      "org.geotools"                % "gt-epsg-hsql"    % geotoolsVersion,
+      "org.geotools"                % "gt-api"          % geotoolsVersion,
+      "org.geotools"                % "gt-referencing"  % geotoolsVersion,
       "org.apache.commons"          % "commons-math3"   % "3.6.1",
       "io.findify"                 %% "s3mock"          % "0.2.4",
       "edu.ucar"                    % "cdm"             % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
       "edu.ucar"                    % "httpservices"    % "5.0.0-SNAPSHOT",
-      "org.apache.spark"           %% "spark-sql"       % "2.2.0",
-      "com.amazonaws"               % "aws-java-sdk-s3" % "1.11.275",
-      "co.fs2"                     %% "fs2-core"        % "1.0.0",
-      "co.fs2"                     %% "fs2-io"          % "1.0.0",
+      "org.apache.spark"           %% "spark-sql"       % sparkVersion,
+      "com.amazonaws"               % "aws-java-sdk-s3" % "1.11.489",
+      "co.fs2"                     %% "fs2-core"        % fs2Version,
+      "co.fs2"                     %% "fs2-io"          % fs2Version,
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(

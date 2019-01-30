@@ -65,12 +65,6 @@ lazy val hylatis = (project in file("."))
   )
 
 lazy val commonSettings = compilerFlags ++ Seq(
-  Compile / compile / wartremoverWarnings ++= Warts.allBut(
-    Wart.Any,         // false positives
-    Wart.Nothing,     // false positives
-    Wart.Product,     // false positives
-    Wart.Serializable // false positives
-  ),
   // Test suite dependencies
   libraryDependencies ++= Seq(
     "junit"            % "junit"           % "4.12"      % Test,
@@ -83,13 +77,15 @@ lazy val compilerFlags = Seq(
     "-deprecation",
     "-encoding", "utf-8",
     "-feature",
-    "-language:higherKinds"
-  ),
-  Compile / compile / scalacOptions ++= Seq(
     "-unchecked",
-    "-Xlint",
+    "-Xfuture",
+    "-Xlint:-unused,_",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
+    "-Ywarn-unused",
     "-Ywarn-value-discard"
+  ),
+  Compile / console / scalacOptions --= Seq(
+    "-Ywarn-unused"
   )
 )

@@ -1,38 +1,46 @@
 package latis.input
 
-import java.net.URI
 import latis.util.AWSUtils
-import scala.concurrent.ExecutionContext
-import fs2._
-import fs2.io._
-import cats.effect._
-import cats.effect.ContextShift
-import cats.implicits._
+
 import java.io.InputStream
+import java.net.URI
 
-case class S3StreamSource(bucket: String, key: String) extends StreamSource {
-  
-  def getStream: Stream[IO, Byte] = {
-    val ec = ExecutionContext.global
-    implicit val cs = IO.contextShift(ec)
-    
-    val s3 = AWSUtils.s3Client.get
-    val is: InputStream = s3.getObject(bucket, key).getObjectContent //TODO: handle error
-    val fis = IO(is) 
-    readInputStream(fis, 4096, ec)
-  }
-}
+import scala.concurrent.ExecutionContext
 
-object S3StreamSource {
+import cats.effect.IO
+import fs2.Stream
+import fs2.io.readInputStream
+
+class S3StreamSource extends StreamSource {
   
   /**
-   * Construct from s3 URI of the form:
+   * The S3StreamSource supports only URIs with an "s3" scheme.
+   */
+  def supportsScheme(uriScheme: String): Boolean =
+    uriScheme == "s3"
+    
+  /**
+   * Extract S3 bucket and key from a URI of the form:
    *   s3://<bucket>/<key>
    */
-  def apply(uri: URI): S3StreamSource = {
-    //TODO: assert that the scheme is "s3"
-    val bucket = uri.getHost
-    val key = uri.getPath.stripPrefix("/")
-    S3StreamSource(bucket, key)
+  private def parseURI(uri: URI): (String, String) = {
+    //TODO: handle errors
+    (uri.getHost, uri.getPath.stripPrefix("/"))
+  }
+    
+  
+  def getStream(uri: URI): Stream[IO, Byte] = {
+    val (bucket, key) = parseURI(uri)
+    
+    // Provide context info for fs2 
+    //TODO: should this use the blockingExecutionContext like UrlStreamSource?
+    val ec = ExecutionContext.global
+    implicit val cs = IO.contextShift(ec)
+   
+    //TODO: handle errors
+    val s3 = AWSUtils.s3Client.get
+    val is: InputStream = s3.getObject(bucket, key).getObjectContent
+    val fis = IO(is) 
+    readInputStream(fis, 4096, ec)
   }
 }

@@ -15,7 +15,7 @@ class TestWavelengths {
     val ds = HysicsWavelengthsReader(new URI("s3://hylatis-hysics-001/des_veg_cloud/wavelength.txt")).getDataset(Seq.empty)
     //Writer.write(ds)
     val z = ds match {
-      case Dataset(_,_,sf) => sf(DomainData(0,631)) match {
+      case Dataset(_,_,sf) => sf(DomainData(631)) match {
         case MemoizedFunction(ss) => ss.head match {
           case Sample(_, RangeData(w: Double)) =>
             assertEquals(349.3, w, 0)

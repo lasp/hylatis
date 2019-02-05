@@ -3,6 +3,7 @@ package latis.input
 import java.net.URL
 import scala.io.Source
 import latis.ops._
+import latis.input._
 import latis.data._
 import latis.metadata._
 import scala.collection.mutable.ArrayBuffer
@@ -49,8 +50,19 @@ case class HysicsReader() extends DatasetSource {
    */
   
   def getDataset(ops: Seq[UnaryOperation]): Dataset = {
+    val xmlString = """<?xml version="1.0" encoding="UTF-8"?>
+        <dataset name="hyscs_image_files"  uri="s3:/hylatis-hysics-001/des_veg_cloud"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="fdml.xsd">
+            <adapter class="latis.input.HysicsGranuleListAdapter"/>
+            <function>
+                <scalar id="iy" type="integer"/>
+                <scalar id="uri" type="text"/>
+            </function>
+        </dataset>
+        """
+    
     // Load the granule list dataset into spark
-    val reader = HysicsGranuleListReader() // hysics_image_files
+    val reader = FDMLReader(xmlString)
+    //val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
     val ds = reader.getDataset().copy(metadata = Metadata("hysics")) //TODO: rename
  //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction

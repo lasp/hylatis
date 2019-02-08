@@ -8,20 +8,8 @@ import latis.util.HylatisPartitioner
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
- * TODO: should we treat this as Memoized?
- *   we started from Samples instead of Stream, so presumably ok
  */
 case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
-  
-  /**
-   * Cache the RDD every time we find it worthy to construct
-   * an RddFunction out of it.
-   * Use function composition before calling the methods here
-   * to avoid excess caching.
-   */
-  rdd.cache()
-  
-  //TODO: unpersist orig RDD?
   
   override def apply(v: DomainData): RddFunction = ???
   
@@ -84,7 +72,11 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
 
 object RddFunction extends FunctionFactory {
 
-  def fromSeq(samples: Seq[Sample]): MemoizedFunction =
+  def fromSamples(samples: Seq[Sample]): MemoizedFunction =
     RddFunction(sparkContext.parallelize(samples))
 
+  override def restructure(data: SampledFunction): MemoizedFunction = data match {
+    case rf: RddFunction => rf //no need to restructure
+    case _ => fromSamples(data.unsafeForce.samples)
+  }
 }

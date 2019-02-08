@@ -17,15 +17,28 @@ import latis.util.CacheManager
 /**
  * Read the Hysics granule list dataset, cache it into Spark,
  * and apply operation to read and structure the data.
- * Cache the LaTiS Dataset in memory so we don't have to reload 
+ * Cache the RDD and the LaTiS Dataset so we don't have to reload 
  * it into spark each time.
  */
 case class HysicsReader() extends DatasetSource {
   /*
+   * TODO: focus on getting data cube persisted on s3 in a more efficient form
+   * save many of these complications for fdml for later
+   * "write" to s3?
+   * consider users wanting to save work
+   */
+  
+  /*
    * TODO: replace this with an FDML file
    * model the granule list in FDML
-   * use dataset ref
    * cache to spark
+   * user server config to specify what to load on init
+   * 
+   *   
+   * 
+   * 'hysics" fdml
+   * use dataset ref to granules id (already cached and in RDD)
+   * ref as DatasetSource?
    * the rest as operations
    * 
    * define wavelength dataset in FDML
@@ -65,8 +78,8 @@ case class HysicsReader() extends DatasetSource {
     //val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
     val ds = reader.getDataset().copy(metadata = Metadata("hysics")) //TODO: rename
-      //.unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
-      .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
+ //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
+      .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
       // only need to parallelize here
       
       /*
@@ -83,10 +96,32 @@ case class HysicsReader() extends DatasetSource {
        * 
        * also want to cache resulting "hysics" cube
        * don't rename it here
+       * provide a name when caching?
        * 
        * could caching to memory work via *registering*  new dataset?
        *   the first place it looks to resolve a dataset name is the cache
        *   use backup locations if cache is expired, re-cache
+       *   
+       *   
+       * use server config to define which datasets need to be cached on init
+       *   still use fdml (adapter?), provide instruction to cache data for specific SampledFunction impl
+       * also goes into CacheManager which should be first DatasetSourceProvider
+       * for this we want granule list memoized to RDD first (ok to go into cache manager but not needed)
+       *   then apply ops
+       *   then cache RDD (not after each op as before)
+       *   finally cache to CM
+       * should the general caching rules be the same?
+       *   go to target SampledFunction first then apply ops then cache to CM?
+       *   might we ever want to apply ops first? 
+       *   likely that we want to filter before memoizing
+       *   use compiler... but not yet
+       * Define granule list to be cached to RDD
+       *   cache after loading and non-existent ops
+       *   define hysics data cube starting with ref to granules
+       *   likewise cache to RDD when done, since already an RDD just cache the RDD
+       *   make caching to SampledFunction idempotent
+       * instead of FunctionFactory.fromSeq, pass it a SF
+       *   if the same type then no-op
        */
     
     //val wuri = new URI("file:/data/hysics/des_veg_cloud/wavelength.txt")
@@ -95,13 +130,7 @@ case class HysicsReader() extends DatasetSource {
     val wuri = new URI(s"$base/wavelength.txt")
     val wds = HysicsWavelengthsReader(wuri).getDataset(Seq.empty)
     //TODO: cache to spark via broadcast?
-      
-    /*
-     * TODO:
-     * define granule list dataset (fdml?)
-     * optional property: cache="rdd"
-     * encode these ops
-     */
+
       
     val allOps: Seq[UnaryOperation] = Seq(
       HysicsImageReaderOperation(), // Load data from each granule
@@ -114,10 +143,13 @@ case class HysicsReader() extends DatasetSource {
     // Substitue wavelength values: (iy, ix, wavelength) -> irradiance
     val ds3 = Substitution()(ds2, wds)
     
-    //cache in memory
-    //TODO: is orig granule dataset in cache from caching to RDD?
-    //TODO: call RDD cache so we don't recompute
-    CacheManager.cacheDataset(ds3)
+/*
+ * call restructure to cache RDD so we don't recompute
+ * TODO: name feels wrong
+ * how else might we abstract out this behavior that other SFs don't have?
+ * copy, cache?
+ */
+    ds3.restructure(RddFunction).cache()
     
     ds3
   }

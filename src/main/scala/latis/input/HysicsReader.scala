@@ -51,7 +51,7 @@ case class HysicsReader() extends DatasetSource {
   
   def getDataset(ops: Seq[UnaryOperation]): Dataset = {
     val xmlString = """<?xml version="1.0" encoding="UTF-8"?>
-        <dataset name="hyscs_image_files"  uri="s3:/hylatis-hysics-001/des_veg_cloud"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="fdml.xsd">
+        <dataset name="hyscs_image_files"  uri="s3://hylatis-hysics-001/des_veg_cloud"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="fdml.xsd">
             <adapter class="latis.input.HysicsGranuleListAdapter"/>
             <function>
                 <scalar id="iy" type="integer"/>
@@ -65,7 +65,7 @@ case class HysicsReader() extends DatasetSource {
     //val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
     val ds = reader.getDataset().copy(metadata = Metadata("hysics")) //TODO: rename
- //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
+      //.unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
       .cache(RddFunction) //include this to memoize data in the form of a Spark RDD
       // only need to parallelize here
       

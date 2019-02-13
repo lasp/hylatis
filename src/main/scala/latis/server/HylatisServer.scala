@@ -23,14 +23,15 @@ import latis.util.CacheManager
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
 
-  // http://localhost:8090/latis-hylatis/latis/hysics.png?rgbPivot(wavelength, 630.87, 531.86, 463.79)
+  // http://localhost:8090/latis-hylatis/dap/hysics.png?rgbPivot(wavelength, 630.87, 531.86, 463.79)
   
   override def init(): Unit = {
     //TODO: load all datasets in catalog
     
     //This will load the hysics cube: (iy, ix, w) -> f
-    //  and cache it in a RddFunction with the latis dataset
+    //  and restructure it in a RddFunction with the latis dataset
     //  cached as "hysics"
+    //TODO: lazy? need to force?
     HysicsReader().getDataset(Seq.empty)
     
   }

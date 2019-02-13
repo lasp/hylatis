@@ -13,6 +13,7 @@ import java.net.URI
 import latis.util.LatisProperties
 import latis.model.Dataset
 import latis.util.CacheManager
+import org.apache.spark.storage.StorageLevel
 
 /**
  * Read the Hysics granule list dataset, cache it into Spark,
@@ -77,7 +78,7 @@ case class HysicsReader() extends DatasetSource {
     val reader = FDMLReader(xmlString)
     //val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
-    val ds = reader.getDataset().copy(metadata = Metadata("hysics")) //TODO: rename
+    val ds = reader.getDataset()
  //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
       .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
       // only need to parallelize here
@@ -141,17 +142,21 @@ case class HysicsReader() extends DatasetSource {
     val ds2 = allOps.foldLeft(ds)((ds, op) => op(ds))
     
     // Substitue wavelength values: (iy, ix, wavelength) -> irradiance
+    //TODO: handle binary operations better
     val ds3 = Substitution()(ds2, wds)
     
-/*
- * call restructure to cache RDD so we don't recompute
- * TODO: name feels wrong
- * how else might we abstract out this behavior that other SFs don't have?
- * copy, cache?
- */
-    ds3.restructure(RddFunction).cache()
-    
-    ds3
+    // Persist the RDD now that all operations have been applied
+    val data = ds3.data match {
+      case rf: RddFunction => 
+        //TODO: config storage level
+        RddFunction(rf.rdd.persist(StorageLevel.MEMORY_AND_DISK_SER))
+      case sf => sf //no-op if not an RddFunction
+    }
+
+    // Rename the Dataset and add it to the LaTiS CacheManager.
+    val ds4 = ds3.copy(data = data).rename("hysics")
+    ds4.cache()
+    ds4
   }
   
 }

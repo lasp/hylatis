@@ -1,6 +1,7 @@
 package latis.server
 
 import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
 
 import javax.servlet.http._
@@ -95,6 +96,10 @@ object HylatisServer {
 
     val context = new ServletContextHandler()
     context.setContextPath("/latis-hylatis")
+
+    context.setResourceBase(getClass.getResource("/webapp").toString)
+    context.addServlet(classOf[DefaultServlet], "/")
+
     val handler = context.addServlet(classOf[HylatisServer], "/dap/*")
     handler.setInitOrder(1)
 

@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <title>Hylatis</title>
+
+    <style>
+     fieldset {
+       display: inline;
+     }
+
+     label {
+       display: inline-block;
+       text-align: left;
+       width: 15px;
+     }
+    </style>
+
+    <script>
+     window.onload = function () {
+       document.getElementById("sub").onclick = function () {
+         const r = document.getElementById("r").value;
+         const g = document.getElementById("g").value;
+         const b = document.getElementById("b").value;
+
+         window.location.href =
+           `/latis-hylatis/dap/hysics.png?rgbPivot(iw,${r},${g},${b})`;
+       };
+     };
+    </script>
+  </head>
+  <body>
+    <h1>Hylatis</h1>
+    <fieldset>
+      <legend>RGB Image</legend>
+
+      <label for="r">R</label>
+      <input id="r" type="number">
+      <br>
+
+      <label for="g">G</label>
+      <input id="g" type="number">
+      <br>
+
+      <label for="b">B</label>
+      <input id="b" type="number">
+      <br><br>
+
+      <button type="button" id="sub">Generate</button>
+    </fieldset>
+  </body>
+</html>

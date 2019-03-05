@@ -9,7 +9,7 @@ import java.net.URI
 import latis.util.HysicsUtils
 
 
-case class HysicsImageReader(uri: URI) extends AdaptedDatasetSource {
+case class HysicsImageReader(uri: URI) extends AdaptedDatasetReader {
    //TODO: replace with fdml
 
 //  // (y, x, wavelength) -> irradiance

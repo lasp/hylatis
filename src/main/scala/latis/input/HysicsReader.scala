@@ -21,7 +21,7 @@ import org.apache.spark.storage.StorageLevel
  * Cache the RDD and the LaTiS Dataset so we don't have to reload 
  * it into spark each time.
  */
-case class HysicsReader() extends DatasetSource {
+case class HysicsReader() extends DatasetReader {
   /*
    * TODO: focus on getting data cube persisted on s3 in a more efficient form
    * save many of these complications for fdml for later
@@ -78,7 +78,7 @@ case class HysicsReader() extends DatasetSource {
     val reader = FDMLReader(xmlString)
     //val reader = HysicsGranuleListReader() // hysics_image_files
     // iy -> uri
-    val ds = reader.getDataset()
+    val ds = reader.getDataset
  //     .unsafeForce //causes latis to use the MemoizedFunction, TODO: impl more of StreamFunction
       .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
       // only need to parallelize here
@@ -129,7 +129,7 @@ case class HysicsReader() extends DatasetSource {
     val defaultBase = "s3://hylatis-hysics-001/des_veg_cloud"
     val base = LatisProperties.getOrElse("hysics.base.uri", defaultBase)
     val wuri = new URI(s"$base/wavelength.txt")
-    val wds = HysicsWavelengthsReader(wuri).getDataset(Seq.empty)
+    val wds = HysicsWavelengthsReader(wuri).getDataset
     //TODO: cache to spark via broadcast?
 
       

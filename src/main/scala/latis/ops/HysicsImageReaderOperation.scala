@@ -53,7 +53,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
       case Sample(domain, RangeData(uri: String)) =>
  //       val ws = bcWavelengths.value
  //val ws = wavelengths
-        val image = HysicsImageReader(new URI(uri)).getDataset() // (ix, iw) -> irradiance
+        val image = HysicsImageReader(new URI(uri)).getDataset // (ix, iw) -> irradiance
         
         /*
          * TODO: use a join to replace iw with w

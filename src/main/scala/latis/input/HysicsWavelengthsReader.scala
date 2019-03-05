@@ -7,7 +7,7 @@ import latis.ops._
 import latis.data._
 import scala.io.Source
 
-case class HysicsWavelengthsReader(uri: URI) extends AdaptedDatasetSource {
+case class HysicsWavelengthsReader(uri: URI) extends AdaptedDatasetReader {
     
   // iw -> wavelength
   val model = Function(

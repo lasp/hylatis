@@ -12,12 +12,6 @@ import fs2.Stream
 import fs2.io.readInputStream
 
 class S3StreamSource extends StreamSource {
-  
-  /**
-   * The S3StreamSource supports only URIs with an "s3" scheme.
-   */
-  def supportsScheme(uriScheme: String): Boolean =
-    uriScheme == "s3"
     
   /**
    * Extract S3 bucket and key from a URI of the form:
@@ -27,20 +21,21 @@ class S3StreamSource extends StreamSource {
     //TODO: handle errors
     (uri.getHost, uri.getPath.stripPrefix("/"))
   }
-    
-  
-  def getStream(uri: URI): Stream[IO, Byte] = {
-    val (bucket, key) = parseURI(uri)
-    
-    // Provide context info for fs2 
-    //TODO: should this use the blockingExecutionContext like UrlStreamSource?
-    val ec = ExecutionContext.global
-    implicit val cs = IO.contextShift(ec)
-   
-    //TODO: handle errors
-    val s3 = AWSUtils.s3Client.get
-    val is: InputStream = s3.getObject(bucket, key).getObjectContent
-    val fis = IO(is) 
-    readInputStream(fis, 4096, ec)
+
+  def getStream(uri: URI): Option[Stream[IO, Byte]] = {
+    if (uri.getScheme == "s3") {
+      val (bucket, key) = parseURI(uri)
+
+      // Provide context info for fs2
+      //TODO: should this use the blockingExecutionContext like UrlStreamSource?
+      val ec = ExecutionContext.global
+      implicit val cs = IO.contextShift(ec)
+
+      //TODO: handle errors
+      val s3 = AWSUtils.s3Client.get
+      val is: InputStream = s3.getObject(bucket, key).getObjectContent
+      val fis = IO(is)
+      Some(readInputStream(fis, 4096, ec))
+    } else None
   }
 }

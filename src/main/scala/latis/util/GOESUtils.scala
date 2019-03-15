@@ -8,28 +8,12 @@ import scala.math._
  * for a specified GOES satellite and a specified GOES image type.
  */
 object GOESUtils {
-  /**
-   * Create a calculator based on the specified spacecraft.
-   */
-  def createGeoCalculator(spaceCraft: String): GOESGeoCalculator = {
-    GOESGeoCalculator(spaceCraft) 
-  }
-
   val rEquator = 6378137.0                  // meters, radius of earth at equator
   val rPolar = 6356752.31414                // meters, radius of earth at poles
   val H = 42164160.0                        // meters, satellite height from center of earth
   val e = 0.0818191910435                   // unitless
   val goesImageryProjection = -1.308996939  // radians, GOES-east only
-  
-  /**
-   *  Convert degrees to radians.
-   */
-  def degreeToRad(degree: Double): Double = degree * Math.PI / 180.0
-  
-  /**
-   * Convert radians to degrees.
-   */
-  def radToDegree(radian: Double): Double = radian * 180.0 / Math.PI
+ 
   
   /**
    * Latitude calculated from the center of the earth.
@@ -50,7 +34,7 @@ object GOESUtils {
   
   /**
    * Much of the earth is not visible from either GOES spacecraft.
-   * This simple inequality determines whether a target o the earth's surface is visible.
+   * This simple inequality determines whether a target on the earth's surface is visible.
    */
   def isTargetVisible(lonLat: (Double, Double)): Boolean = {
     val (sx, sy, sz) = computeViewAngles(lonLat)
@@ -63,10 +47,10 @@ object GOESUtils {
    * View angles sx, sy, sz are used for several calculations.
    */
   def computeViewAngles(lonLat: (Double, Double)): (Double, Double, Double) = lonLat match {
-    case (lon, lat) => {
+    case (lon, lat) => 
       // first convert degrees into radians
-      val latRadians = degreeToRad(lat)
-      val lonRadians = degreeToRad(lon)
+      val latRadians = toRadians(lat)
+      val lonRadians = toRadians(lon)
           
       // convert to geocentric coordinates
       val geoLat = geocentricLat(latRadians)
@@ -77,7 +61,6 @@ object GOESUtils {
       val sy = computeSy(geoDist, geoLat, lonRadians)
       val sz = computeSz(geoDist, geoLat)
       (sx, sy, sz)
-    }
   }
 
   case class GOESGeoCalculator(spaceCraft: String) {

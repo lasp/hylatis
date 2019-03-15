@@ -12,12 +12,12 @@ class TestGOESUtils {
     assertFalse(GOESUtils.isTargetVisible((16.37, 48.2)))  // Vienna, Austria
     assertTrue(GOESUtils.isTargetVisible((0.13, 51.51)))   // London, England
     
-    val calc = GOESGeoCalculator("GOES_EAST")
-    println("Quito Ecuador:")
-    calc.geoToYX((-78.47, 0.1807))
-    println("NW Corner of Colorado:")
-    calc.geoToYX((-109.0, 41.0))
-    println("Sample Location from Docs:")
-    calc.geoToYX((-84.690932, 33.846162))
+//    val calc = GOESGeoCalculator("GOES_EAST")
+//    println("Quito Ecuador:")
+//    calc.geoToYX((-78.47, 0.1807))
+//    println("NW Corner of Colorado:")
+//    calc.geoToYX((-109.0, 41.0))
+//    println("Sample Location from Docs:")
+//    calc.geoToYX((-84.690932, 33.846162))
   }
 }

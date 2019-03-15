@@ -6,6 +6,8 @@ import scala.math._
  * Transform between GRS80 geodetic coordinates  and GOES index coordinates.
  * The general approach taken is to create a GOESGeoTransform object 
  * for a specified GOES satellite and a specified GOES image type.
+ * 
+ * The current implementation is for GOES-East only.
  */
 object GOESUtils {
   val rEquator = 6378137.0                  // meters, radius of earth at equator

@@ -18,6 +18,8 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
   //      support the various forms with transformations
   //TODO: enumerate format options, not clearly defined
   //TODO: see other image types: https://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImage.html
+  
+  //TODO: assume (row, col) vs (x,y) ?
 
   override def write(dataset: Dataset): Unit = {
     // Construct a BufferedImage based on the shape of the data
@@ -49,7 +51,7 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val cols = mutable.Set[Any]()
     val buffer = mutable.ArrayBuffer[Int]()
     unsafeStreamToSeq(dataset.data.streamSamples) foreach {
-      case Sample(DomainData(row, col), RangeData(v: Double)) => //TODO: don't assume Double, extract double with Number match?
+      case Sample(DomainData(row, col), RangeData(Number(v))) =>
         rows += row
         cols += col
         buffer += v.toInt 
@@ -73,7 +75,7 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
     val gb = mutable.ArrayBuffer[Double]()
     val bb = mutable.ArrayBuffer[Double]()
     unsafeStreamToSeq(dataset.data.streamSamples) foreach {
-      case Sample(DomainData(row, col), RangeData(r: Double, g: Double, b: Double)) =>
+      case Sample(DomainData(row, col), RangeData(Number(r), Number(g), Number(b))) =>
         rows += row
         cols += col
         rb += Math.max(0, r)

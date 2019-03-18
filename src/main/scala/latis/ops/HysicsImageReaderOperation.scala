@@ -4,10 +4,6 @@ import latis.data._
 import latis.metadata._
 import latis.model._
 import java.net.URI
-//import latis.input.MatrixTextAdapter
-import latis.util._
-import scala.io.Source
-import latis.input.DatasetSource
 import latis.input.HysicsImageReader
 
 /**

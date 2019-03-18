@@ -16,12 +16,17 @@ import latis.util.CacheManager
 import org.apache.spark.storage.StorageLevel
 
 /**
- * Read the Hysics granule list dataset, cache it into Spark,
+ * Read the Hysics granule list dataset, put it into Spark,
  * and apply operation to read and structure the data.
  * Cache the RDD and the LaTiS Dataset so we don't have to reload 
  * it into spark each time.
  */
 case class HysicsReader() extends DatasetReader {
+  /*
+   * TODO: DatasetReader is used with ServiceLoader, not needed here since this is specific
+   * define as HysicsDataset?
+   */
+  
   /*
    * TODO: focus on getting data cube persisted on s3 in a more efficient form
    * save many of these complications for fdml for later
@@ -34,8 +39,6 @@ case class HysicsReader() extends DatasetReader {
    * model the granule list in FDML
    * cache to spark
    * user server config to specify what to load on init
-   * 
-   *   
    * 
    * 'hysics" fdml
    * use dataset ref to granules id (already cached and in RDD)
@@ -126,10 +129,10 @@ case class HysicsReader() extends DatasetReader {
        */
     
     //val wuri = new URI("file:/data/hysics/des_veg_cloud/wavelength.txt")
-    val defaultBase = "s3://hylatis-hysics-001/des_veg_cloud"
-    val base = LatisProperties.getOrElse("hysics.base.uri", defaultBase)
-    val wuri = new URI(s"$base/wavelength.txt")
-    val wds = HysicsWavelengthsReader(wuri).getDataset
+    //val defaultBase = "s3://hylatis-hysics-001/des_veg_cloud"
+    //val base = LatisProperties.getOrElse("hysics.base.uri", defaultBase)
+    //val wuri = new URI(s"$base/wavelength.txt")
+    val wds = HysicsWavelengths() //HysicsWavelengthsReader(wuri).getDataset
     //TODO: cache to spark via broadcast?
 
       

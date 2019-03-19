@@ -3,14 +3,18 @@
     <title>Hylatis</title>
 
     <style>
-     fieldset {
+     .outer {
        display: inline;
      }
 
-     label {
+     .rgb-box label {
        display: inline-block;
        text-align: left;
        width: 15px;
+     }
+
+     .no-border {
+       border: none;
      }
     </style>
 
@@ -21,28 +25,85 @@
          const g = document.getElementById("g").value;
          const b = document.getElementById("b").value;
 
-         window.location.href =
-           `/latis-hylatis/dap/hysics.png?rgbPivot(iw,${r},${g},${b})`;
+         const latN = document.getElementById("lat-n").value;
+         const latS = document.getElementById("lat-s").value;
+         const lonE = document.getElementById("lon-e").value;
+         const lonW = document.getElementById("lon-w").value;
+
+         const spacecraft =
+           document.querySelector("input[name=spacecraft]:checked").value;
+
+         const root = `/latis-hylatis/dap/${spacecraft}.png`;
+
+         // Assuming RGB are given.
+         const rgb = `rgbPivot(iw,${r},${g},${b})`;
+
+         // The bounding box is optional.
+         const boxDefined =
+           [latN, latS, lonE, lonW].every(x => x.length > 0);
+         const box =
+           (boxDefined) ? `&bbox(${lonW},${latN},${lonE},${latS})` : "";
+
+         const url = `${root}?${rgb}${box}`;
+         window.location.href = url;
        };
      };
     </script>
   </head>
   <body>
     <h1>Hylatis</h1>
-    <fieldset>
+    <fieldset class="outer">
       <legend>RGB Image</legend>
 
-      <label for="r">R</label>
-      <input id="r" type="number">
-      <br>
+      <fieldset>
+        <legend>Spacecraft</legend>
 
-      <label for="g">G</label>
-      <input id="g" type="number">
-      <br>
+        <label for="hysics">HySICS</label>
+        <input type="radio" id="hysics" value="hysics" name="spacecraft" checked>
 
-      <label for="b">B</label>
-      <input id="b" type="number">
-      <br><br>
+        <label for="goes">GOES</label>
+        <input type="radio" id="goes" value="goes" name="spacecraft">
+      </fieldset>
+
+      <fieldset class="rgb-box">
+        <legend>RGB Wavelengths</legend>
+
+        <label for="r">R</label>
+        <input id="r" type="number">
+        <br>
+
+        <label for="g">G</label>
+        <input id="g" type="number">
+        <br>
+
+        <label for="b">B</label>
+        <input id="b" type="number">
+      </fieldset>
+
+      <fieldset>
+        <legend>Bounding Box</legend>
+
+        <fieldset class="no-border">
+          <legend>NW Corner</legend>
+
+          <input id="lat-n" type="number">
+          <label for="lat-n">°N</label>
+
+          <input id="lon-w" type="number">
+          <label for="lon-w">°E</label>
+        </fieldset>
+
+        <fieldset class="no-border">
+          <legend>SE Corner</legend>
+
+          <input id="lat-s" type="number">
+          <label for="lat-s">°N</label>
+
+          <input id="lon-e" type="number">
+          <label for="lon-e">°E</label>
+        </fieldset>
+      </fieldset>
+      <br>
 
       <button type="button" id="sub">Generate</button>
     </fieldset>

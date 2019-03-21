@@ -59,7 +59,10 @@ lazy val hylatis = (project in file("."))
       orig.copy(includeScala = false)
     },
     // Disable tests when assembling.
-    assembly / test := {}
+    assembly / test := {},
+    assembly / assemblyShadeRules := Seq(
+      ShadeRule.rename("org.apache.http.**" -> "shade.@1").inAll
+    )
     // Enable sbt to find scala files (dataset descriptors) in /src/main/resources/datasets/
     //unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
   )

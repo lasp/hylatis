@@ -302,7 +302,7 @@ class TestHysics {
   @Test
   def bulk_load = {
     // (iy, ix, wavelength) -> irradiance
-    val hysics = HysicsReader().getDataset(Seq.empty)
+    val hysics = HysicsReader().getDataset
     
     val ops: Seq[UnaryOperation] = Seq(
       Selection("ix >= 470")
@@ -321,7 +321,7 @@ class TestHysics {
 }
 
 object TestHysics {
-  
+  //TODO: not working? still need to run s3mock outside first
   private val s3mock: S3Mock = S3Mock(port = 8001, dir = "/data/s3")
   
   //@BeforeClass

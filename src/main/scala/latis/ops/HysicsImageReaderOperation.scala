@@ -4,10 +4,6 @@ import latis.data._
 import latis.metadata._
 import latis.model._
 import java.net.URI
-//import latis.input.MatrixTextAdapter
-import latis.util._
-import scala.io.Source
-import latis.input.DatasetSource
 import latis.input.HysicsImageReader
 
 /**
@@ -53,7 +49,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
       case Sample(domain, RangeData(uri: String)) =>
  //       val ws = bcWavelengths.value
  //val ws = wavelengths
-        val image = HysicsImageReader(new URI(uri)).getDataset() // (ix, iw) -> irradiance
+        val image = HysicsImageReader(new URI(uri)).getDataset // (ix, iw) -> irradiance
         
         /*
          * TODO: use a join to replace iw with w

@@ -8,20 +8,8 @@ import latis.util.HylatisPartitioner
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
- * TODO: should we treat this as Memoized?
- *   we started from Samples instead of Stream, so presumably ok
  */
 case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
-  
-  /**
-   * Cache the RDD every time we find it worthy to construct
-   * an RddFunction out of it.
-   * Use function composition before calling the methods here
-   * to avoid excess caching.
-   */
-  rdd.cache()
-  
-  //TODO: unpersist orig RDD?
   
   override def apply(v: DomainData): RddFunction = ???
   
@@ -42,31 +30,36 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
     RddFunction(rdd.flatMap(s => f(s).samples))
     
   override def groupBy(paths: SamplePath*): RddFunction = {
-    //Assume Hysics use case: (iy, ix, w) -> f  => (ix, iy) -> w -> f
+    //TODO: no-op if empty
+    // Gather the indices into the Domain of the Sample 
+    // for the variables that are being grouped.
+    val gbIndices = paths.map(_.head) map { case DomainPosition(n) => n }
+
+    // Define a function to extract the new domain from a Sample
     val groupByFunction: Sample => DomainData = (sample: Sample) => sample match {
-      case Sample(DomainData(iy, ix, _), _) => DomainData(ix, iy)
-      case _ => ??? //TODO: impl general case
+      case Sample(domain, _) => DomainData.fromSeq(gbIndices.map(domain(_)))
     }
-    
-    val agg: (DomainData, Iterable[Sample]) => Sample = (data: DomainData, samples: Iterable[Sample]) => {
-      val ss = samples.toVector map {
-        case Sample(ds, rs) => Sample(ds.drop(2), rs)  // w -> f
+
+    // Define an aggregation function to construct a (nested) Function from the newly grouped Samples
+    val agg: (DomainData, Iterable[Sample]) => Sample =
+      (domain: DomainData, samples: Iterable[Sample]) => {
+        val ss = samples.toVector map {
+          case Sample(domain, range) =>
+            // Remove the groupBy variables from the domain
+            Sample(
+              DomainData.fromSeq(domain.zipWithIndex.filterNot(p => gbIndices.contains(p._2)).map(_._1)),
+              range
+            )
+        }
+        //val stream: Stream[IO, Sample] = Stream.eval(IO(ss)).flatMap(Stream.emits(_))
+        Sample(domain, RangeData(SampledFunction.fromSeq(ss))) 
       }
-      //val stream: Stream[IO, Sample] = Stream.eval(IO(ss)).flatMap(Stream.emits(_))
-      Sample(data, RangeData(SampledFunction.fromSeq(ss))) // (ix, iy) -> w -> f
-    }
         
     //val partitioner = new HylatisPartitioner(4)
     implicit val ordering = DomainOrdering
     val rdd2 = rdd.groupBy(groupByFunction)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
                   .map(p => agg(p._1, p._2))
                   .sortBy(s => s.domain)
-                  
-//  println(partitioner.numPartitions)
-//  println(partitioner.getPartition(Seq(478,1)))
-//  println(partitioner.getPartition(Seq(478,2101)))
-//  println(partitioner.getPartition(Seq(479,1)))
-//  println(partitioner.getPartition(Seq(479,2101)))
     
     /*
      * TODO: samples not sorted even with our partitioner
@@ -84,7 +77,11 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
 
 object RddFunction extends FunctionFactory {
 
-  def fromSeq(samples: Seq[Sample]): MemoizedFunction =
+  def fromSamples(samples: Seq[Sample]): MemoizedFunction =
     RddFunction(sparkContext.parallelize(samples))
 
+  override def restructure(data: SampledFunction): MemoizedFunction = data match {
+    case rf: RddFunction => rf //no need to restructure
+    case _ => fromSamples(data.unsafeForce.samples)
+  }
 }

@@ -9,7 +9,6 @@ import org.geotools.referencing.CRS
 import org.geotools.referencing.GeodeticCalculator
 
 import latis.data._
-import latis.input.DatasetSource
 import latis.model.Dataset
 import latis.util.StreamUtils._
 

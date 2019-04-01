@@ -21,7 +21,7 @@ import cats.effect.IO
  * directory/bucket where the Hysics images files live.
  * The files are named "img0001.txt" through "img4200.txt".
  */
-case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetSource {
+case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetReader {
   
   val model = Function(
     Scalar(Metadata("iy") + ("type" -> "int")),  //TODO: use "i" or "index" then rename as needed

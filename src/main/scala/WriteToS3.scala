@@ -1,5 +1,4 @@
 import latis.util.AWSUtils
-import latis.input.DatasetSource
 import latis.data._
 import java.io.File
 import java.net.URI

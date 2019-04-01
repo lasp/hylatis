@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dataset name="goes_image_files"  
+         uri="file://data/goes16"  
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:noNamespaceSchemaLocation="fdml.xsd">
+  <adapter class="latis.input.GoesGranuleListAdapter"/>
+  
+  <function>
+    <scalar id="iw" type="integer"/>
+    <scalar id="uri" type="text"/>
+  </function>
+  
+</dataset>

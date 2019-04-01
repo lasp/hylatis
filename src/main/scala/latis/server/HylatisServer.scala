@@ -33,7 +33,7 @@ class HylatisServer extends HttpServlet {
     //  cached as "hysics"
     //TODO: lazy? need to force?
     HysicsReader().getDataset
-    
+    GoesReader().getDataset
   }
 
   override def doGet(

@@ -30,8 +30,8 @@ case class HysicsReader() extends DatasetReader {
     // iy -> uri
     val ds = reader.getDataset
       //TODO: use config option to specify whether to use spark
-      .unsafeForce //causes latis to use the MemoizedFunction since StreamFunction is not complete
- //     .restructure(RddFunction) //memoize data in the form of a Spark RDD
+      //.unsafeForce //causes latis to use the MemoizedFunction since StreamFunction is not complete
+      .restructure(RddFunction) //memoize data in the form of a Spark RDD
       
       
     // Get the dataset of Hysics wavelengths: iw -> wavelength

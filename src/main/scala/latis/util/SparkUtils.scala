@@ -17,6 +17,8 @@ object SparkUtils {
     LatisProperties.get("spark.default.parallelism") foreach { n =>
       sconf = sconf.set("spark.default.parallelism", n)
     }
+
+    sconf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     
     // Register Kryo serializable classes
     sconf.registerKryoClasses(Array(

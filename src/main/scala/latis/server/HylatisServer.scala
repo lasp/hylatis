@@ -75,7 +75,15 @@ val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
           val Array(r,g,b) = as.tail.map(_.toDouble)
           RGBImagePivot(pivotVar, r, g, b)
         case ("uncurry", _) => Uncurry()
-        case ("read", _) => HysicsImageReaderOperation()
+        case ("bbox", args) => args.split(",") match {
+          case Array(x1, y1, x2, y2, n) => 
+            BoundingBoxResampling(x1.toDouble, 
+                                  y1.toDouble,
+                                  x2.toDouble,
+                                  y2.toDouble,
+                                  n.toInt)
+          case _ => throw new UnsupportedOperationException("usage: bbox(x1,y1,x2,y2,n)")
+        }
       }
 //        //for testing handling of http errors
 //        case ("httpError", s: String) => throw new HTTPException(s.toInt) 

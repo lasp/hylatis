@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <dataset name="goes_image_files"  
-         uri="file://data/goes16"  
+         uri="http://s3.amazonaws.com/noaa-goes16/ABI-L1b-RadF/2018/230/17"  
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
          xsi:noNamespaceSchemaLocation="fdml.xsd">
   <adapter class="latis.input.GoesGranuleListAdapter"/>

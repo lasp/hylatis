@@ -5,13 +5,27 @@ import org.apache.spark.rdd.RDD
 import fs2._
 import cats.effect.IO
 import latis.util.HylatisPartitioner
+import org.apache.spark.rdd.PairRDDFunctions
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
  */
 case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
-  
-  override def apply(v: DomainData): RddFunction = ???
+    
+  /**
+   * An RDD doesn't support "find" 
+   * flatMap and head?
+   */
+  override def apply(value: DomainData): Option[RangeData] = {
+    //TODO: implicit Interpolation strategy
+    //TODO: take advantage of ordering, find should at least short-circuit
+    
+    //TODO: Go back to Sample as type alias for (DomainData, RangeData)
+    // so we get implicit PairRDDFunctions
+    type Foo = (DomainData, RangeData)
+    val prdd: RDD[Foo] = ???
+    prdd.lookup(value).headOption
+  }
   
   override def samples: Seq[Sample] = 
     rdd.toLocalIterator.toSeq

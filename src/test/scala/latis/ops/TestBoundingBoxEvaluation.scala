@@ -4,7 +4,7 @@ import org.junit._
 import org.junit.Assert._
 import latis.data._
 
-class TestBoundingBoxResampling {
+class TestBoundingBoxBoundingBoxEvaluation {
   
   @Test
   def array2d() = {
@@ -18,9 +18,9 @@ class TestBoundingBoxResampling {
       )
     )
     
-    val bbox = BoundingBoxResampling(1.0,1.0,3.0,3.0,4)
+    val bbox = BoundingBoxEvaluation(1.0,1.0,3.0,3.0,4)
     val f2 = bbox.applyToData(f, null)
-    f2.samples.last match { //.foreach(println(_))
+    f2.unsafeForce.samples.last match { //.foreach(println(_))
       case Sample(_, RangeData(Number(v))) => assertEquals(6.0, v, 0)
     }
   }

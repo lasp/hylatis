@@ -77,7 +77,7 @@ val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
         case ("uncurry", _) => Uncurry()
         case ("bbox", args) => args.split(",") match {
           case Array(x1, y1, x2, y2, n) => 
-            BoundingBoxResampling(x1.toDouble, 
+            BoundingBoxEvaluation(x1.toDouble, 
                                   y1.toDouble,
                                   x2.toDouble,
                                   y2.toDouble,

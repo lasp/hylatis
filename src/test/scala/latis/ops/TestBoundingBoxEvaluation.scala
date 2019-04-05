@@ -4,7 +4,7 @@ import org.junit._
 import org.junit.Assert._
 import latis.data._
 
-class TestBoundingBoxBoundingBoxEvaluation {
+class TestBoundingBoxEvaluation {
   
   @Test
   def array2d() = {

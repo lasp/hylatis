@@ -38,7 +38,7 @@ case class GoesNetcdfAdapter() extends Adapter {
     val section = new Section(s"(0:5423:$scaleFactor, 0:5423:$scaleFactor)")
     val radianceData = radianceVariable.read(section)
     netCDFFile.close()
-    def getRadiance(i: Int, j: Int) = Vector(radianceData.getInt(scaledShape * j  + i))
+    def getRadiance(i: Int, j: Int) = RangeData(radianceData.getInt(scaledShape * j  + i))
     val vs2d: Array[Array[RangeData]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
 
     ArrayFunction2D(vs2d)

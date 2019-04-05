@@ -26,19 +26,19 @@ class TestGoesAbiReader {
   def bulk_load_goes = {
     val reader = GoesReader()
     val goes = reader.getDataset
-    println("dataSet: " + goes)
-    println("  model: " + goes.model)
-    println("  metadata: " + goes.metadata.properties)
-    println("  data: " + goes.data)
+    //println("dataSet: " + goes)
+    //println("  model: " + goes.model)
+    //println("  metadata: " + goes.metadata.properties)
+    //println("  data: " + goes.data)
     //Writer.write(goes)
     val ops: Seq[UnaryOperation] = Seq(
       GroupBy("ix", "iy")
      , Pivot(Vector(0, 1, 2), Vector("r","g","b")) 
     )
     val image = ops.foldLeft(goes)((ds, op) => op(ds))
-    println("Write final image")
+    //println("Write final image")
     //Writer.write(image)      // only use for downsampled datasets
-    ImageWriter("indexRGB.png").write(image)
+    ImageWriter("goesRGB.png").write(image)
   }
   
   
@@ -58,8 +58,14 @@ class TestGoesAbiReader {
   
   //@Test
   def aws_full_disk_image = {
-    val ds = GoesImageReader(new URI("file://data/goes16/OR_ABI-L1b-RadF-M3C08_G16_s20182301700501_e20182301711267_c20182301711312.nc")).getDataset
-    Writer.write(ds)
+    //val ds = GoesImageReader(new URI("file://data/goes16/OR_ABI-L1b-RadF-M3C08_G16_s20182301700501_e20182301711267_c20182301711312.nc")).getDataset
+    val ds = GoesImageReader(new URI("http://s3.amazonaws.com/noaa-goes16/ABI-L1b-RadF/2018/230/17/OR_ABI-L1b-RadF-M3C08_G16_s20182301700501_e20182301711267_c20182301711312.nc")).getDataset
+    //Writer.write(ds)
+    ds.data.unsafeForce.samples.head match {
+      case Sample(d,r) =>
+        println(d)
+        println(r)
+    }
   }
 
   //@Test

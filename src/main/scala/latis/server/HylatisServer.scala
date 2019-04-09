@@ -50,9 +50,12 @@ class HylatisServer extends HttpServlet {
       case _ => Seq.empty
     }
 
-     //DatasetSource.fromName(datasetName).getDataset(ops)
-val ds0 =  CacheManager.getDataset(datasetName).get //cached during init
-val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
+
+    //Dataset.fromName(datasetName)
+    //need to make sure CacheManager tries first
+    val ds0 = CacheManager.getDataset(datasetName).getOrElse(Dataset.fromName(datasetName))
+    // Apply operations
+    val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
 
     val writer: Writer = suffix match {
       case "png" => ImageWriter(response.getOutputStream, "png")

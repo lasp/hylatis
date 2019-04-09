@@ -31,3 +31,4 @@ a JAR than can be submitted using the `spark-submit` script.
 ### Image request
 
 http://localhost:8090/latis-hylatis/dap/hysics.png?rgbPivot(wavelength,630.87,531.86,463.79)
+http://localhost:8090/latis-hylatis/dap/goes.png?rgbPivot(iw,0,1,2)

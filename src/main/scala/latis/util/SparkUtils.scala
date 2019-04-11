@@ -25,7 +25,7 @@ object SparkUtils {
 //      classOf[latis.data.ScalarData[_]]
     ))
     
-    new SparkContext(sconf)
+    SparkContext.getOrCreate(sconf)
   }
       
   //hopefully not needed now that we are using RddFunction to handle the RDD.

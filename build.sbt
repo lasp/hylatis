@@ -47,6 +47,7 @@ lazy val hylatis = (project in file("."))
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith ".tsml" => MergeStrategy.first
       case "latis.properties"                            => MergeStrategy.first
+      case PathList("tec", "uom", "se", "format", "messages.properties") => MergeStrategy.first
       case PathList("META-INF", "jdom-info.xml")         => MergeStrategy.discard
       case x =>
         val strategy = (assemblyMergeStrategy in assembly).value

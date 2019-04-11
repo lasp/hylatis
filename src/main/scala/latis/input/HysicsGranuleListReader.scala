@@ -40,8 +40,8 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetReader {
       //TODO: use more suitable operations instead of this property
       val stride: Int = 4200 / imageCount
     
-      val samples: Stream[IO, Sample] = Stream.range(1, 4201, stride) map { i =>
-        val uri = f"${base}/img$i%04d.txt"
+      val samples: Stream[IO, Sample] = Stream.range(0, 4200, stride) map { i =>
+        val uri = f"${base}/img${i+1}%04d.txt"
         Sample(DomainData(i), RangeData(uri))
       }
 

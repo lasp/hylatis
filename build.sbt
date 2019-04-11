@@ -42,7 +42,7 @@ lazy val hylatis = (project in file("."))
       "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases",
       "Unidata Snaphots" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-snapshots"
     ),
-    assembly / mainClass := Some("latis.server.GoesServer"),
+    assembly / mainClass := Some("latis.server.HylatisServer"),
     assembly / assemblyMergeStrategy := {
       case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
       case PathList(ps @ _*) if ps.last endsWith ".tsml" => MergeStrategy.first

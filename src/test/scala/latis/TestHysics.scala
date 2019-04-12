@@ -314,8 +314,8 @@ class TestHysics {
     
     //val image = DatasetSource.fromName("hysics").getDataset(ops)
     val image = ops.foldLeft(hysics)((ds, op) => op(ds))
-    Writer.write(image)
-    //ImageWriter("xyRGB.png").write(image)
+    //Writer.write(image)
+    ImageWriter("xyRGB.png").write(image)
   }
 
 }

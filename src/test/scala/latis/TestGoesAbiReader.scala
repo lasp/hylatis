@@ -71,7 +71,7 @@ class TestGoesAbiReader {
   //@Test
   def goes_image_files = {
     val ds = Dataset.fromName("goes_image_files")
-    Writer.write(ds)
+    //Writer.write(ds)
   }
   
 }

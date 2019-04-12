@@ -19,6 +19,7 @@ import latis.util.SparkUtils._
 import latis.util.SparkUtils
 import latis.data.RddFunction
 import latis.util.CacheManager
+import cats.effect.IO
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
@@ -57,11 +58,12 @@ class HylatisServer extends HttpServlet {
     // Apply operations
     val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
 
-    val writer: Writer = suffix match {
-      case "png" => ImageWriter(response.getOutputStream, "png")
-      case _ => new Writer(response.getOutputStream)
+    suffix match {
+      case "png" => ImageWriter(response.getOutputStream, "png").write(ds)
+      case _ => //TODO: fix writing to output stream
+        val writer = OutputStreamWriter.unsafeFromOutputStream[IO](response.getOutputStream)
+        val z = TextEncoder.encode(ds) //.through(writer)
     }
-    writer.write(ds)
 
     response.setStatus(HttpServletResponse.SC_OK)
     response.flushBuffer()
@@ -86,6 +88,14 @@ class HylatisServer extends HttpServlet {
                                   y2.toDouble,
                                   n.toInt)
           case _ => throw new UnsupportedOperationException("usage: bbox(x1,y1,x2,y2,n)")
+        }
+        case ("gbox", args) => args.split(",") match {
+          case Array(x1, y1, x2, y2) => 
+            GeoBoundingBox(x1.toDouble, 
+                           y1.toDouble,
+                           x2.toDouble,
+                           y2.toDouble)
+          case _ => throw new UnsupportedOperationException("usage: gbox(lon1,lat1,lon2,lat2)")
         }
       }
 //        //for testing handling of http errors

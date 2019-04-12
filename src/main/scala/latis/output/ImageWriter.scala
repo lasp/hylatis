@@ -12,7 +12,7 @@ import java.io.OutputStream
 import java.io.FileOutputStream
 import latis.metadata._
 
-class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
+class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
   //TODO: add properties, WriterProperties that looks for and hides the "writer" part
   //TODO: define an Image type to enforce that it works with this writer, at least Cartesian
   //      support the various forms with transformations
@@ -21,7 +21,7 @@ class ImageWriter(out: OutputStream, format: String) extends Writer(out) {
   
   //TODO: assume (row, col) vs (x,y) ?
 
-  override def write(dataset: Dataset): Unit = {
+  def write(dataset: Dataset): Unit = {
     // Construct a BufferedImage based on the shape of the data
     val image: BufferedImage = dataset.model match {
       //assert that domain arity is 2; TODO: assert Cartesian

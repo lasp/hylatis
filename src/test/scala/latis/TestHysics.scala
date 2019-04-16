@@ -301,7 +301,7 @@ class TestHysics {
   
   @Test
   def bulk_load = {
-    // (iy, ix, wavelength) -> irradiance
+    // (iy, ix, wavelength) -> radiance
     val hysics = HysicsReader().getDataset
     
     val ops: Seq[UnaryOperation] = Seq(

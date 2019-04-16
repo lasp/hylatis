@@ -42,13 +42,13 @@ case class HysicsReader() extends DatasetReader {
     // Define operations to be applied to this dataset to complete the cube
     val ops: Seq[UnaryOperation] = Seq(
       HysicsImageReaderOperation(), // Load data from each granule
-      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance
+      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> radiance
     )
     
     // Apply Operations
     val ds2 = ops.foldLeft(ds)((ds, op) => op(ds))
     
-    // Substitue wavelength values: (iy, ix, wavelength) -> irradiance
+    // Substitue wavelength values: (iy, ix, wavelength) -> radiance
     //TODO: handle binary operations better
     val ds3 = Substitution()(ds2, wds)
     

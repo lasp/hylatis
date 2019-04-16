@@ -31,7 +31,7 @@ case class GoesReader() extends DatasetReader {
      
     val ops: Seq[UnaryOperation] = Seq(
       GoesImageReaderOperation(), // Load data from each granule
-      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> irradiance
+      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> radiance
     )
     
     // Apply Operations

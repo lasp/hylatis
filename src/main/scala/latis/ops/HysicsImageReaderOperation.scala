@@ -34,7 +34,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
   
   /**
    * Construct a function to convert samples of URIs to samples of image data
-   * used to make the hysics data cube: iy -> (ix, wavelength) -> irradiance
+   * used to make the hysics data cube: iy -> (ix, wavelength) -> radiance
    */
   def makeMapFunction(model: DataType): Sample => Sample = {
     //Read and broadcast the wavelength values
@@ -49,7 +49,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
       case Sample(domain, RangeData(uri: String)) =>
  //       val ws = bcWavelengths.value
  //val ws = wavelengths
-        val image = HysicsImageReader(new URI(uri)).getDataset // (ix, iw) -> irradiance
+        val image = HysicsImageReader(new URI(uri)).getDataset // (ix, iw) -> radiance
         
         /*
          * TODO: use a join to replace iw with w
@@ -77,7 +77,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
          * does it help?
          *   
          */
-//        //replace iw with wavelength values: (ix, wavelength) -> irradiance
+//        //replace iw with wavelength values: (ix, wavelength) -> radiance
 ////TODO: use operation, update model
 //        val sf = image.data map {
 //          case Sample(DomainData(ix, iw: Int), range) => Sample(DomainData(ix, ws(iw)), range)
@@ -91,7 +91,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction =
     data.map(makeMapFunction(model))
   
-  // iy -> (ix, iw) -> irradiance
+  // iy -> (ix, iw) -> radiance
   //TODO: map f to replace uri with image type, 
   //but can't get it without making HysicsImageReader with URI
   override def applyToModel(model: DataType): DataType =
@@ -102,7 +102,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
           Scalar(Metadata("ix") + ("type" -> "int")), 
           Scalar(Metadata("iw") + ("type" -> "int"))
         ),
-        Scalar(Metadata("irradiance") + ("type" -> "double"))
+        Scalar(Metadata("radiance") + ("type" -> "double"))
       )
     )
     

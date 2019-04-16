@@ -8,18 +8,18 @@ import java.net.URI
 
 /**
  * The Hysics dataset consists of 4200 "image" text files each with
- * irradiance in the "slit" and wavelength dimwnsion.
+ * radiance in the "slit" and wavelength dimwnsion.
  */
 case class HysicsImageReader(uri: URI) extends AdaptedDatasetReader {
    //TODO: replace with fdml
   
-   // (ix, iw) -> irradiance
+   // (ix, iw) -> radiance
   def model = Function(
     Tuple(
       Scalar(Metadata("ix") + ("type" -> "int")), 
       Scalar(Metadata("wavelength") + ("type" -> "double"))
     ),
-    Scalar(Metadata("irradiance") + ("type" -> "double"))
+    Scalar(Metadata("radiance") + ("type" -> "double"))
   )
 
   /**

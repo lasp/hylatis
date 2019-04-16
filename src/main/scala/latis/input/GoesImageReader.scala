@@ -12,7 +12,7 @@ case class GoesImageReader(uri: URI) extends AdaptedDatasetReader {
       Scalar(Metadata("iy") + ("type" -> "int")), 
       Scalar(Metadata("ix") + ("type" -> "int"))
     ),
-    Scalar(Metadata("irradiance") + ("type" -> "double"))
+    Scalar(Metadata("radiance") + ("type" -> "double"))
   )
 
 

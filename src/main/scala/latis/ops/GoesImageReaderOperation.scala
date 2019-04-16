@@ -17,7 +17,7 @@ case class GoesImageReaderOperation() extends UnaryOperation {
 
   /**
    * Construct a function to convert samples of URIs to samples of image data
-   * used to make the hysics data cube: iy -> (ix, wavelength) -> irradiance
+   * used to make the hysics data cube: iy -> (ix, wavelength) -> radiance
    */
   def makeMapFunction(model: DataType): Sample => Sample = {
     //Define function to map URIs to data samples
@@ -27,7 +27,7 @@ case class GoesImageReaderOperation() extends UnaryOperation {
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
       case Sample(domain, RangeData(uri: String)) =>
-        val image = GoesImageReader(new URI(uri)).getDataset // (iy, ix) -> irradiance
+        val image = GoesImageReader(new URI(uri)).getDataset // (iy, ix) -> radiance
         Sample(domain, RangeData(image.data))
     }
   }
@@ -35,7 +35,7 @@ case class GoesImageReaderOperation() extends UnaryOperation {
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction =
     data.map(makeMapFunction(model))
   
-  // iw -> (iy, ix) -> irradiance
+  // iw -> (iy, ix) -> radiance
   override def applyToModel(model: DataType): DataType =
     Function(
       Scalar(Metadata("iw") + ("type" -> "int")),
@@ -44,7 +44,7 @@ case class GoesImageReaderOperation() extends UnaryOperation {
           Scalar(Metadata("iy") + ("type" -> "int")), 
           Scalar(Metadata("ix") + ("type" -> "int"))
         ),
-        Scalar(Metadata("irradiance") + ("type" -> "double"))
+        Scalar(Metadata("radiance") + ("type" -> "double"))
       )
     )
     

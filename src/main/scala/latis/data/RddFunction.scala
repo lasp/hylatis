@@ -93,6 +93,7 @@ object RddFunction extends FunctionFactory {
 
   def fromSamples(samples: Seq[Sample]): MemoizedFunction =
     RddFunction(sparkContext.parallelize(samples))
+    //TODO: "count" the data to load it; configurable "cache" option
 
   override def restructure(data: SampledFunction): MemoizedFunction = data match {
     case rf: RddFunction => rf //no need to restructure

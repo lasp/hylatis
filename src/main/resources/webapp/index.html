@@ -32,6 +32,7 @@
 
          const spacecraft =
            document.querySelector("input[name=spacecraft]:checked").value;
+         const nPx = 1e5;
 
          const root = `/latis-hylatis/dap/${spacecraft}.png`;
 
@@ -42,7 +43,7 @@
          const boxDefined =
            [latN, latS, lonE, lonW].every(x => x.length > 0);
          const box =
-           (boxDefined) ? `&bbox(${lonW},${latN},${lonE},${latS})` : "";
+           (boxDefined) ? `&bbox(${lonW},${latS},${lonE},${latN},${nPx})` : "";
 
          const url = `${root}?${rgb}${box}`;
          window.location.href = url;

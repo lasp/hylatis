@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<dataset name="goes_image_files"  
-         uri="http://s3.amazonaws.com/noaa-goes16/ABI-L1b-RadF/2018/230/17"  
+<dataset name="goes_image_files"
+         uriS3="http://s3.amazonaws.com/noaa-goes16/ABI-L1b-RadF/2018/230/17"
+         uri="/data/goes/2018_230_17" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
          xsi:noNamespaceSchemaLocation="fdml.xsd">
   <adapter class="latis.input.GoesGranuleListAdapter"/>
   
   <function>
-    <scalar id="iw" type="integer"/>
+    <scalar id="wavelength" type="double"/>
     <scalar id="uri" type="text"/>
   </function>
   

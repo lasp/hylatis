@@ -23,6 +23,11 @@ object GOESUtils {
   val radiansPerPixel = 0.000056            // radians per pixel in full disk images
   val imageOffsetNS = 0.151844              // radians upper left corner offset from image center on y axis
   val imageOffsetEW = 0.151844              // radians upper left corner offset from image center on x axis
+          
+  val scaleFactor: Int = LatisProperties.get("goes.scale.factor") match {
+    case Some(s) => s.toInt
+    case None => 1
+  }
   
   /**
    * Latitude of point P calculated from the center of the earth.
@@ -132,8 +137,8 @@ object GOESUtils {
    */
   def radiansToIndex(yx: (Double, Double)): (Double, Double) = yx match {
     case (y, x) =>
-      val yIndex = (imageOffsetNS - y) / radiansPerPixel
-      val xIndex = (imageOffsetEW + x) / radiansPerPixel
+      val yIndex = (imageOffsetNS - y) / radiansPerPixel / scaleFactor
+      val xIndex = (imageOffsetEW + x) / radiansPerPixel / scaleFactor
       
       (yIndex, xIndex)
   }
@@ -154,7 +159,6 @@ object GOESUtils {
         val (sx, sy, sz) = computeViewVectorsfromLatLon(latLon)
         val elevationAngleNS = atan(sz / sx)
         val scanningAngleEW = asin(-sy / sqrt(pow(sx, 2) + pow(sy, 2) + pow(sz, 2)))
-        
         Some(radiansToIndex(elevationAngleNS, scanningAngleEW))
       } else {
         None

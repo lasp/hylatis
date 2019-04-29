@@ -48,13 +48,24 @@ case class GoesNetcdfAdapter() extends Adapter {
     * Return a NetcdfFile
     */
   def open(uri: URI): NetcdfFile = {
-    if (uri.getScheme.startsWith("s3")) {
-      val uriExpression = uri.getScheme + "://" + uri.getHost + uri.getPath
-      val raf = new ucar.unidata.io.s3.S3RandomAccessFile(uriExpression, 1<<15, 1<<24)
-      NetcdfFile.open(raf, uriExpression, null, null)
-    } else {
-      NetcdfFile.open(uri.getScheme + "://" + uri.getHost + "/" + uri.getPath)
+    uri.getScheme match {
+      case null => 
+        NetcdfFile.open(uri.getPath) //assume file path
+      case "s3" => 
+        val uriExpression = uri.getScheme + "://" + uri.getHost + uri.getPath
+        val raf = new ucar.unidata.io.s3.S3RandomAccessFile(uriExpression, 1<<15, 1<<24)
+        NetcdfFile.open(raf, uriExpression, null, null)
+      //TODO:  "file"
+      case _    =>
+        NetcdfFile.open(uri.getScheme + "://" + uri.getHost + "/" + uri.getPath)
     }
+//    if (uri.getScheme.startsWith("s3")) {
+//      val uriExpression = uri.getScheme + "://" + uri.getHost + uri.getPath
+//      val raf = new ucar.unidata.io.s3.S3RandomAccessFile(uriExpression, 1<<15, 1<<24)
+//      NetcdfFile.open(raf, uriExpression, null, null)
+//    } else {
+//      NetcdfFile.open(uri.getScheme + "://" + uri.getHost + "/" + uri.getPath)
+//    }
   }
   
 }

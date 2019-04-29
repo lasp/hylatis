@@ -20,6 +20,7 @@ import latis.util.SparkUtils
 import latis.data.RddFunction
 import latis.util.CacheManager
 import cats.effect.IO
+import fs2.text
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
@@ -33,7 +34,7 @@ class HylatisServer extends HttpServlet {
     //  and restructure it in a RddFunction with the latis dataset
     //  cached as "hysics"
     //TODO: lazy? need to force?
-    HysicsReader().getDataset
+//    HysicsReader().getDataset
     GoesReader().getDataset
   }
 
@@ -62,7 +63,10 @@ class HylatisServer extends HttpServlet {
       case "png" => ImageWriter(response.getOutputStream, "png").write(ds)
       case _ => //TODO: fix writing to output stream
         val writer = OutputStreamWriter.unsafeFromOutputStream[IO](response.getOutputStream)
-        val z = TextEncoder.encode(ds) //.through(writer)
+        TextEncoder.encode(ds)
+                   .through(text.utf8Encode)
+                   .through(writer.write)
+                   .compile.drain.unsafeRunSync()
     }
 
     response.setStatus(HttpServletResponse.SC_OK)
@@ -82,11 +86,11 @@ class HylatisServer extends HttpServlet {
         case ("uncurry", _) => Uncurry()
         case ("bbox", args) => args.split(",") match {
           case Array(x1, y1, x2, y2, n) => 
-            BoundingBoxEvaluation(x1.toDouble, 
-                                  y1.toDouble,
-                                  x2.toDouble,
-                                  y2.toDouble,
-                                  n.toInt)
+            GoesGridEvaluation(x1.toDouble, 
+                               y1.toDouble,
+                               x2.toDouble,
+                               y2.toDouble,
+                               n.toInt)
           case _ => throw new UnsupportedOperationException("usage: bbox(x1,y1,x2,y2,n)")
         }
         case ("gbox", args) => args.split(",") match {

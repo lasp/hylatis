@@ -16,6 +16,10 @@
      .no-border {
        border: none;
      }
+
+     .invisible {
+       display: none;
+     }
     </style>
 
     <script>
@@ -42,12 +46,32 @@
          // The bounding box is optional.
          const boxDefined =
            [latN, latS, lonE, lonW].every(x => x.length > 0);
-         const box =
-           (boxDefined) ? `&bbox(${lonW},${latS},${lonE},${latN},${nPx})` : "";
+         const useBox = boxDefined && spacecraft == "goes";
+         const box = (useBox) ? `&bbox(${lonW},${latS},${lonE},${latN},${nPx})` : "";
 
          const url = `${root}?${rgb}${box}`;
          window.location.href = url;
        };
+
+       showBndBox = function () {
+         document.getElementById("bnd-box").classList.remove("invisible")
+       };
+
+       hideBndBox = function () {
+         document.getElementById("bnd-box").classList.add("invisible")
+       };
+
+       // Show bounding box selection if GOES is selected.
+       document.getElementById("goes").onchange = showBndBox;
+
+       // Hide bounding box selection if HySICS is selected.
+       document.getElementById("hysics").onchange = hideBndBox;
+
+       // Show the box if we start with GOES checked. (Happens if you
+       // press back after making a GOES image.)
+       if (document.querySelector("input[name=spacecraft]:checked").value == "goes") {
+         document.getElementById("bnd-box").classList.remove("invisible");
+       }
      };
     </script>
   </head>
@@ -81,7 +105,7 @@
         <input id="b" type="number" min="0">
       </fieldset>
 
-      <fieldset>
+      <fieldset id="bnd-box" class="invisible">
         <legend>Bounding Box</legend>
 
         <fieldset class="no-border">

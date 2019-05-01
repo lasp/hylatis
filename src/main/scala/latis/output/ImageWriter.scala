@@ -90,9 +90,14 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     val bmax = bb.max
 
     //normalize to 0..1
+    /*
+     * TODO: undo hack
+     * Since the data coming in for GOES is ordered by (x, y) with y flipped compensate here.
+     * Not sure if this is the entire order issue, yet.
+     */
     val data = for {
+      col <- (0 until width).reverse
       row <- (0 until height)
-      col <- (0 until width)
     } yield {
       val i = row * width + col
       val r = (rb(i) / rmax).toFloat
@@ -100,8 +105,10 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
       val b = (bb(i) / bmax).toFloat
       new Color(r, g, b).getRGB
     }
-    val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-    image.setRGB(0, 0, width, height, data.toArray, 0, width)
+    //val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val image = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB)
+    //image.setRGB(0, 0, width, height, data.toArray, 0, width)
+    image.setRGB(0, 0, height, width, data.toArray, 0, height)
     image
   }
 

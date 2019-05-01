@@ -38,6 +38,7 @@ class TestGoesAbiReader {
       //GeoBoundingBox(-110, 30, -100, 40),  //Breaks index logic later
       //Contains("wavelength", 1370.0, 2200.0, 3900.0),
       GroupBy("ix", "iy"),
+      //GroupBy("iy", "ix"),
       Pivot(Vector(1370.0, 2200.0, 3900.0), Vector("r","g","b")) 
     )
     val image = ops.foldLeft(goes)((ds, op) => op(ds))
@@ -45,7 +46,7 @@ class TestGoesAbiReader {
     val ds = image.restructure(GoesArrayFunction2D) //TODO: do in GoesGridEvaluation
     
     //val gridOp = GoesGridEvaluation(-135.0, 50.0, -65.0, 25.0, 100)
-    val gridOp = GoesGridEvaluation(-135.0, 25.0, -65.0, 50.0, 1000000)
+    val gridOp = GoesGridEvaluation(-130.0, 20.0, -65.0, 55.0, 1000000)
     //val gridOp = GoesGridEvaluation(-110, -10, -90, 10, 1000000)
     val ds2 = gridOp(ds) 
     //TODO: not ordered

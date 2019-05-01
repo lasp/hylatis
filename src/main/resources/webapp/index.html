@@ -7,9 +7,8 @@
        display: inline;
      }
 
-     .rgb-box label {
+     .rgb-box span {
        display: inline-block;
-       text-align: left;
        width: 15px;
      }
 
@@ -93,16 +92,23 @@
       <fieldset class="rgb-box">
         <legend>RGB Wavelengths</legend>
 
-        <label for="r">R</label>
-        <input id="r" type="number" min="0">
-        <br>
+        <div>
+          <span>R</span>
+          <input id="r" type="number" min="0">
+          <label for="r">nm</label>
+        </div>
 
-        <label for="g">G</label>
-        <input id="g" type="number" min="0">
-        <br>
+        <div>
+          <span>G</span>
+          <input id="g" type="number" min="0">
+          <label for="g">nm</label>
+        </div>
 
-        <label for="b">B</label>
-        <input id="b" type="number" min="0">
+        <div>
+          <span>B</span>
+          <input id="b" type="number" min="0">
+          <label for="b">nm</label>
+        </div>
       </fieldset>
 
       <fieldset id="bnd-box" class="invisible">

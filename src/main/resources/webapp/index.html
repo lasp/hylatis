@@ -7,46 +7,84 @@
        display: inline;
      }
 
-     .rgb-box label {
+     .rgb-box span {
        display: inline-block;
-       text-align: left;
        width: 15px;
      }
 
      .no-border {
        border: none;
      }
+
+     .invisible {
+       display: none;
+     }
     </style>
 
     <script>
      window.onload = function () {
        document.getElementById("sub").onclick = function () {
-         const r = document.getElementById("r").value;
-         const g = document.getElementById("g").value;
-         const b = document.getElementById("b").value;
+         const spacecraft =
+           document.querySelector("input[name=spacecraft]:checked").value;
+
+         var r;
+         var g;
+         var b;
+
+         if (spacecraft === "hysics") {
+           r = document.getElementById("r").value;
+           g = document.getElementById("g").value;
+           b = document.getElementById("b").value;
+         } else {
+           r = document.getElementById("gr").value;
+           g = document.getElementById("gg").value;
+           b = document.getElementById("gb").value;
+         }
 
          const latN = document.getElementById("lat-n").value;
          const latS = document.getElementById("lat-s").value;
          const lonE = document.getElementById("lon-e").value;
          const lonW = document.getElementById("lon-w").value;
-
-         const spacecraft =
-           document.querySelector("input[name=spacecraft]:checked").value;
+         const nPx = 1e5;
 
          const root = `/latis-hylatis/dap/${spacecraft}.png`;
 
          // Assuming RGB are given.
-         const rgb = `rgbPivot(wavelength,${r},${g},${b})`;
+         const rgb = `rgbImagePivot(wavelength,${r},${g},${b})`;
 
          // The bounding box is optional.
          const boxDefined =
            [latN, latS, lonE, lonW].every(x => x.length > 0);
-         const box =
-           (boxDefined) ? `&bbox(${lonW},${latN},${lonE},${latS})` : "";
+         const useBox = boxDefined && spacecraft == "goes";
+         const box = (useBox) ? `&geoGridResample(${lonW},${latS},${lonE},${latN},${nPx})` : "";
 
          const url = `${root}?${rgb}${box}`;
          window.location.href = url;
        };
+
+       showGoes = function () {
+         document.getElementById("bnd-box").classList.remove("invisible");
+         document.getElementById("g-rgb-box").classList.remove("invisible");
+         document.getElementById("h-rgb-box").classList.add("invisible");
+       };
+
+       showHysics = function () {
+         document.getElementById("bnd-box").classList.add("invisible");
+         document.getElementById("g-rgb-box").classList.add("invisible");
+         document.getElementById("h-rgb-box").classList.remove("invisible");
+       };
+
+       // Show bounding box selection if GOES is selected.
+       document.getElementById("goes").onchange = showGoes;
+
+       // Hide bounding box selection if HySICS is selected.
+       document.getElementById("hysics").onchange = showHysics;
+
+       // Show the box if we start with GOES checked. (Happens if you
+       // press back after making a GOES image.)
+       if (document.querySelector("input[name=spacecraft]:checked").value == "goes") {
+         showGoes();
+       }
      };
     </script>
   </head>
@@ -65,22 +103,89 @@
         <input type="radio" id="goes" value="goes" name="spacecraft">
       </fieldset>
 
-      <fieldset class="rgb-box">
+      <fieldset class="rgb-box" id="h-rgb-box">
         <legend>RGB Wavelengths</legend>
 
-        <label for="r">R</label>
-        <input id="r" type="number">
-        <br>
+        <div>
+          <span>R</span>
+          <input id="r" type="number" min="0">
+          <label for="r">nm</label>
+        </div>
 
-        <label for="g">G</label>
-        <input id="g" type="number">
-        <br>
+        <div>
+          <span>G</span>
+          <input id="g" type="number" min="0">
+          <label for="g">nm</label>
+        </div>
 
-        <label for="b">B</label>
-        <input id="b" type="number">
+        <div>
+          <span>B</span>
+          <input id="b" type="number" min="0">
+          <label for="b">nm</label>
+        </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset class="rgb-box invisible" id="g-rgb-box">
+        <legend>RGB Wavelengths</legend>
+        <div>
+          <span>R</span>
+          <select id="gr">
+            <option value="1370">1370</option>
+            <option value="2200">2200</option>
+            <option value="3900">3900</option>
+            <option value="6200">6200</option>
+            <option value="6900">6900</option>
+            <option value="7300">7300</option>
+            <option value="8400">8400</option>
+            <option value="9600">9600</option>
+            <option value="10300">10300</option>
+            <option value="11200">11200</option>
+            <option value="12300">12300</option>
+            <option value="13300">13300</option>
+          </select>
+          <label for="gr">nm</label>
+        </div>
+
+        <div>
+          <span>G</span>
+          <select id="gg">
+            <option value="1370">1370</option>
+            <option value="2200">2200</option>
+            <option value="3900">3900</option>
+            <option value="6200">6200</option>
+            <option value="6900">6900</option>
+            <option value="7300">7300</option>
+            <option value="8400">8400</option>
+            <option value="9600">9600</option>
+            <option value="10300">10300</option>
+            <option value="11200">11200</option>
+            <option value="12300">12300</option>
+            <option value="13300">13300</option>
+          </select>
+          <label for="gg">nm</label>
+        </div>
+
+        <div>
+          <span>B</span>
+          <select id="gb">
+            <option value="1370">1370</option>
+            <option value="2200">2200</option>
+            <option value="3900">3900</option>
+            <option value="6200">6200</option>
+            <option value="6900">6900</option>
+            <option value="7300">7300</option>
+            <option value="8400">8400</option>
+            <option value="9600">9600</option>
+            <option value="10300">10300</option>
+            <option value="11200">11200</option>
+            <option value="12300">12300</option>
+            <option value="13300">13300</option>
+          </select>
+          <label for="gb">nm</label>
+        </div>
+      </fieldset>
+
+      <fieldset id="bnd-box" class="invisible">
         <legend>Bounding Box</legend>
 
         <fieldset class="no-border">

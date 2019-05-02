@@ -50,13 +50,13 @@
          const root = `/latis-hylatis/dap/${spacecraft}.png`;
 
          // Assuming RGB are given.
-         const rgb = `rgbPivot(wavelength,${r},${g},${b})`;
+         const rgb = `rgbImagePivot(wavelength,${r},${g},${b})`;
 
          // The bounding box is optional.
          const boxDefined =
            [latN, latS, lonE, lonW].every(x => x.length > 0);
          const useBox = boxDefined && spacecraft == "goes";
-         const box = (useBox) ? `&bbox(${lonW},${latS},${lonE},${latN},${nPx})` : "";
+         const box = (useBox) ? `&geoGridResample(${lonW},${latS},${lonE},${latN},${nPx})` : "";
 
          const url = `${root}?${rgb}${box}`;
          window.location.href = url;

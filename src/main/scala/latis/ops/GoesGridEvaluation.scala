@@ -1,7 +1,7 @@
 package latis.ops
 
 import latis.data._
-import latis.model.DataType
+import latis.model._
 import latis.util.GOESUtils._
 
 import scala.math._
@@ -38,7 +38,14 @@ class GoesGridEvaluation(lon1: Double, lat1: Double, lon2: Double, lat2: Double,
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
     GoesArrayFunction2D.restructure(data)(grid)
   }
-
+  
+  // Hack to get the model right
+  override def applyToModel(model: DataType): DataType = {
+    Function(
+      Tuple(Scalar("longitude"), Scalar("latitude")),
+      Tuple(Scalar("red"), Scalar("green"), Scalar("blue"))
+    )
+  }
 }
 
 object GoesGridEvaluation {

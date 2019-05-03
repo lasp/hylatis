@@ -14,6 +14,7 @@ import latis.util.LatisProperties
 import latis.model.Dataset
 import latis.util.CacheManager
 import org.apache.spark.storage.StorageLevel
+import latis.model._
 
 /**
  * Read the Goes granule list dataset, cache it into Spark,
@@ -25,13 +26,23 @@ case class GoesReader() extends DatasetReader {
   
   def getDataset: Dataset = {
     // Load the granule list dataset into spark
-    val ds = Dataset.fromName("goes_image_files")
-      .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
-    //.unsafeForce 
-     
+    //val ds = Dataset.fromName("goes_image_files")   // wavelength -> uri
+    val ds: Dataset = {
+      val md = Metadata("goes_image_files")
+      val model = Function(
+        Scalar(Metadata("wavelength") + ("type" -> "double")),
+        Scalar(Metadata("uri") + ("type" -> "string"))
+      )
+      val uri = new URI(LatisProperties.get("goes.base.uri").get)
+      val data = (new GoesGranuleListAdapter)(uri)
+      Dataset(md, model, data)
+        .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
+        //.unsafeForce 
+    }
+    
     val ops: Seq[UnaryOperation] = Seq(
       GoesImageReaderOperation(), // Load data from each granule
-      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> radiance
+      Uncurry()  // Uncurry the dataset: (wavelength, iy, ix) -> radiance
     )
     
     // Apply Operations

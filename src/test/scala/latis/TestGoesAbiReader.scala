@@ -18,11 +18,14 @@ import java.io.File
 import java.awt.Color
 import latis.ops.Operation
 import latis.ops.Uncurry
-
+import cats.effect.IO
+import latis.util.GOESUtils.GOESGeoCalculator
+import fs2._
+import latis.util.StreamUtils._
 
 class TestGoesAbiReader {
 
-  //@Test
+  @Test
   def bulk_load_goes = {
     val reader = GoesReader()
     val goes = reader.getDataset
@@ -32,16 +35,38 @@ class TestGoesAbiReader {
     //println("  data: " + goes.data)
     //Writer.write(goes)
     val ops: Seq[UnaryOperation] = Seq(
-      GroupBy("ix", "iy")
-     , Pivot(Vector(0, 1, 2), Vector("r","g","b")) 
+      //GeoBoundingBox(-110, 30, -100, 40),  //Breaks index logic later
+      //Contains("wavelength", 1370.0, 2200.0, 3900.0),
+      GroupBy("ix", "iy"),
+      //GroupBy("iy", "ix"),
+      Pivot(Vector(1370.0, 2200.0, 3900.0), Vector("r","g","b")) 
     )
     val image = ops.foldLeft(goes)((ds, op) => op(ds))
-    //println("Write final image")
-    //Writer.write(image)      // only use for downsampled datasets
-    ImageWriter("goesRGB.png").write(image)
+
+    val ds = image.restructure(GoesArrayFunction2D) //TODO: do in GoesGridEvaluation
+    
+    //val gridOp = GoesGridEvaluation(-135.0, 50.0, -65.0, 25.0, 100)
+    val gridOp = GoesGridEvaluation(-130.0, 20.0, -65.0, 55.0, 1000000)
+    //val gridOp = GoesGridEvaluation(-110, -10, -90, 10, 1000000)
+    val ds2 = gridOp(ds) 
+    //TODO: not ordered
+    
+    //TextWriter(System.out).write(ds2)
+    ImageWriter("goesRGB.png").write(ds2)
   }
   
-  
+  @Test
+  def replicate_service = {
+    val goes = GoesReader().getDataset
+    val ops = Seq(
+      RGBImagePivot("wavelength", 1370.0, 2200.0, 3900.0),
+      GoesGridEvaluation(-135.0, 25.0, -65.0, 50.0, 100)
+    )
+    val ds = ops.foldLeft(goes)((ds, op) => op(ds))
+    
+    TextWriter(System.out).write(ds)
+    //ImageWriter("goesRGB.png").write(ds)
+  }
   
 //  @Test
 //  def read_NetCDF_S3_image = {
@@ -69,11 +94,30 @@ class TestGoesAbiReader {
   }
 
   //@Test
-  def goes_image_files = {
+  def goes_image_files() = {
     val ds = Dataset.fromName("goes_image_files")
     //Writer.write(ds)
+    TextWriter(System.out).write(ds)
   }
   
+  @Test
+  def calculator = {
+    val calc = GOESGeoCalculator("")
+    val lat = 10.0
+    val lon = -90.0
+    var (y, x) = calc.geoToYX((lat, lon)).get
+    println(y,x)
+  }
+  /* lat,lon    y, x
+   * 0,0	    (2711.5, 5406)
+   * 0,-90    (2711.5, 1893)
+   * 40,-115  (822, 1261)
+   * -40,-115 (4600, 1261)
+  var (y2, x1) = calc.geoToYX((lat1, lon1)).get //TODO: orElse error
+  var (y1, x2) = calc.geoToYX((lat2, lon2)).get //TODO: orElse error
+   * -10,-110 (3242, 980)  y2, x1
+   *  10, -90 (2167, 1908) y1, x2
+   */
 }
 
  

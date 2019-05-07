@@ -25,7 +25,7 @@ import latis.util.StreamUtils._
 
 class TestGoesAbiReader {
 
-  @Test
+  //@Test
   def bulk_load_goes = {
     val reader = GoesReader()
     val goes = reader.getDataset
@@ -55,7 +55,7 @@ class TestGoesAbiReader {
     ImageWriter("goesRGB.png").write(ds2)
   }
   
-  @Test
+  //@Test
   def replicate_service = {
     val goes = GoesReader().getDataset
     val ops = Seq(
@@ -100,7 +100,7 @@ class TestGoesAbiReader {
     TextWriter(System.out).write(ds)
   }
   
-  @Test
+  //@Test
   def calculator = {
     val calc = GOESGeoCalculator("")
     val lat = 10.0

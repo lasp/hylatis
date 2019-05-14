@@ -16,14 +16,11 @@ import latis.output.Writer
 case class GoesImageReaderOperation() extends UnaryOperation {
 
   /**
-   * Construct a function to convert samples of URIs to samples of image data
-   * used to make the hysics data cube: iy -> (ix, wavelength) -> radiance
+   * Construct a function to convert samples of URIs to samples of image data.
    */
   def makeMapFunction(model: DataType): Sample => Sample = {
     //Define function to map URIs to data samples
     (sample: Sample) => sample match {
-      // Sample of granule list: iy -> URI
-      //TODO: use model to determine sample value for URI
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
       case Sample(domain, RangeData(uri: String)) =>
@@ -35,14 +32,14 @@ case class GoesImageReaderOperation() extends UnaryOperation {
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction =
     data.map(makeMapFunction(model))
   
-  // wavelength -> (iy, ix) -> radiance
+  // wavelength -> (row, column) -> radiance
   override def applyToModel(model: DataType): DataType =
     Function(
       Scalar(Metadata("wavelength") + ("type" -> "int")),
       Function(
         Tuple(
-          Scalar(Metadata("iy") + ("type" -> "int")), 
-          Scalar(Metadata("ix") + ("type" -> "int"))
+          Scalar(Metadata("row") + ("type" -> "int")), 
+          Scalar(Metadata("column") + ("type" -> "int"))
         ),
         Scalar(Metadata("radiance") + ("type" -> "double"))
       )

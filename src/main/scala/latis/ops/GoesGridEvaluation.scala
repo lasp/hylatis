@@ -14,7 +14,7 @@ import scala.math._
  * box requests won't overlap. This is consistent with capturing the grid cell
  * centers with a half cell offset.
  */
-class GoesGridEvaluation(lon1: Double, lat1: Double, lon2: Double, lat2: Double, nx: Int, ny: Int) extends UnaryOperation {
+class GoesGridEvaluation(lon1: Double, lat1: Double, lon2: Double, lat2: Double, nx: Int, ny: Int) extends MapOperation {
   //val calc = GOESGeoCalculator("GOES_EAST")
   
   /**
@@ -32,18 +32,25 @@ class GoesGridEvaluation(lon1: Double, lat1: Double, lon2: Double, lat2: Double,
     DomainSet(dds)
   }
   
-  /**
-   * Gather the data into a local GoesArrayFunction2D and apply the resampling.
-   */
-  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
-    GoesArrayFunction2D.restructure(data)(grid)
-  }
+//  /**
+//   * Gather the data into a local GoesArrayFunction2D and apply the resampling.
+//   */
+//  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
+//    GoesArrayFunction2D.restructure(data)(grid)
+//  }
+
+  // evaluate the range of each sample
+  def makeMapFunction(model: DataType): Sample => Sample = (sample: Sample) =>
+    sample match {
+      case Sample(domain, RangeData(sf: SampledFunction)) =>
+        Sample(domain, RangeData(sf(grid)))
+    }
   
-  // Hack to get the model right
-  override def applyToModel(model: DataType): DataType = {
-    Function(
-      Tuple(Scalar("longitude"), Scalar("latitude")),
-      Tuple(Scalar("red"), Scalar("green"), Scalar("blue"))
+  
+  // Replace domain in nested function
+  override def applyToModel(model: DataType): DataType = model match {
+    case Function(domain, Function(_, range)) => Function(
+      domain, Function(Tuple(Scalar("longitude"), Scalar("latitude")), range)
     )
   }
 }

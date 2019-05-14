@@ -14,15 +14,47 @@ import latis.model._
  */
 case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Double) extends UnaryOperation {
   
-  override def apply(ds: Dataset): Dataset = {
-    val ops = Seq(
-      Contains(pivotVar, red, green, blue)
-      , GroupBy("ix", "iy")
-      , Pivot(Vector(red, green, blue), Vector("r","g","b"))  //TODO: evaluate w -> f
-    )
+  // Assume w -> (x, y) -> f
+  // Create (x, y) -> (r, g, b)
+  // Cartesian so we know each grid is the same
+  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
+    // Evaluate cube at each wavelength
+    val grids = Vector(red, green, blue).map { v =>
+      data(DomainData(v)) match {
+        case Some(RangeData(sf: MemoizedFunction)) => sf
+        case _ => ??? //TODO: error
+      }
+    }
     
-    ops.foldLeft(ds)((ds, op) => op(ds))
+    grids.reduce(join)
   }
+  
+  private def join(sf1: MemoizedFunction, sf2: MemoizedFunction): MemoizedFunction = {
+    val samples = (sf1.samples zip sf2.samples) map { 
+      // Assume same domain
+      case (Sample(d, r1), Sample(_, r2)) => Sample(d, r1 ++ r2)
+    }
+    
+    SampledFunction.fromSeq(samples)
+  }
+  
+  override def applyToModel(model: DataType): DataType = model match {
+    case Function(_, Function(domain, _)) => Function(
+      domain, Tuple(Scalar("r"), Scalar("g"), Scalar("b"))
+    )
+  }
+  
+  
+  // Assume (w, ix, iy) -> f
+//  override def apply(ds: Dataset): Dataset = {
+//    val ops = Seq(
+//      Contains(pivotVar, red, green, blue)
+//      , GroupBy("ix", "iy")
+//      , Pivot(Vector(red, green, blue), Vector("r","g","b"))  //TODO: evaluate w -> f
+//    )
+//    
+//    ops.foldLeft(ds)((ds, op) => op(ds))
+//  }
   
   /*
    * TODO: break into basic ops

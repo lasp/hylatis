@@ -41,7 +41,7 @@ case class GoesNetcdfAdapter() extends Adapter {
     def getRadiance(i: Int, j: Int) = RangeData(radianceData.getInt(scaledShape * j  + i))
     val vs2d: Array[Array[RangeData]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
 
-    ArrayFunction2D(vs2d)
+    GoesArrayFunction2D(vs2d) // has coordinate system transform built in
   }
   
   /**

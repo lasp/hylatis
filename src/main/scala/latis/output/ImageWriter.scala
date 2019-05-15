@@ -90,17 +90,20 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     val rmax = rb.max
     val gmax = gb.max
     val bmax = bb.max
+    val rmin = rb.min
+    val gmin = gb.min
+    val bmin = bb.min
 
-    // Normalize to 0..1 based on range of 0 to max value.
+    // Normalize to 0..1 based on range of min to max value.
     //TODO: make histogram and drop outer n%
     val data = for {
       row <- (0 until height)
       col <- (0 until width)
     } yield {
       val i = row * width + col
-      val r = (rb(i) / rmax).toFloat
-      val g = (gb(i) / gmax).toFloat
-      val b = (bb(i) / bmax).toFloat
+      val r = ((rb(i) - rmin) / (rmax - rmin)).toFloat
+      val g = ((gb(i) - gmin) / (gmax - gmin)).toFloat
+      val b = ((bb(i) - bmin) / (bmax - bmin)).toFloat
       new Color(r, g, b).getRGB
     }
     

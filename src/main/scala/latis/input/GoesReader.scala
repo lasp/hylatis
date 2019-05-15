@@ -37,8 +37,8 @@ case class GoesReader() extends DatasetReader {
       val uri = new URI(LatisProperties.get("goes.base.uri").get)
       val data = (new GoesGranuleListAdapter)(uri)
       Dataset(md, model, data)
-//        .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
-.unsafeForce 
+        .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
+//.unsafeForce 
     }
     
     val ops: Seq[UnaryOperation] = Seq(

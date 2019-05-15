@@ -10,18 +10,10 @@ import latis.util.LatisProperties
 
 /**
  * Adapter for reading radiance data from GOES files on S3 or from local file system.
+ * This dataset has row-major ordering from the north. Use row-col domain ordering.
  */
 case class GoesNetcdfAdapter() extends Adapter {
   val Shape: Int = 5424 //TODO: get from NetCDF file dimensions
-  //val ScaleFactor = 1        // full resolution
-  //val ScaleFactor = 226      // shrink the number of points in each dimension by this multiplier
-  //val ScaleFactor = 4
-  //val ScaleFactor = 6
-  //val ScaleFactor = 12
-  //val ScaleFactor = 24
-  //val ScaleFactor = 48
-  //val ScaleFactor = 113
-  //val ScaleFactor = 452
   val scaleFactor: Int = LatisProperties.get("goes.scale.factor") match {
     case Some(s) => s.toInt
     case None => 1
@@ -36,9 +28,10 @@ case class GoesNetcdfAdapter() extends Adapter {
     val netCDFFile: NetcdfFile = open(netCDFUri)
     val radianceVariable = netCDFFile.findVariable("Rad") 
     val section = new Section(s"(0:5423:$scaleFactor, 0:5423:$scaleFactor)")
-    val radianceData = radianceVariable.read(section)
+    val radianceData = radianceVariable.read(section) //2D short array
     netCDFFile.close()
-    def getRadiance(i: Int, j: Int) = RangeData(radianceData.getInt(scaledShape * j  + i))
+    def getRadiance(row: Int, col: Int) = RangeData(radianceData.getInt(scaledShape * row + col))
+    //TODO: try to suck in blob?
     val vs2d: Array[Array[RangeData]] = Array.tabulate(scaledShape, scaledShape)(getRadiance)
 
     GoesArrayFunction2D(vs2d) // has coordinate system transform built in

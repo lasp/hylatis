@@ -90,7 +90,7 @@ class HylatisServer extends HttpServlet {
         case ("uncurry", _) => Uncurry()
         case ("geoGridResample", args) => args.split(",") match {
           case Array(x1, y1, x2, y2, n) => 
-            GoesGridEvaluation(x1.toDouble, 
+            GeoGridImageResampling(x1.toDouble, 
                                y1.toDouble,
                                x2.toDouble,
                                y2.toDouble,

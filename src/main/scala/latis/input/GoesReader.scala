@@ -23,6 +23,7 @@ import latis.model._
  * it into spark each time.
  */
 case class GoesReader() extends DatasetReader {
+  //NOTE: The native image ordering is consistent with 0-based row-column ordering.
   
   def getDataset: Dataset = {
     // Load the granule list dataset into spark
@@ -37,12 +38,12 @@ case class GoesReader() extends DatasetReader {
       val data = (new GoesGranuleListAdapter)(uri)
       Dataset(md, model, data)
         .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD
-        //.unsafeForce 
+//.unsafeForce 
     }
     
     val ops: Seq[UnaryOperation] = Seq(
-      GoesImageReaderOperation(), // Load data from each granule
-      Uncurry()  // Uncurry the dataset: (wavelength, iy, ix) -> radiance
+      GoesImageReaderOperation(), // Load data from each granule: wavelength -> (row, column) -> radiance
+      //Uncurry()  // Uncurry the dataset: (wavelength, row, column) -> radiance
     )
     
     // Apply Operations

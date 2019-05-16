@@ -9,22 +9,14 @@ import org.apache.spark.rdd.PairRDDFunctions
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
+ * An RDD[Sample] is equivalent to an RDD[(DomainData, RangeData)]
+ * which allows us to use the Spark PairRDDFunctions.
  */
 case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
     
-  /**
-   * An RDD doesn't support "find" 
-   * flatMap and head?
-   */
   override def apply(value: DomainData): Option[RangeData] = {
-    //TODO: implicit Interpolation strategy
-    //TODO: take advantage of ordering, find should at least short-circuit
-    
-    //TODO: Go back to Sample as type alias for (DomainData, RangeData)
-    // so we get implicit PairRDDFunctions
-    type Foo = (DomainData, RangeData)
-    val prdd: RDD[Foo] = ???
-    prdd.lookup(value).headOption
+    //TODO: support interpolation
+    rdd.lookup(value).headOption
   }
   
   override def samples: Seq[Sample] = 

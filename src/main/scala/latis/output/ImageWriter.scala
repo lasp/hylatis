@@ -12,23 +12,22 @@ import java.io.OutputStream
 import java.io.FileOutputStream
 import latis.metadata._
 
+/**
+ * Create an png image of a Dataset of one of the shapes:
+ *   (row, col) -> (red, green, blue)
+ *   (row, col) -> RGBpackedInt
+ * Note that this uses row-major ordering starting with
+ * the first row at the top.
+ */
 class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
-  //TODO: add properties, WriterProperties that looks for and hides the "writer" part
-  //TODO: define an Image type to enforce that it works with this writer, at least Cartesian
-  //      support the various forms with transformations
-  //TODO: enumerate format options, not clearly defined
+  //TODO: define an Image type to enforce that it works with this writer
   //TODO: see other image types: https://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImage.html
-  
-  //TODO: assume (row, col) vs (x,y) ?
 
   def write(dataset: Dataset): Unit = {
     // Construct a BufferedImage based on the shape of the data
     val image: BufferedImage = dataset.model match {
-      //assert that domain arity is 2; TODO: assert Cartesian
-      //  domain: (x,y) //TODO: x -> y
-      //  range: (r,g,b) or packed color
       case Function(domain, range) => domain match {
-        case Tuple(_, _) => range match {
+        case Tuple(_, _) => range match { // 2D
           case _: Scalar      => makeImageFromPackedColor(dataset)
           case Tuple(_, _, _) => makeImageFromRGB(dataset)
           case _                  => ??? //TODO: invalid range type
@@ -66,7 +65,7 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
   }
 
   /**
-   * Make an Image assuming a Dataset of the form: (x,y) -> (r, g, b)
+   * Make an Image assuming a Dataset of the form: (row, col) -> (r, g, b)
    */
   private def makeImageFromRGB(dataset: Dataset): BufferedImage = {
     val rows = mutable.Set[Any]()
@@ -74,13 +73,16 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     val rb = mutable.ArrayBuffer[Double]()
     val gb = mutable.ArrayBuffer[Double]()
     val bb = mutable.ArrayBuffer[Double]()
+    
+    // Make sense of a Seq of Samples.
+    //TODO: take advantage of ArrayFunction2D and such
     unsafeStreamToSeq(dataset.data.streamSamples) foreach {
       case Sample(DomainData(row, col), RangeData(Number(r), Number(g), Number(b))) =>
         rows += row
         cols += col
-        rb += Math.max(0, r)
-        gb += Math.max(0, g)
-        bb += Math.max(0, b)
+        rb += r
+        gb += g
+        bb += b
     }
 
     val width = cols.size
@@ -88,27 +90,25 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     val rmax = rb.max
     val gmax = gb.max
     val bmax = bb.max
+    val rmin = rb.min
+    val gmin = gb.min
+    val bmin = bb.min
 
-    //normalize to 0..1
-    /*
-     * TODO: undo hack
-     * Since the data coming in for GOES is ordered by (x, y) with y flipped compensate here.
-     * Not sure if this is the entire order issue, yet.
-     */
+    // Normalize to 0..1 based on range of min to max value.
+    //TODO: make histogram and drop outer n%
     val data = for {
-      col <- (0 until width).reverse
       row <- (0 until height)
+      col <- (0 until width)
     } yield {
       val i = row * width + col
-      val r = (rb(i) / rmax).toFloat
-      val g = (gb(i) / gmax).toFloat
-      val b = (bb(i) / bmax).toFloat
+      val r = ((rb(i) - rmin) / (rmax - rmin)).toFloat
+      val g = ((gb(i) - gmin) / (gmax - gmin)).toFloat
+      val b = ((bb(i) - bmin) / (bmax - bmin)).toFloat
       new Color(r, g, b).getRGB
     }
-    //val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-    val image = new BufferedImage(height, width, BufferedImage.TYPE_INT_ARGB)
-    //image.setRGB(0, 0, width, height, data.toArray, 0, width)
-    image.setRGB(0, 0, height, width, data.toArray, 0, height)
+    
+    val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    image.setRGB(0, 0, width, height, data.toArray, 0, width)
     image
   }
 

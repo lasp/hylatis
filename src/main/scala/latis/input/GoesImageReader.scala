@@ -9,8 +9,8 @@ case class GoesImageReader(uri: URI) extends AdaptedDatasetReader {
    
   def model = Function(
     Tuple(
-      Scalar(Metadata("iy") + ("type" -> "int")), 
-      Scalar(Metadata("ix") + ("type" -> "int"))
+      Scalar(Metadata("row")    + ("type" -> "int")), 
+      Scalar(Metadata("column") + ("type" -> "int"))
     ),
     Scalar(Metadata("radiance") + ("type" -> "double"))
   )

@@ -32,24 +32,23 @@ case class HysicsReader() extends DatasetReader {
       //TODO: use config option to specify whether to use spark
       //.unsafeForce //causes latis to use the MemoizedFunction since StreamFunction is not complete
       .restructure(RddFunction) //memoize data in the form of a Spark RDD
-      
-      
-    // Get the dataset of Hysics wavelengths: iw -> wavelength
-    val wds = HysicsWavelengths()
-    //TODO: cache to spark via broadcast?
 
-      
     // Define operations to be applied to this dataset to complete the cube
     val ops: Seq[UnaryOperation] = Seq(
-      HysicsImageReaderOperation(), // Load data from each granule
-      Uncurry()  // Uncurry the dataset: (iy, ix, iw) -> radiance
+      HysicsImageReaderOperation(), // Load data from each granule; iy -> (ix, iw) -> radiance
+      Uncurry(),  // Uncurry the dataset: (iy, ix, iw) -> radiance
+      GroupBy("iw")  // iw -> (iy, ix) -> radiance
     )
     
     // Apply Operations
     val ds2 = ops.foldLeft(ds)((ds, op) => op(ds))
+
+    // Get the dataset of Hysics wavelengths: iw -> wavelength
+    val wds = HysicsWavelengths()
+    //TODO: cache to spark via broadcast?
     
-    // Substitue wavelength values: (iy, ix, wavelength) -> radiance
-    //TODO: handle binary operations better
+    // Substitute wavelength values: wavelength -> (iy, ix) -> radiance
+    //TODO: handle binary operations better, AST?
     val ds3 = Substitution()(ds2, wds)
     
     // Persist the RDD now that all operations have been applied

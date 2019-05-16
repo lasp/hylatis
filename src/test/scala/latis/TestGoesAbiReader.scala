@@ -27,46 +27,19 @@ class TestGoesAbiReader {
 
   //@Test
   def bulk_load_goes = {
-    val reader = GoesReader()
-    val goes = reader.getDataset
-    //println("dataSet: " + goes)
-    //println("  model: " + goes.model)
-    //println("  metadata: " + goes.metadata.properties)
-    //println("  data: " + goes.data)
-    //Writer.write(goes)
-    val ops: Seq[UnaryOperation] = Seq(
-      //GeoBoundingBox(-110, 30, -100, 40),  //Breaks index logic later
-      //Contains("wavelength", 1370.0, 2200.0, 3900.0),
-      GroupBy("ix", "iy"),
-      //GroupBy("iy", "ix"),
-      Pivot(Vector(1370.0, 2200.0, 3900.0), Vector("r","g","b")) 
-    )
-    val image = ops.foldLeft(goes)((ds, op) => op(ds))
-
-    val ds = image.restructure(GoesArrayFunction2D) //TODO: do in GoesGridEvaluation
-    
-    //val gridOp = GoesGridEvaluation(-135.0, 50.0, -65.0, 25.0, 100)
-    val gridOp = GoesGridEvaluation(-130.0, 20.0, -65.0, 55.0, 1000000)
-    //val gridOp = GoesGridEvaluation(-110, -10, -90, 10, 1000000)
-    val ds2 = gridOp(ds) 
-    //TODO: not ordered
-    
-    //TextWriter(System.out).write(ds2)
-    ImageWriter("goesRGB.png").write(ds2)
-  }
-  
-  //@Test
-  def replicate_service = {
     val goes = GoesReader().getDataset
-    val ops = Seq(
-      RGBImagePivot("wavelength", 1370.0, 2200.0, 3900.0),
-      GoesGridEvaluation(-135.0, 25.0, -65.0, 50.0, 100)
-    )
-    val ds = ops.foldLeft(goes)((ds, op) => op(ds))
     
-    TextWriter(System.out).write(ds)
-    //ImageWriter("goesRGB.png").write(ds)
+    val ops: Seq[UnaryOperation] = Seq(
+      //Contains("wavelength", 1370.0, 2200.0, 3900.0),
+      GeoGridImageResampling(-130, 0, -30, 50, 10000),
+      RGBImagePivot("wavelength", 1370.0, 2200.0, 3900.0)
+    )
+    
+    val ds = ops.foldLeft(goes)((ds, op) => op(ds))
+    //TextWriter(System.out).write(ds)
+    ImageWriter("goesRGB.png").write(ds)
   }
+
   
 //  @Test
 //  def read_NetCDF_S3_image = {

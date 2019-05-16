@@ -305,19 +305,15 @@ class TestHysics {
     val hysics = HysicsReader().getDataset
     
     val ops: Seq[UnaryOperation] = Seq(
-      //TODO: selection in nested function not working  Selection("ix >= 477"),
-      Contains("wavelength", 630.87, 531.86, 463.79),
+      //TODO: selection in nested function not working:  Selection("ix >= 477"),
       RGBImagePivot("wavelength", 630.87, 531.86, 463.79),
-      //, 
-      //, GroupBy("ix", "iy")
-      //, Pivot(Vector(630.87, 531.86, 463.79), Vector("r","g","b"))  //TODO: evaluate w -> f
-      //, XYTransform()
+      //XYTransform()
     )
     
     //val image = DatasetSource.fromName("hysics").getDataset(ops)
     val image = ops.foldLeft(hysics)((ds, op) => op(ds))
-    TextWriter(System.out).write(image)
-    //ImageWriter("hysicsRGB.png").write(image)
+    //TextWriter(System.out).write(image)
+    ImageWriter("hysicsRGB.png").write(image)
   }
 
 }

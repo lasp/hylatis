@@ -84,6 +84,7 @@ lazy val compilerFlags = Seq(
     "-unchecked",
     "-Xfuture",
     "-Xlint:-unused,_",
+    "-Ypartial-unification",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ywarn-unused",

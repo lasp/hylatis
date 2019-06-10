@@ -2,10 +2,11 @@ package latis
 
 import org.junit._
 import org.junit.Assert._
+import org.scalatest.junit.JUnitSuite
 import latis.model._
 import latis.data._
 
-class TestWavelengths {
+class TestWavelengths extends JUnitSuite {
   
   @Test
   def read() = {

@@ -2,9 +2,11 @@ package latis.ops
 
 import org.junit._
 import org.junit.Assert._
+import org.scalatest.junit.JUnitSuite
+
 import latis.data._
 
-class TestBoundingBoxEvaluation {
+class TestBoundingBoxEvaluation extends JUnitSuite {
   
   @Test
   def array2d() = {

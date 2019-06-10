@@ -2,6 +2,7 @@ package latis
 
 import org.junit._
 import org.junit.Assert._
+import org.scalatest.junit.JUnitSuite
 import scala.io.Source
 import latis.input._
 import latis.output._
@@ -18,7 +19,7 @@ import io.findify.s3mock._
 import latis.ops.Operation
 import latis.ops.Uncurry
 
-class TestHysics {
+class TestHysics extends JUnitSuite {
   
 //  //@Test
 //  def inspect_wavelength_file(): Unit = {

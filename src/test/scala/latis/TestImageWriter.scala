@@ -3,6 +3,7 @@ package latis
 import io.findify.s3mock._
 import org.junit._
 import org.junit.Assert._
+import org.scalatest.junit.JUnitSuite
 import scala.io.Source
 import latis.input._
 import latis.output._
@@ -23,7 +24,7 @@ import latis.util.GOESUtils.GOESGeoCalculator
 import fs2._
 import latis.util.StreamUtils._
 
-class TestImageWriter {
+class TestImageWriter extends JUnitSuite {
 
   val image2D_2x2 = {
     // row-col ordering

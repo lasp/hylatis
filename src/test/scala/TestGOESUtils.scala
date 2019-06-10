@@ -1,10 +1,11 @@
 import org.junit._
 import org.junit.Assert._
+import org.scalatest.junit.JUnitSuite
 
 import latis.util.GOESUtils
 import latis.util.GOESUtils.GOESGeoCalculator
 
-class TestGOESUtils {
+class TestGOESUtils extends JUnitSuite {
   // TODO: as this code is further generalized for GOES west and other GOES views, 
   // write a unit test for every function in GOESUtils
   val DELTA = 0.000001      // six decimal places

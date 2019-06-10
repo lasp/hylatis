@@ -2,9 +2,10 @@ package latis
 
 import org.junit._
 import org.junit.Assert._
+import org.scalatest.junit.JUnitSuite
 import latis.util.AWSUtils
 
-class TestAWS {
+class TestAWS extends JUnitSuite {
   
   //@Test
   def list_bucket = {

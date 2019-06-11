@@ -3,7 +3,6 @@ package latis.input
 import java.net.URI
 
 import latis.data._
-import latis.util.LatisProperties
 import fs2._
 import cats.effect.IO
 

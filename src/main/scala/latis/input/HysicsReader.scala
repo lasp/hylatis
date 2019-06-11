@@ -9,7 +9,6 @@ import scala.collection.mutable.ArrayBuffer
 import latis.util.HysicsUtils
 import latis.util.AWSUtils
 import java.net.URI
-import latis.util.LatisProperties
 import latis.model.Dataset
 import latis.util.CacheManager
 import org.apache.spark.storage.StorageLevel

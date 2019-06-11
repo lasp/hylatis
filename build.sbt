@@ -33,6 +33,7 @@ lazy val hylatis = (project in file("."))
       "com.amazonaws"               % "aws-java-sdk-s3" % "1.11.489",
       "co.fs2"                     %% "fs2-core"        % fs2Version,
       "co.fs2"                     %% "fs2-io"          % fs2Version,
+      "com.typesafe"                % "config"          % "1.3.4"
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(

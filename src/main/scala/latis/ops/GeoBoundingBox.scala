@@ -4,7 +4,7 @@ import latis.data._
 import latis.model.DataType
 import latis.util.GOESUtils
 import latis.util.GOESUtils.GOESGeoCalculator
-import latis.util.LatisProperties
+import latis.util.LatisConfig
 
 /**
  * Given the minimum (south-west) and maximum (north-east) coordinates for a 
@@ -26,7 +26,7 @@ class GeoBoundingBox(lon1: Double, lat1: Double, lon2: Double, lat2: Double) ext
   val calc = GOESGeoCalculator("")
   var (y2, x1) = calc.geoToYX((lat1, lon1)).get //TODO: orElse error
   var (y1, x2) = calc.geoToYX((lat2, lon2)).get //TODO: orElse error
-  val scale: Int = LatisProperties.get("goes.scale.factor").map(_.toInt).getOrElse(1)
+  val scale: Int = LatisConfig.getOrElse("hylatis.goes.scale-factor", 1)
   x1 = Math.round(x1 / scale)
   x2 = Math.round(x2 / scale)
   y1 = Math.round(y1 / scale)

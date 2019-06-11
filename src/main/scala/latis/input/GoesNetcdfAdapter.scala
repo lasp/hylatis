@@ -6,7 +6,7 @@ import ucar.nc2._
 
 import latis.data._
 import ucar.ma2.Section
-import latis.util.LatisProperties
+import latis.util.LatisConfig
 
 /**
  * Adapter for reading radiance data from GOES files on S3 or from local file system.
@@ -14,10 +14,7 @@ import latis.util.LatisProperties
  */
 case class GoesNetcdfAdapter() extends Adapter {
   val Shape: Int = 5424 //TODO: get from NetCDF file dimensions
-  val scaleFactor: Int = LatisProperties.get("goes.scale.factor") match {
-    case Some(s) => s.toInt
-    case None => 1
-  }
+  val scaleFactor: Int = LatisConfig.getOrElse("hylatis.goes.scale-factor", 1)
   val scaledShape = Shape / scaleFactor
   
   /**

@@ -12,9 +12,9 @@ object SparkUtils {
   private def makeSparkContext: SparkContext = {
     // Create Spark config based on defined properties
     var sconf = new SparkConf()
-    LatisProperties.get("spark.master").foreach(master => sconf = sconf.setMaster(master))
-    LatisProperties.get("spark.app").foreach(app => sconf = sconf.setAppName(app))
-    LatisProperties.get("spark.default.parallelism") foreach { n =>
+    LatisConfig.get("hylatis.spark.master").foreach(master => sconf = sconf.setMaster(master))
+    LatisConfig.get("hylatis.spark.app").foreach(app => sconf = sconf.setAppName(app))
+    LatisConfig.get("spark.default.parallelism") foreach { n =>
       sconf = sconf.set("spark.default.parallelism", n)
     }
 

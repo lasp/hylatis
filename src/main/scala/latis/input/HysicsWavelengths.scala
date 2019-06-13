@@ -3,7 +3,7 @@ package latis.input
 import latis.model._
 import latis.metadata._
 import latis.data._
-import latis.util.LatisProperties
+import latis.util.LatisConfig
 import java.net.URI
 import java.net.URI
 
@@ -35,9 +35,9 @@ object HysicsWavelengths {
       Scalar(Metadata("iw") + ("type" -> "int")),
       Scalar(Metadata("wavelength") + ("type" -> "double")))
 
-    def notFound = throw new RuntimeException("hysics.base.uri not defined")
+    def notFound = throw new RuntimeException("hylatis.hysics.base-uri not defined")
     //val defaultBase = "s3://hylatis-hysics-001/des_veg_cloud"
-    val base = LatisProperties.getOrElse("hysics.base.uri", notFound)
+    val base = LatisConfig.get("hylatis.hysics.base-uri").getOrElse(notFound)
     val uri = new URI(s"$base/wavelength.txt")
 
     val data = new MatrixTextAdapter(TextAdapter.Config(), model)(uri) match {

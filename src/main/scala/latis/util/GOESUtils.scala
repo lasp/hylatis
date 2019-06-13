@@ -24,10 +24,7 @@ object GOESUtils {
   val imageOffsetNS = 0.151844              // radians upper left corner offset from image center on y axis
   val imageOffsetEW = 0.151844              // radians upper left corner offset from image center on x axis
           
-  val scaleFactor: Int = LatisProperties.get("goes.scale.factor") match {
-    case Some(s) => s.toInt
-    case None => 1
-  }
+  val scaleFactor: Int = LatisConfig.getOrElse("hylatis.goes.scale-factor", 1)
   
   /**
    * Latitude of point P calculated from the center of the earth.

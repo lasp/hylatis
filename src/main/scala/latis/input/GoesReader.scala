@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 import latis.util.HysicsUtils
 import latis.util.AWSUtils
 import java.net.URI
-import latis.util.LatisProperties
+import latis.util.LatisConfig
 import latis.model.Dataset
 import latis.util.CacheManager
 import org.apache.spark.storage.StorageLevel
@@ -34,7 +34,7 @@ case class GoesReader() extends DatasetReader {
         Scalar(Metadata("wavelength") + ("type" -> "double")),
         Scalar(Metadata("uri") + ("type" -> "string"))
       )
-      val uri = new URI(LatisProperties.get("goes.base.uri").get)
+      val uri = new URI(LatisConfig.get("hylatis.goes.base-uri").get)
       val data = (new GoesGranuleListAdapter)(uri)
       Dataset(md, model, data)
         .restructure(RddFunction) //include this to memoize data in the form of a Spark RDD

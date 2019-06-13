@@ -10,7 +10,7 @@ import latis.model._
 import latis.util.HysicsUtils
 //import latis.util.AWSUtils
 import java.net.URI
-import latis.util.LatisProperties
+import latis.util.LatisConfig
 import fs2._
 import cats.effect.IO
 
@@ -35,7 +35,7 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetReader {
   def adapter: Adapter = new Adapter() {
     def apply(uri: URI): SampledFunction = {
       val base = uri.toString //"s3:/hylatis-hysics-001/des_veg_cloud"
-      val imageCount = LatisProperties.getOrElse("imageCount", "4200").toInt
+      val imageCount = LatisConfig.getOrElse("hylatis.hysics.image-count", 4200)
       // Use image count to compute a stride.
       //TODO: use more suitable operations instead of this property
       val stride: Int = 4200 / imageCount
@@ -55,7 +55,7 @@ object HysicsGranuleListReader {
   
   def apply() = {
     val defaultURI = "s3://hylatis-hysics-001/des_veg_cloud"
-    val uri = LatisProperties.getOrElse("hysics.base.uri", defaultURI)
+    val uri = LatisConfig.getOrElse("hylatis.hysics.base-uri", defaultURI)
     new HysicsGranuleListReader(URI.create(uri))
   }
 

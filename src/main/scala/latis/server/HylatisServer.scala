@@ -11,7 +11,6 @@ import latis.output._
 import latis.input._
 import latis.util.RegEx._
 import java.net.URLDecoder
-import latis.util.LatisProperties
 import latis.model._
 import latis.metadata._
 import latis.util.StreamUtils._

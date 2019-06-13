@@ -18,9 +18,9 @@ trait S3MockFixture extends BeforeAndAfterAll { this: Suite =>
 
   /** Start S3Mock. */
   override def beforeAll(): Unit = {
-    val port = LatisProperties.get("s3mock.port").getOrElse(
-      throw new RuntimeException("Set s3mock.port")
-    ).toInt
+    val port = LatisConfig.getInt("hylatis.s3mock.port").getOrElse(
+      throw new RuntimeException("Set hylatis.s3mock.port")
+    )
 
     s3 = S3Mock(port)
     s3.start

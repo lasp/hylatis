@@ -1,6 +1,5 @@
 package latis.util
 
-import latis.util.LatisProperties._
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.AnonymousAWSCredentials
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
@@ -9,8 +8,8 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 object AWSUtils {
   
   val s3Client = for {
-    endpoint <- get("aws.endpoint")
-    region <- get("aws.region")
+    endpoint <- LatisConfig.get("hylatis.aws.endpoint")
+    region <- LatisConfig.get("hylatis.aws.region")
   } yield {
     AmazonS3ClientBuilder
       .standard

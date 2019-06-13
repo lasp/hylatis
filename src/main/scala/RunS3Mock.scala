@@ -1,12 +1,12 @@
 import io.findify.s3mock.S3Mock
-import latis.util.LatisProperties
+import latis.util.LatisConfig
 
 
 object RunS3Mock extends App {
   
   for {
-    port <- LatisProperties.get("s3mock.port")
-    dir  <- LatisProperties.get("s3mock.dir")
-  } yield S3Mock(port = port.toInt, dir = dir).start
+    port <- LatisConfig.getInt("hylatis.s3mock.port")
+    dir  <- LatisConfig.get("hylatis.s3mock.dir")
+  } yield S3Mock(port = port, dir = dir).start
   
 }

@@ -11,25 +11,17 @@ import latis.output.TextWriter
 import latis.ops.RGBImagePivot
 import latis.output.ImageWriter
 import latis.data.RddFunction
+import latis.input.ModisReader
 
 class TestModis {
   
-  // (iw, ix, iy) -> EV_1KM_RefSB
-  val model = Function(
-    Tuple(Scalar("iw"), Scalar("ix"), Scalar("iy")),
-    Scalar("EV_1KM_RefSB")
-  )
-  
   @Test
-  def read() = {
+  def reader() = {
     val uri = new URI("/data/modis/MYD021KM.A2014230.1940.061.2018054170416.hdf")
-    val data = ModisNetcdfAdapter(model)(uri)
-    val ds = Dataset(Metadata("modis"), model, data).restructure(RddFunction)
-    
-    val ds2 = GroupBy("iw")(ds)
-    val image = RGBImagePivot("iw", 0,1,2)(ds2)
-    //StreamUtils.unsafeStreamToSeq(ds2.data.streamSamples.take(10)) foreach println
-    //TextWriter(System.out).write(ds3)
-    ImageWriter("modisRGB.png").write(image)
+    val ds = ModisReader(uri).getDataset
+    //TextWriter(System.out).write(ds)
+    val image = RGBImagePivot("band", 1.0, 4.0, 2.0)(ds)
+    //TextWriter(System.out).write(image)
+    ImageWriter("/data/modis/modisRGB.png").write(image)
   }
 }

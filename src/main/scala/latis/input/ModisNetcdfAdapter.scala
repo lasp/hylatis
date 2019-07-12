@@ -36,6 +36,8 @@ case class ModisNetcdfAdapter(varName: String) extends Adapter {
 
 import scala.collection.JavaConverters._
 import latis.util.StreamUtils
+import ucar.ma2.{Range,Section}
+import latis.util.LatisConfig
 
 /**
  * Express a NetCDF file as a SampledFunction.
@@ -59,23 +61,32 @@ case class NetcdfFunction(ncFile: NetcdfFile, varName: String) extends SampledFu
     val ncvar = ncFile.findVariable(varName)
     
     val bands: Array[Float] = getBands(varName)
-    val nw = bands.length
     
     val scales:  Array[Float] = ncvar.findAttribute("radiance_scales")
       .getValues.copyTo1DJavaArray.asInstanceOf[Array[Float]]
     val offsets: Array[Float] = ncvar.findAttribute("radiance_offsets")
       .getValues.copyTo1DJavaArray.asInstanceOf[Array[Float]]
     
-    val shape = ncvar.getShape //15, 2030, 1354
-    //val (nx, ny) = (shape(1), shape(2))
-val (nx, ny) = (20,20) //TODO: apply scale factor
-    val ncarr = ncvar.read(Array(0,0,0), Array(nw,nx,ny)) //read into memory yet? slow so probably yes
+    val shape = ncvar.getShape //e.g. [15, 2030, 1354]
+    val stride = LatisConfig.getOrElse("hylatis.modis.stride", 1)
+    val section = new Section(
+      new Range(shape(0)),
+      new Range(0, shape(1)-1, stride),
+      new Range(0, shape(2)-1, stride)
+    )
+    val (nw, nx, ny) = section.getShape match {case Array(nw, nx, ny) => (nw, nx, ny)}
+    
+    val ncarr = ncvar.read(section)
     val samples = for {
       iw <- 0 until nw
       ix <- 0 until nx
       iy <- 0 until ny
       index = iy + ix * ny + iw * nx * ny
-      value = scales(iw) * (ncarr.getShort(index) - offsets(iw))
+      value = ncarr.getShort(index) match {
+        // Invalid if raw scaled int > 32767
+        case si if si > 32767 => Float.NaN
+        case si => scales(iw) * (si - offsets(iw))
+      }
     } yield Sample(DomainData(bands(iw),ix,iy), RangeData(value))
     
     StreamUtils.seqToIOStream(samples)

@@ -56,20 +56,26 @@ case class NetcdfFunction(ncFile: NetcdfFile, varName: String) extends SampledFu
     //???which does Hysics use???
     // Should we use standard names for swath dimensions instead of x, y?
     
+    val ncvar = ncFile.findVariable(varName)
+    
     val bands: Array[Float] = getBands(varName)
     val nw = bands.length
     
-    val ncvar = ncFile.findVariable(varName)
+    val scales:  Array[Float] = ncvar.findAttribute("radiance_scales")
+      .getValues.copyTo1DJavaArray.asInstanceOf[Array[Float]]
+    val offsets: Array[Float] = ncvar.findAttribute("radiance_offsets")
+      .getValues.copyTo1DJavaArray.asInstanceOf[Array[Float]]
+    
     val shape = ncvar.getShape //15, 2030, 1354
     //val (nx, ny) = (shape(1), shape(2))
-    val (nx, ny) = (20,20) //TODO: apply scale factor
+val (nx, ny) = (20,20) //TODO: apply scale factor
     val ncarr = ncvar.read(Array(0,0,0), Array(nw,nx,ny)) //read into memory yet? slow so probably yes
     val samples = for {
       iw <- 0 until nw
       ix <- 0 until nx
       iy <- 0 until ny
       index = iy + ix * ny + iw * nx * ny
-      value = ncarr.getShort(index)
+      value = scales(iw) * (ncarr.getShort(index) - offsets(iw))
     } yield Sample(DomainData(bands(iw),ix,iy), RangeData(value))
     
     StreamUtils.seqToIOStream(samples)

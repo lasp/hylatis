@@ -33,8 +33,10 @@ class HylatisServer extends HttpServlet {
     //  and restructure it in a RddFunction with the latis dataset
     //  cached as "hysics"
     //TODO: lazy? need to force?
+    //TODO: define HysicsDataset instead of going through reader?
     HysicsReader().getDataset
     GoesReader().getDataset
+    ModisReader().getDataset
   }
 
   override def doGet(

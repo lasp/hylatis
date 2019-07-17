@@ -4,6 +4,7 @@ import latis.data._
 import latis.model._
 import latis.metadata.Metadata
 import latis.ops._
+import latis.util._
 
 import java.net.URI
 
@@ -25,8 +26,15 @@ import java.net.URI
  * file has longitudes and latitudes (scaled) but they don't
  * define a Cartesian coordinate system.
  */
-case class ModisReader(uri: URI) extends DatasetReader {
-  //TODO: scale radiance values (HYLATIS-210)
+case class ModisReader() extends DatasetReader {
+  
+  /**
+   * Get the URI for the MODIS data file to read.
+   */
+  val uri: URI = LatisConfig.get("hylatis.modis.uri") match {
+    case Some(s) => new URI(s) //TODO: invalid URI
+    case _ => ??? //TODO: uri not defined
+  }
       
   /**
    * Define the model for each uncurried component of the

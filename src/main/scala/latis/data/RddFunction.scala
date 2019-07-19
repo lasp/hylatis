@@ -62,7 +62,6 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
       }
         
     //val partitioner = new HylatisPartitioner(4)
-    implicit val ordering = DomainOrdering
     val rdd2 = rdd.groupBy(groupByFunction)  //TODO: look into PairRDDFunctions.aggregateByKey or PairRDDFunctions.reduceByKey
                   .map(p => agg(p._1, p._2))
                   .sortBy(s => s.domain)

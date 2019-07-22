@@ -11,6 +11,7 @@ import scala.collection.mutable.SortedMap
 import latis.util.CoordinateSystemTransform
 import latis.metadata.Metadata
 import latis.output.TextWriter
+import scala.collection.mutable.Buffer
 
 class TestModis {
   
@@ -83,117 +84,88 @@ class TestModis {
      * 
      * make SF from DomainSet and range seq
      */
-    val xs: Array[Any] = Array.tabulate(50)((i: Int) => 0.2 * i)
-    val ys: Array[Any] = Array.tabulate(50)((i: Int) => 0.2 * i)
-    val vs: Array[Array[Any]] = Array.tabulate(100, 100)((i: Int, j: Int) => 1.0 * i * j) 
-    val origSF = IndexedFunction2D(xs, ys, vs)
-    //origSF.samples foreach println
     
-    //Define CSR for new grid, transform to/from index space
-    /*
-     * TODO: generalize CSXs, property tests
-     * CSX(CSR1, CSR2)
-     *   csx. to, from?
-     * just a bijective function
-     *   CSX: p1 <=> p2, d is a point in the domain, DomainData
-     *     2D: (x1, y1) <=> (x2, y2)
-     *     apply
-     *     inverse.apply
-     * can we construct a CSX given 2 CSRs? 
-     *   what would a CSR need?
-     *   only valid if all use same space? e.g. lon,lat
-     *   don't see how
-     *   could combine 2 CSXs if they share a CS space
-     * we probably just need to think in terms of bijective function
-     *   have to, from functions as vals
-     *   inverse makes a new one with to,from swapped? 
-     */
-    val csx = CoordinateSystemTransform(
-      // Forward transform
-      (data: DomainData) => data match {
-        case DomainData(ix: Int, iy: Int) =>
-          DomainData(1.0 * (ix + 1), 2.0 * (iy + 1))
-        case _ => ??? //TODO: error, invalid data
-      },
-      // Reverse transform: (x, y) => (ix, iy)
- //TODO: round such that we are cell-centered
-      (data: DomainData) => data match {
-        case DomainData(x: Double, y: Double) =>
-          DomainData(x.toInt - 1, (y/2.0).toInt - 1)
-        case _ => ??? //TODO: error, invalid data
-      }
-    )
+    // Define original Function
+    val (onx, ony) = (50, 50)
+    val set = LinearSet2D(0.2, 1.0, onx, 0.2, 1.0, ony)
+    val values = for {
+      ix <- (0 until onx)
+      iy <- (0 until ony)
+    } yield RangeData(1.0 * ix * iy)
+    val origSF = SetFunction(set, values)
+    //origSF.samples foreach println
     
     // Define regular grid to resample onto
     val (nx, ny) = (3,4)
-    val domainSet: DomainSet = DomainSet(
-      for {
-        ix <- 0 until nx
-        iy <- 0 until ny
-      } yield csx(DomainData(ix, iy))
-    )
+    val domainSet = LinearSet2D(1, 2.0, nx, 1, 2.0, ny)
     //domainSet.elements foreach println
+
+    val cells: Array[Buffer[Sample]] = 
+      Array.fill(domainSet.length)(Buffer.empty)
     
-    // Map (x, y) points of target (regular) grid to the Seq of Samples that fall in that cell
-    //val cells = SortedMap[(Double,Double), Seq[Sample]]() 
-    val cells = SortedMap[DomainData, Seq[Sample]]() 
-    /*
-     * this is effectively a SF, but need to be able to mutate, build
-     * use CartesianMap2D?, wrap as SF
-     */
     origSF.samples foreach {
-      /*
-       * Compute which new cell to put this sample in
-       *   could be multiple to support richer interp
-       * Use inverse of domain set generation math (CSX) to get index
-       * Note: this origSF needs to have same domain type as target
-       *   TODO: apply CSX to go from native to target, e.g. modis index to lon,lat
-       *   
-       * should we keep the cells in index space?
-       * could use 2D array
-       * but so close to being the SF we want
-       * Ints are smaller
-       */
       case sample @ Sample(domain, _) =>
         // (x, y) looking for a home in the regular grid (x2, y2) 
-        // 
-        //indices of the target cell = key into cells Map
-        val d2 = csx.inverse(domain)
-        val (ix, iy) = d2 match {
-          case DomainData(ix: Int, iy: Int) => (ix, iy)
-        }
-        
-        // Add the orig Sample into the appropriate cell of the target domain set
-        val z = cells.get(d2) 
-        z match {
-          case Some(s) => cells += d2 -> (s :+ sample)
-          case None => 
-            if (ix >= 0 && ix < nx && iy >= 0 && iy < ny) 
-              cells += d2 -> Seq(sample)
-            //else sample outside desired grid
-        }
+        // Put sample into cells array by index of the target grid
+        val index = domainSet.indexOf(domain)
+        if (index >= 0 && index < domainSet.length) cells(index) += sample
+        //else out of bounds so ignore
     }
     //cells foreach println
     
-    // Make new SF from cells Map
-    val samples = cells.toSeq map {
-      case (domain, samples) =>
-        Sample(csx(domain), RangeData(SeqFunction(samples)))
+    // Define function to compute the distance between two DomainData
+    val distance = (dd1: DomainData, dd2: DomainData) => {
+      //TODO: assert same length
+      //TODO: support any Numeric
+      val squares = (dd1 zip dd2) map {
+        case (d1: Double, d2: Double) => Math.pow((d2 - d1), 2)
+      }
+      Math.sqrt(squares.sum)
     }
-    val data = SeqFunction(samples)
     
+    // Make a new SF with the samples in each cell then evaluate it
+    // with the domain value of that cell to get the final range value.
+    val range: Seq[RangeData] = (domainSet.elements zip cells) map { 
+      case (domain, samples) =>
+        //TODO: use SF that is more suitable for interp
+        //val f = SeqFunction(samples) //TODO: specify interp strategy
+        //f(data) getOrElse ??? //TODO: fill data
+        
+        // Do interp here until SF has it
+        /*
+         * Interpolation
+         * need access to all the samples of the SF
+         * awkward to construct implicitly? generally want to be explicit anyway or via config
+         * *should SF extend/mixin an interpolation?
+         * may need to explore combinations of SF structure and interp type
+         * simply built in to the SF.apply? that is effectively the interp API
+         * or separate interp? function=?
+         * 
+         */
+        // Nearest neighbor
+        val nearestSample = samples minBy {
+          case Sample(dd, _) => distance(domain, dd)
+        }
+        //val newSample = Sample(domain, nearestSample.range)
+        nearestSample.range
+    }
+    
+    // Build new Dataset
+    //Note: could build samples above, but this way we preserve the topology of the regular grid
+    val data = SetFunction(domainSet, range)
+
     val model = Function(
       Tuple(
         Scalar(Metadata("id" -> "x", "type" -> "double")),
         Scalar(Metadata("id" -> "y", "type" -> "double"))
       ),
-      Function(
-        Tuple(
-          Scalar(Metadata("id" -> "x0", "type" -> "double")),
-          Scalar(Metadata("id" -> "y0", "type" -> "double"))
-        ),
+//      Function(
+//        Tuple(
+//          Scalar(Metadata("id" -> "x0", "type" -> "double")),
+//          Scalar(Metadata("id" -> "y0", "type" -> "double"))
+//        ),
         Scalar(Metadata("id" -> "v", "type" -> "double"))
-      )
+//      )
     )
     
     val md = Metadata("modis_test")

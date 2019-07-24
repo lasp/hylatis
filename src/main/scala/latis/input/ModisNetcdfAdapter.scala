@@ -12,7 +12,7 @@ case class ModisNetcdfAdapter(varName: String) extends Adapter {
   //TODO: get orig varName from the model? metadata?
   
   def apply(uri: URI): SampledFunction =
-    NetcdfFunction(open(uri), varName)
+    NetcdfFunction0(open(uri), varName)
   
   /**
     * Return a NetcdfFile
@@ -42,10 +42,11 @@ import latis.util.LatisConfig
 /**
  * Express a NetCDF file as a SampledFunction.
  */
-case class NetcdfFunction(ncFile: NetcdfFile, varName: String) extends SampledFunction {
+case class NetcdfFunction0(ncFile: NetcdfFile, varName: String) extends SampledFunction {
   //TODO: factor out class?
   //TODO: NetcdfDataset?
   //TODO: override "force" to make ArrayFunctionND
+  //TODO: use model instead of single varName
   
   def streamSamples: Stream[IO, Sample] = {
     //Assume 3D array, for now
@@ -84,6 +85,7 @@ case class NetcdfFunction(ncFile: NetcdfFile, varName: String) extends SampledFu
       index = iy + ix * ny + iw * nx * ny
       value = ncarr.getShort(index) match {
         // Invalid if raw scaled int > 32767
+        //TODO: add support for valid min and valid max
         case si if si > 32767 => Float.NaN
         case si => scales(iw) * (si - offsets(iw))
       }
@@ -97,6 +99,7 @@ case class NetcdfFunction(ncFile: NetcdfFile, varName: String) extends SampledFu
    * Each 3D radiance variable in a MODIS 021KM file has a corresponding band variable.
    */
   def getBands(varName: String): Array[Float] = {
+    //TODO: define a Dataset: i -> band then substitute
     val bandName = varName match {
       case s if s endsWith "EV_1KM_RefSB" => "MODIS_SWATH_Type_L1B/Data_Fields/Band_1KM_RefSB"
       case s if s endsWith "EV_1KM_Emissive" => "MODIS_SWATH_Type_L1B/Data_Fields/Band_1KM_Emissive"

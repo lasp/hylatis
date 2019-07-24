@@ -28,7 +28,7 @@ class BoundingBoxEvaluation(x1: Double, y1: Double, x2: Double, y2: Double, nx: 
     DomainSet(dds)
   }
   
-  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = data(grid)
+  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = data.resample(grid)
 }
 
 object BoundingBoxEvaluation {

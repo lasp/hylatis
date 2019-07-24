@@ -6,6 +6,7 @@ import fs2._
 import cats.effect.IO
 import latis.util.HylatisPartitioner
 import org.apache.spark.rdd.PairRDDFunctions
+import latis.resample._
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
@@ -13,8 +14,12 @@ import org.apache.spark.rdd.PairRDDFunctions
  * which allows us to use the Spark PairRDDFunctions.
  */
 case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
-    
-  override def apply(value: DomainData): Option[RangeData] = {
+      
+  override def apply(
+    value: DomainData, 
+    interpolation: Interpolation = NoInterpolation(),
+    extrapolation: Extrapolation = NoExtrapolation()
+  ): Option[RangeData] = {
     //TODO: support interpolation
     rdd.lookup(value).headOption
   }

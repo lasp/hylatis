@@ -40,7 +40,7 @@ case class GeoGridImageResampling(
   def makeMapFunction(model: DataType): Sample => Sample = 
     (sample: Sample) => sample match {
       case Sample(domain, RangeData(sf: SampledFunction)) =>
-        Sample(domain, RangeData(sf(grid)))
+        Sample(domain, RangeData(sf.resample(grid)))
     }
   
   

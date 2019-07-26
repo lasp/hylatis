@@ -35,9 +35,15 @@ case class Curry() extends UnaryOperation {
   }
   
   override def applyToModel(model: DataType): DataType = model match {
-    case Function(Tuple(ds @ _*), range) =>
-      Function(ds.head, Function(Tuple(ds.tail: _*), range))
-      //TODO: reduce 1-tuple to scalar?
+    case Function(Tuple(dts @ _*), range) =>
+      val domain = dts.head
+      val innerDomain = dts.tail.length match {
+        case 1 => dts.tail.head  //reduce 1-tuple to scalar 
+          //TODO: prepend parent Tuple's id with "."
+        case _ => Tuple(dts.tail: _*)
+        //Note, 0 is not possible since we only apply (above) to data
+      }
+      Function(domain, Function(innerDomain, range))
       //TODO: deal with named tuple
       //TODO: deal with nested tuple
     case _ => ??? // shouldn't get here since arity > 1 implies a Tuple domain

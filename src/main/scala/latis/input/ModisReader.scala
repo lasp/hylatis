@@ -42,7 +42,10 @@ case class ModisReader() extends DatasetReader {
    *   (band, ix, iy) -> radiance
    */
   val origModel = Function(
-    Tuple(Scalar("band"), Scalar("ix"), Scalar("iy")),
+    Tuple(
+      Scalar("band"), Scalar("ix"), Scalar("iy")
+      //Tuple(Metadata("geoIndex"), Scalar("ix"), Scalar("iy"))
+    ),
     Scalar("radiance")
   )
   
@@ -74,9 +77,9 @@ case class ModisReader() extends DatasetReader {
       //TODO: put in Spark first? curry should cause repartitioning
       //  potentially expensive but could provide sorting with our partitioner
       
-      Curry()(ds)  // band -> (ix, iy) -> radiance
-        .restructure(RddFunction)  //put into Spark
-        //.unsafeForce 
+      val ds2 = Curry()(ds)  // band -> (ix, iy) -> radiance
+      ds2.restructure(RddFunction)  //put into Spark
+      //ds2.unsafeForce  //TODO: broke on Union
     }
     
     // Define the binary operation to union the datasets

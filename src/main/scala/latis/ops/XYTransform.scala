@@ -10,7 +10,7 @@ case class XYTransform() extends MapOperation {
   
   override def makeMapFunction(model: DataType):  Sample => Sample =
     (sample: Sample) => sample match {
-      case Sample(DomainData(ix: Int, iy: Int), range) =>
+      case Sample(DomainData(Index(ix), Index(iy)), range) =>
         val (x, y) = HysicsUtils.indexToXY((ix, iy))
         Sample(DomainData(x, y), range)
     }

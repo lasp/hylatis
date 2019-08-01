@@ -55,16 +55,16 @@ case class NetcdfFunction(ncFile: NetcdfFile, model: DataType) extends SampledFu
     val domains: Seq[DomainData] = shape.length match {
       case 1 => Vector.tabulate(shape(0))(DomainData(_))
       case 2 => Vector.tabulate(shape(0), shape(1))(DomainData(_,_)).flatten
-      case 3 => Vector.tabulate(shape(0), shape(1), shape(2))(DomainData(_,_,_)).flatten
+      case 3 => Vector.tabulate(shape(0), shape(1), shape(2))(DomainData(_,_,_)).flatten.flatten
       case _ => ??? //TODO: support other ranks
     }
-    
+
     val samples = for {
       index <- (0 until n)
       domain = domains(index)
-      range = RangeData(ncArrs.map(_.getObject(index)): _*)
+      range = RangeData(ncArrs.map(a => Data(a.getObject(index))): _*)
     } yield Sample(domain, range)
-    
+
     StreamUtils.seqToIOStream(samples)
   }
     

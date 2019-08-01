@@ -11,7 +11,7 @@ import latis.resample._
 case class LinearFunction2D(
   xScale: Double, xOffset: Double, 
   yScale: Double, yOffset: Double, 
-  values: Array[Array[Any]]
+  values: Array[Array[RangeData]]
 ) extends MemoizedFunction {
   
   val nx = values.length
@@ -29,7 +29,7 @@ case class LinearFunction2D(
         xScale * ix + xOffset,
         yScale * iy + yOffset
       ), 
-      RangeData(values(ix)(iy))
+      values(ix)(iy)
     )
   
   /**
@@ -45,12 +45,12 @@ case class LinearFunction2D(
   ): Option[RangeData] = value match {
     //Note, adding the 0.5 then floor effectively rounds to the nearest index.
     //We could use "round" but it's not clear if rounding up at 0.5 is guaranteed.
-    case DomainData(x: Double, y: Double) => 
+    case DomainData(Number(x), Number(y)) => 
       val ix = Math.floor((x - xOffset)/xScale + 0.5).toInt
       val iy = Math.floor((y - yOffset)/yScale + 0.5).toInt
       // Don't extrapolate. Return None if out of bounds.
       if (ix >= 0 && ix < nx && iy >= 0 && iy < ny) 
-        Some(RangeData(values(ix)(iy)))
+        Some(values(ix)(iy))
       else None
     case _ => ??? //TODO: error, invalid input
   }

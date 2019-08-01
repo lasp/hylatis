@@ -36,7 +36,7 @@ case class ModisNetcdfAdapter(varName: String) extends Adapter {
 
 import scala.collection.JavaConverters._
 import latis.util.StreamUtils
-import ucar.ma2.{Range,Section}
+import ucar.ma2.{Range => NRange,Section}
 import latis.util.LatisConfig
 
 /**
@@ -61,7 +61,7 @@ case class NetcdfFunction0(ncFile: NetcdfFile, varName: String) extends SampledF
     
     val ncvar = ncFile.findVariable(varName)
     
-    val bands: Array[Float] = getBands(varName)
+    val bands: Array[Double] = getBands(varName)
     
     val scales:  Array[Float] = ncvar.findAttribute("radiance_scales")
       .getValues.copyTo1DJavaArray.asInstanceOf[Array[Float]]
@@ -71,9 +71,9 @@ case class NetcdfFunction0(ncFile: NetcdfFile, varName: String) extends SampledF
     val shape = ncvar.getShape //e.g. [15, 2030, 1354]
     val stride = LatisConfig.getOrElse("hylatis.modis.stride", 1)
     val section = new Section(
-      new Range(shape(0)),
-      new Range(0, shape(1)-1, stride),
-      new Range(0, shape(2)-1, stride)
+      new NRange(shape(0)),
+      new NRange(0, shape(1)-1, stride),
+      new NRange(0, shape(2)-1, stride)
     )
     val (nw, nx, ny) = section.getShape match {case Array(nw, nx, ny) => (nw, nx, ny)}
     
@@ -89,7 +89,7 @@ case class NetcdfFunction0(ncFile: NetcdfFile, varName: String) extends SampledF
         case si if si > 32767 => Float.NaN
         case si => scales(iw) * (si - offsets(iw))
       }
-    } yield Sample(DomainData(bands(iw),ix,iy), RangeData(value))
+    } yield Sample(DomainData(bands(iw), ix*stride, iy*stride), RangeData(value))
     
     StreamUtils.seqToIOStream(samples)
   }
@@ -98,7 +98,9 @@ case class NetcdfFunction0(ncFile: NetcdfFile, varName: String) extends SampledF
    * Get the values of the variable representing the band/wavelength dimension.
    * Each 3D radiance variable in a MODIS 021KM file has a corresponding band variable.
    */
-  def getBands(varName: String): Array[Float] = {
+  //def getBands(varName: String): Array[Float] = {
+  // Make these Doubles so eval will work
+  def getBands(varName: String): Array[Double] = {
     //TODO: define a Dataset: i -> band then substitute
     val bandName = varName match {
       case s if s endsWith "EV_1KM_RefSB" => "MODIS_SWATH_Type_L1B/Data_Fields/Band_1KM_RefSB"
@@ -106,7 +108,7 @@ case class NetcdfFunction0(ncFile: NetcdfFile, varName: String) extends SampledF
       case s if s endsWith "EV_250_Aggr1km_RefSB" => "MODIS_SWATH_Type_L1B/Data_Fields/Band_250M"
       case s if s endsWith "EV_500_Aggr1km_RefSB" => "MODIS_SWATH_Type_L1B/Data_Fields/Band_500M"
     }
-    ncFile.findVariable(bandName).read.copyTo1DJavaArray.asInstanceOf[Array[Float]]
+    ncFile.findVariable(bandName).read.copyTo1DJavaArray.asInstanceOf[Array[Float]].map(_.toDouble)
   }
   
   /**

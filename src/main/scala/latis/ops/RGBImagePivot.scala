@@ -1,27 +1,24 @@
 package latis.ops
 
 import latis.data._
-import latis.metadata._
 import latis.model._
 
 /**
  * Given a dataset of the form:
- *   (y, x, pivotVar) -> v
- * and values of the pivot variable that correspond to colors red, green, anf blue,
+ *   pivotVar -> (x, y) -> a
+ * and values of the pivot variable that correspond to colors red, green, and blue,
  * make an image dataset of the form:
- *   (x, y) -> (red, green, blue)
- * Note the transformed domain.
+ *   (x, y) -> (r, g, b)
+ * We assume that the 3D domain set of the Dataset is Cartesian.
  */
 case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Double) extends UnaryOperation {
   
-  // Assume w -> (x, y) -> f
-  // Create (x, y) -> (r, g, b)
-  // Cartesian so we know each grid is the same
+
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
-    // Evaluate cube at each wavelength
+    // Evaluate cube for each color
     val grids = Vector(red, green, blue).map { v =>
       data(DomainData(v)) match {
-        case Some(RangeData(sf: MemoizedFunction)) => sf
+        case Some(RangeData(sf: MemoizedFunction)) => sf //(x, y) -> a
         case _ => ??? //TODO: error
       }
     }

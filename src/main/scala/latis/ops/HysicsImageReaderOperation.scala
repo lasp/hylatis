@@ -46,7 +46,7 @@ case class HysicsImageReaderOperation() extends UnaryOperation {
       //TODO: use model to determine sample value for URI
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
-      case Sample(domain, RangeData(uri: String)) =>
+      case Sample(domain, RangeData(Text(uri))) =>
  //       val ws = bcWavelengths.value
  //val ws = wavelengths
         val image = HysicsImageReader(new URI(uri)).getDataset // (ix, iw) -> radiance

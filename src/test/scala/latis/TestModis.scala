@@ -29,9 +29,20 @@ class TestModis {
     //System.setProperty("hylatis.modis.uri", "/data/modis/MYD021KM.A2014230.2120.061.2018054180853.hdf")
     val ds = ModisReader().getDataset
     //TextWriter(System.out).write(ds)
-    val image = RGBImagePivot("band", 1.0, 4.0, 2.0)(ds)
+    val image = RGBImagePivot("band", 1.0, 1.0, 1.0)(ds)
     //TextWriter(System.out).write(image)
     ImageWriter("/data/modis/modisRGB.png").write(image)
+    /*
+     * TODO: problem with consistent types
+     * band values were stored at floats in the RDD
+     * RGBImagePivot evaluates it with doubles
+     *   we must have gotten lucky before, 1.0d==1.0f but 1.1d!=1.1f
+     * would be a shame to store data as doubles in the rdd if we don't have to
+     * this is a general concern for Function evaluation
+     * do we just need to do all data as doubles (and longs)?
+     * can we use metadata? SF knows nothing about metadata
+     * 
+     */
   }
   
   lazy val geoLocation = {
@@ -43,6 +54,9 @@ class TestModis {
   def geolocation() = {
     val gds = ModisGeolocationReader().getDataset // (ix, iy) -> (lon, lat), NOT Cartesian
     val gdsa = gds.restructure(ArrayFunction2D) //reading geoloc data into 2D array ~ 10s
+    
+    //TextWriter(System.out).write(gdsa) //.data.unsafeForce.samples.take(100) foreach println
+    
     //TODO: NetcdfFunction.force => ArrayFunction
     //val a = gdsa.data
     //val r = a(DomainData(1000, 1000)) //range has extra Vector
@@ -54,22 +68,22 @@ class TestModis {
      * need to name the x,y tuple and preserve it unnested after curry
      */
     
-    //pick off range of first sample: (ix, iy) -> radiance
-    val sub = Substitution()
-    val ds = {
-      ModisReader().getDataset match {
-        case Dataset(md, model, data) =>
-          val model2 = model match {
-            case Function(_, f: Function) => f //sub.applyToModel(f, gds.model)
-          }
-          val data2 = data(DomainData(1.0)) match {
-            case Some(RangeData(sf: SampledFunction)) => sf
-          }
-          Dataset(md, model2, data2)
-      }
-    }
-
-    val dsg = sub(ds, gdsa)
+//    //pick off range of first sample: (ix, iy) -> radiance
+//    val sub = Substitution()
+//    val ds = {
+//      ModisReader().getDataset match {
+//        case Dataset(md, model, data) =>
+//          val model2 = model match {
+//            case Function(_, f: Function) => f //sub.applyToModel(f, gds.model)
+//          }
+//          val data2 = data(DomainData(1.0)) match {
+//            case Some(RangeData(sf: SampledFunction)) => sf
+//          }
+//          Dataset(md, model2, data2)
+//      }
+//    }
+//
+//    val dsg = sub(ds, gdsa)
     //TextWriter(System.out).write(dsg)
   }
   
@@ -106,15 +120,29 @@ class TestModis {
      *   but couldn't make image in orig geo coords
      */
     
-    val ds = Substitution()(ModisReader().getDataset, geoLocation)
- //   TextWriter(System.out).write(ds)
+    val ds0 = ModisReader().getDataset
+    //TextWriter(System.out).write(ds0)
+    /*
+     * stride = 10:
+     *   read: 4.3s
+     *   write: 20s
+     * stride = 1:
+     *   read: too slow
+     */
+
+    // band -> (longitude, latitude) -> radiance
+    val ds = Substitution()(ds0, geoLocation) // < 1s, 10s to read geoloc; 20s in spark with 2 bands, not parallel
+   //TextWriter(System.out).write(ds)
     
     // Define regular grid to resample onto
-    val (nx, ny) = (3,4)
-    val domainSet = LinearSet2D(10, -100, nx, 1, 12, ny)
-    //TODO: cnsider (start, stride) vs (scale, offset)
+    val (nx, ny) = (60,50)
+    val domainSet = LinearSet2D(0.5, -110, nx, 0.5, 10, ny)
+    /*
+     * TODO: consider (start, stride) vs (scale, offset)
+     * alternate constructors
+     *   min, max, n
+     */
     //domainSet.elements foreach println
-
     
     /*
      * TODO: define SF.resample with Resampling
@@ -129,19 +157,36 @@ class TestModis {
      */
     // Resample nested Functions
     // map over outer samples
+ 
     val resampleGrid = (sample: Sample) => sample match {
       case Sample(domain, RangeData(sf: MemoizedFunction)) =>
         val grid = BinResampling().resample(sf, domainSet)
         Sample(domain, RangeData(grid))
     }
 
-    val data = ds.data.map(resampleGrid)
+    val data = ds.data.map(resampleGrid) // < 0.5 s
     
     val model = ds.model
     
     val md = ds.metadata //TODO: enhance, prov
-    
     val ds2 = Dataset(md, model, data)
-    TextWriter().write(ds2)
+    //TextWriter().write(ds2)
+       
+    val pivot = RGBImagePivot("band", 2.0, 1.0, 1.0) // ~ 0.1 s
+    val ds3 = pivot(ds2)
+
+println(System.nanoTime()) //
+    //TextWriter().write(ds3)
+    ImageWriter("/data/modis/modisRGB.png").write(ds3)
+
+    /*
+     * TODO: getting OOM trying to get here with a small grid
+     * in spark, fast without spark but no support for union, yet
+     * OOM even without union, only 2 bands
+     * seems to happen in pivot
+     * org.apache.spark.rpc.RpcTimeoutException: Futures timed out after [10 seconds]. This timeout is controlled by spark.executor.heartbeatInterval
+     * odd that we don't see this in the substitution phase where it takes 10s to read the geoloc data
+     * the pivot is happening with the smaller grid
+     */
   }
 }

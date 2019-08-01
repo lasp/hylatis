@@ -55,9 +55,9 @@ case class ModisReader() extends DatasetReader {
    */    
   val varNames = List(
     "MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB",    
-    "MODIS_SWATH_Type_L1B/Data_Fields/EV_500_Aggr1km_RefSB",    
-    "MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_RefSB",    
-    "MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_Emissive",    
+    //"MODIS_SWATH_Type_L1B/Data_Fields/EV_500_Aggr1km_RefSB",    
+    //"MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_RefSB",    
+    //"MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_Emissive",    
   )
   
   /**
@@ -83,10 +83,10 @@ case class ModisReader() extends DatasetReader {
     }
     
     // Define the binary operation to union the datasets
-    val join: (Dataset,Dataset) => Dataset = Union().apply
+//    val join: (Dataset,Dataset) => Dataset = Union().apply
     
     // Union all of the segments into a single Dataset
-    //varNames.map(getDataset).fold(Dataset.empty)(join) //TODO: define empty Dataset?
-    varNames.map(getDataset(_)).reduce(join)
+//    varNames.map(getDataset(_)).reduce(join)
+ varNames.map(getDataset(_)).head
   }
 }

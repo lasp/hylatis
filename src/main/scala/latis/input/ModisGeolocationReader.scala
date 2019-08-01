@@ -4,16 +4,23 @@ import latis.model._
 import latis.metadata.Metadata
 
 import java.net.URI
+import latis.util.LatisConfig
 
 case class ModisGeolocationReader() extends DatasetReader {
   //TODO: define as Dataset, need a Dataset trait instead of case class
   //or object value, not class
   
-  //TODO: get from config, or construct reader with URI
-  val uri: URI = new URI("/data/modis/MYD03.A2014230.1940.061.2018054000543.hdf")
-    
+  /**
+   * Get the URI for the MODIS data file to read.
+   */
+  val uri: URI = LatisConfig.get("hylatis.modis.geoloc.uri") match {
+    case Some(s) => new URI(s) //TODO: invalid URI
+    case _ => ??? //TODO: uri not defined
+  }
+  
   val metadata = Metadata("modis_geolocation")
   
+  // (ix, iy) -> (longitude, latitude)
   val model = Function(
     Tuple(Scalar("ix"), Scalar("iy")),
     Tuple(

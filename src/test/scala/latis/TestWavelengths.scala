@@ -16,7 +16,7 @@ class TestWavelengths extends JUnitSuite {
     ds match {
       case Dataset(_,_,sf) => sf(DomainData(631)) match {
         case MemoizedFunction(ss) => ss.head match {
-          case Sample(_, RangeData(w: Double)) =>
+          case Sample(_, RangeData(Number(w))) =>
             assertEquals(349.3, w, 0)
         }
       }

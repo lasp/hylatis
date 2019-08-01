@@ -51,19 +51,22 @@ case class Curry() extends UnaryOperation {
   
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
     // Define a cats.Eq instance for Any to be used by Stream.groupAdjacentBy
-    val eq = new cats.Eq[Any] {
-      def eqv(a: Any, b: Any): Boolean = 
-        ScalarOrdering.compare(a, b) == 0
+    val eq = new cats.Eq[OrderedData] {
+      def eqv(a: OrderedData, b: OrderedData): Boolean = (a, b) match {
+        case (a: Number, b: Number) => (a compare b) == 0
+        case (a: Text, b: Text)     => (a compare b) == 0
+        case _ => false
+      }
     }
     
     // Chunk while the curried variable has the same value
     //   then combine the Samples in each chunk into a SampledFunction.
     val samples: Stream[IO, Sample] = 
       data.streamSamples.groupAdjacentBy(Curry.extractCurriedValue)(eq) map {
-        case (a: Any, chunk) =>
+        case (d: OrderedData, chunk) =>
           val nestedSamples = chunk.toList.map(Curry.removeCurriedValue)
           Sample(
-            DomainData(a), 
+            DomainData(d), 
             RangeData(SampledFunction.fromSeq(nestedSamples))
           )
       }
@@ -79,7 +82,7 @@ object Curry {
    * Get the value of the curried variable (first value of the domain)
    * from a Sample.
    */
-  val extractCurriedValue: Sample => Any = (sample: Sample) => 
+  val extractCurriedValue: Sample => OrderedData = (sample: Sample) => 
     sample._1.head
       
   /**

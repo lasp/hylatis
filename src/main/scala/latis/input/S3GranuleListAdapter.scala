@@ -64,7 +64,7 @@ class S3GranuleListAdapter(pattern: Regex, model: DataType)
             case Function(_, r) => r.getScalars
           }
 
-          val rdata: Option[Vector[Any]] = rtypes.traverse {
+          val rdata: Option[RangeData] = rtypes.traverse {
             // A scalar named "key" will get the object's key.
             case s if s.id == "key" => Option(s.parseValue(key))
             // Look for the scalar ID in the named capture groups.
@@ -75,7 +75,7 @@ class S3GranuleListAdapter(pattern: Regex, model: DataType)
                 .map(s.parseValue(_))
           }
 
-          rdata.map(Sample(List(index), _))
+          rdata.map(Sample(DomainData(index), _))
         }
     }
 

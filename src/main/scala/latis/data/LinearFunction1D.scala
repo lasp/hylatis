@@ -6,7 +6,7 @@ import latis.resample._
  * Define a SampledFunction whose domain is defined
  * in terms of scale and offset.
  */
-case class LinearFunction1D(scale: Double, offset: Double, values: Array[Any]) extends MemoizedFunction {
+case class LinearFunction1D(scale: Double, offset: Double, values: Array[RangeData]) extends MemoizedFunction {
   //TODO: support Int, any numeric?
   
   /*
@@ -32,7 +32,7 @@ case class LinearFunction1D(scale: Double, offset: Double, values: Array[Any]) e
       i <- (0 until n)
     } yield Sample(
       DomainData(scale * i + offset), 
-      RangeData(values(i))
+      values(i)
     )
   }
   
@@ -49,10 +49,10 @@ case class LinearFunction1D(scale: Double, offset: Double, values: Array[Any]) e
   ): Option[RangeData] = value match {
     //Note, adding the 0.5 then floor effectively rounds to the nearest index.
     //We could use "round" but it's not clear if rounding up at 0.5 is guaranteed.
-    case DomainData(x: Double) => 
+    case DomainData(Number(x)) => 
       val index = Math.floor((x - offset)/scale + 0.5).toInt
       // Don't extrapolate. Return None if out of bounds.
-      if (index >= 0 && index < values.length) Some(RangeData(values(index)))
+      if (index >= 0 && index < values.length) Some(values(index))
       else None
     case _ => ??? //TODO: error, invalid input
   }

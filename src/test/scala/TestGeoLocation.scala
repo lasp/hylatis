@@ -88,7 +88,7 @@ object TestGeoLocation extends App {
   //Writer().write(ds)
   val lonLats: Seq[(Double, Double)] = unsafeStreamToSeq(gpsDataset.data.streamSamples).map {
     //case Sample(_, Array(_, Real(lat), Real(lon))) => (lon, lat)
-    case Sample(_, RangeData(lat: Double, lon: Double)) => (lon, lat)
+    case Sample(_, RangeData(Number(lat), Number(lon))) => (lon, lat)
   }
 
   //  // Local approximation: distance in degrees, dLon reduced by cos(lat0)

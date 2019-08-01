@@ -11,6 +11,7 @@ import java.awt.Color
 import java.io.OutputStream
 import java.io.FileOutputStream
 import latis.metadata._
+import org.apache.spark.sql.catalyst.expressions.IsNaN
 
 /**
  * Create an png image of a Dataset of one of the shapes:
@@ -77,12 +78,13 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     // Make sense of a Seq of Samples.
     //TODO: take advantage of ArrayFunction2D and such
     unsafeStreamToSeq(dataset.data.streamSamples) foreach {
+      // Assumes Cartesian domain to determine the size of the image
       case Sample(DomainData(row, col), RangeData(Number(r), Number(g), Number(b))) =>
         rows += row
         cols += col
-        rb += r
-        gb += g
-        bb += b
+        rb += (if (r.isNaN) 0 else r)
+        gb += (if (g.isNaN) 0 else g)
+        bb += (if (b.isNaN) 0 else b)
     }
 
     val width = cols.size

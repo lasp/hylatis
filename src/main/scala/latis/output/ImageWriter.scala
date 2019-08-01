@@ -82,9 +82,9 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
       case Sample(DomainData(row, col), RangeData(Number(r), Number(g), Number(b))) =>
         rows += row
         cols += col
-        rb += (if (r.isNaN) 0 else r)
-        gb += (if (g.isNaN) 0 else g)
-        bb += (if (b.isNaN) 0 else b)
+        rb += r
+        gb += g
+        bb += b
     }
 
     val width = cols.size
@@ -103,9 +103,18 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
       col <- (0 until width)
     } yield {
       val i = row * width + col
-      val r = ((rb(i) - rmin) / (rmax - rmin)).toFloat
-      val g = ((gb(i) - gmin) / (gmax - gmin)).toFloat
-      val b = ((bb(i) - bmin) / (bmax - bmin)).toFloat
+      val r = {
+        val r = ((rb(i) - rmin) / (rmax - rmin)).toFloat
+        if (r.isNaN) 0 else r
+      }
+      val g = {
+        val g = ((gb(i) - gmin) / (gmax - gmin)).toFloat
+        if (g.isNaN) 0 else g
+      }
+      val b = {
+        val b = ((bb(i) - bmin) / (bmax - bmin)).toFloat
+        if (b.isNaN) 0 else b
+      }
       new Color(r, g, b).getRGB
     }
     

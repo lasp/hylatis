@@ -9,7 +9,7 @@ import latis.model._
  * and values of the pivot variable that correspond to colors red, green, and blue,
  * make an image dataset of the form:
  *   (x, y) -> (r, g, b)
- * We assume that the 3D domain set of the Dataset is Cartesian.
+ * This assumes that every x-y domain set is the same (outer Function is Cartesian).
  */
 case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Double) extends UnaryOperation {
   

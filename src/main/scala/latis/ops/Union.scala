@@ -18,26 +18,7 @@ case class Union() extends BinaryOperation {
     
     val model = ds1.model //TODO: ensure the models match
     
-    val data: SampledFunction = {
-      //TODO: delegate to "union(other)" function on SampledFunction
-      /*
-       * zipWithPreviousAndNext ?
-       *   but need to advance one stream without the other
-       * or consume and re-emit?
-       */
-      
-      /*
-       * Spark union
-       * use .distinct to remove duplicates
-       * sortBy[K](f: (T) ⇒ K, ascending: Boolean = true, numPartitions: Int = this.partitions.length)(implicit ord: Ordering[K], ctag: ClassTag[K]): RDD[T] 
-       */
-      (ds1.data, ds2.data) match {
-        case (rddf1: RddFunction, rddf2: RddFunction) =>
-          RddFunction(rddf1.rdd.union(rddf2.rdd).distinct.sortBy(identity))
-        case _ => ??? //TODO: only support Spark RDDs for now
-      }
-    }
-    
+    val data: SampledFunction = ds1.data union ds2.data
     
     Dataset(metadata, model, data)
   }

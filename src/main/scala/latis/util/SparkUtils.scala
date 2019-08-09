@@ -19,6 +19,7 @@ object SparkUtils {
     }
 
     sconf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    //sconf.set("spark.executor.heartbeatInterval", "20")
     
     // Register Kryo serializable classes
     sconf.registerKryoClasses(Array(

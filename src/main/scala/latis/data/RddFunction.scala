@@ -83,6 +83,13 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
     RddFunction(rdd2)
   }
   
+  override def union(that: SampledFunction) = that match {
+    case rf: RddFunction =>
+      // Note, spark union does not remove duplicates
+      //TODO: consider cogroup => RDD[(K, (Iterable[S], Iterable[S]))]
+      RddFunction(this.rdd.union(rf.rdd).distinct.sortBy(identity))
+    case _ => ??? //TODO: union expects both to be RddFunctions
+  }
 }
 
 object RddFunction extends FunctionFactory {

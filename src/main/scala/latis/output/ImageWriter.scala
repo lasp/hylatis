@@ -21,7 +21,10 @@ import org.apache.spark.sql.catalyst.expressions.IsNaN
  * the first row at the top.
  */
 class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
-  //TODO: define an Image type to enforce that it works with this writer
+  /*
+   * TODO: define an Image type to enforce that it works with this writer
+   * deal with non row-major ordering
+   */
   //TODO: see other image types: https://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImage.html
 
   def write(dataset: Dataset): Unit = {
@@ -89,12 +92,13 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
 
     val width = cols.size
     val height = rows.size
-    val rmax = rb.max
-    val gmax = gb.max
-    val bmax = bb.max
-    val rmin = rb.min
-    val gmin = gb.min
-    val bmin = bb.min
+    // Filter out NaN before finding min/max
+    val rmax = rb.filter(! _.isNaN()).max
+    val gmax = gb.filter(! _.isNaN()).max
+    val bmax = bb.filter(! _.isNaN()).max
+    val rmin = rb.filter(! _.isNaN()).min
+    val gmin = gb.filter(! _.isNaN()).min
+    val bmin = bb.filter(! _.isNaN()).min
 
     // Normalize to 0..1 based on range of min to max value.
     //TODO: make histogram and drop outer n%

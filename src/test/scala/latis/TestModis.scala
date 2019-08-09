@@ -20,6 +20,7 @@ import latis.data.LinearSet2D
 import java.io.FileOutputStream
 import latis.input.ModisGeolocationReader
 import latis.ops.Substitution
+import latis.ops._
 
 class TestModis {
   
@@ -49,42 +50,31 @@ class TestModis {
     val gds = ModisGeolocationReader().getDataset // (ix, iy) -> (lon, lat), NOT Cartesian
     gds.restructure(ArrayFunction2D) //reading geoloc data into 2D array ~ 10s
   }
-  
-  //@Test
-  def geolocation() = {
-    val gds = ModisGeolocationReader().getDataset // (ix, iy) -> (lon, lat), NOT Cartesian
-    val gdsa = gds.restructure(ArrayFunction2D) //reading geoloc data into 2D array ~ 10s
+
+  lazy val toyGeoLocation = {
+//    val samples = for {
+//      ix <- (0 until 203)
+//      iy <- (0 until 136)
+//      lon: Double = ix / 10.0
+//      lat: Double = iy / 10.0
+//    } yield Sample(DomainData(ix*10, iy*10), RangeData(lon, lat))
+//    val data = SampledFunction.fromSeq(samples)
+    val array: Array[Array[RangeData]] = Array.tabulate(2030, 1354)((i,j) => RangeData(i/10.0, j/10.0))
+    val data = ArrayFunction2D(array)
     
-    //TextWriter(System.out).write(gdsa) //.data.unsafeForce.samples.take(100) foreach println
-    
-    //TODO: NetcdfFunction.force => ArrayFunction
-    //val a = gdsa.data
-    //val r = a(DomainData(1000, 1000)) //range has extra Vector
-    //println(r)
-    //TextWriter(System.out).write(ds)
-    /*
-     * TODO: substitute into index based modis data
-     * 2D substitution could get tricky
-     * need to name the x,y tuple and preserve it unnested after curry
-     */
-    
-//    //pick off range of first sample: (ix, iy) -> radiance
-//    val sub = Substitution()
-//    val ds = {
-//      ModisReader().getDataset match {
-//        case Dataset(md, model, data) =>
-//          val model2 = model match {
-//            case Function(_, f: Function) => f //sub.applyToModel(f, gds.model)
-//          }
-//          val data2 = data(DomainData(1.0)) match {
-//            case Some(RangeData(sf: SampledFunction)) => sf
-//          }
-//          Dataset(md, model2, data2)
-//      }
-//    }
-//
-//    val dsg = sub(ds, gdsa)
-    //TextWriter(System.out).write(dsg)
+    val model = Function(
+      Tuple(Scalar("ix"), Scalar("iy")),
+      Tuple(
+        Scalar(Metadata(
+          "id" -> "longitude",
+          "type" -> "float",
+          "origName" -> "MODIS_Swath_Type_GEO/Geolocation_Fields/Longitude")),
+        Scalar(Metadata(
+          "id" -> "latitude",
+          "type" -> "float",
+          "origName" -> "MODIS_Swath_Type_GEO/Geolocation_Fields/Latitude"))))
+          
+    Dataset(Metadata(""), model, data) 
   }
   
   /*
@@ -96,7 +86,7 @@ class TestModis {
    *   define a dataset for each band using netcdf slice on 1st dimension
    */
   
-  @Test
+  //@Test
   def resample() = {
     /*
      * Given (longitude, latitude) provide (ix, iy)
@@ -132,11 +122,16 @@ class TestModis {
 
     // band -> (longitude, latitude) -> radiance
     val ds = Substitution()(ds0, geoLocation) // < 1s, 10s to read geoloc; 20s in spark with 2 bands, not parallel
+//val ds = Substitution()(ds0, toyGeoLocation)
    //TextWriter(System.out).write(ds)
     
     // Define regular grid to resample onto
-    val (nx, ny) = (60,50)
-    val domainSet = LinearSet2D(0.5, -110, nx, 0.5, 10, ny)
+    val (nx, ny) = (30, 25)
+    val domainSet = LinearSet2D(1, -110, nx, 1, 10, ny)
+    //val domainSet = LinearSet2D(0.5, -110, nx, 0.5, 10, ny)
+//for toy grid
+//val (nx, ny) = (200,130)
+//val domainSet = LinearSet2D(1, 0, nx, 1, 0, ny) //max vals in toy grid: 202, 135
     /*
      * TODO: consider (start, stride) vs (scale, offset)
      * alternate constructors
@@ -165,6 +160,7 @@ class TestModis {
     }
 
     val data = ds.data.map(resampleGrid) // < 0.5 s
+    //TODO: fill missing cells via interp
     
     val model = ds.model
     
@@ -172,12 +168,12 @@ class TestModis {
     val ds2 = Dataset(md, model, data)
     //TextWriter().write(ds2)
        
-    val pivot = RGBImagePivot("band", 2.0, 1.0, 1.0) // ~ 0.1 s
+    val pivot = RGBImagePivot("band", 1.0, 1.0, 1.0)
+    //val pivot = RGBImagePivot("band", 1.0, 4.0, 3.0)
     val ds3 = pivot(ds2)
 
-println(System.nanoTime()) //
     //TextWriter().write(ds3)
-    ImageWriter("/data/modis/modisRGB.png").write(ds3)
+    ImageWriter("/data/modis/modisRGB3.png").write(ds3)
 
     /*
      * TODO: getting OOM trying to get here with a small grid
@@ -185,8 +181,89 @@ println(System.nanoTime()) //
      * OOM even without union, only 2 bands
      * seems to happen in pivot
      * org.apache.spark.rpc.RpcTimeoutException: Futures timed out after [10 seconds]. This timeout is controlled by spark.executor.heartbeatInterval
+     *   could the time out cause it to retry using up even more memory to GC?
      * odd that we don't see this in the substitution phase where it takes 10s to read the geoloc data
      * the pivot is happening with the smaller grid
+     * reduce 60x50 grid to 6x5: still fails
+     * try bumping up timeout from 10 to 30s: error trying to re-register with master
+     *   20s: timeout
+     * try without substitution (index space), 2 bands, no union, resample 203x135 < 10s!
+     *   union, 7 bands: ~50s
+     * does non-cartesian lon-lat complicate things? doesn't look like it
+     *   
+     * 2 bands, no union, no spark, toy grid
+     *   toy grid is fast
+     *   reading data ~14s
+     *   substitution: 245s! toy grid was SeqSF so slow to eval; with ArrayFunction2D < 18s
+     *   resample 200x130: < 18s
+     *  *with spark, print after resample: 154 s! note, 2 bands sequentially
+     *     due to data moving? or memory pressure?
+     *     with data as Arrays instead of Vector: 93s
+     *       but HashPartitioner cannot partition array keys, use custom partitioner?
+     *   with pivot and image gen: OOM after 132 s
+     *  *fails in pivot before trying to write
+     *  *so not related to skewed grid
+     *   the full image gen for 300x250 works without spark < 15 s
+     * 
+     * TODO: Is this a spark laziness issue?
+     * or lack of caching and redoing a lot of work?
+     *   note that we pivot on the outer variable: band
+     *     band -> (x, y) -> f
+     *   each band is in a separate sample in the RDD
+     *   might that be the source of the problem?
+     *   RGBImagePivot evals at a given band, should be a cheap lookup
+     *     then joins by getting the samples of all, sounds costly
+     * 
+     * look at size of Samples as compressed with Kryo
+     *   are we using that much less space with index vs lon-lat?
+     *   what kind of SF are we using for the grids? Seq, Indexed?
+     *   See TestKryo
+     * 
      */
+  }
+  
+  @Test
+  def transpose() = {
+    /*
+     * w -> (x, y) -> f  =>  (x, y) -> w -> f
+     * keep spectra together instead of pivoting across outer samples
+     * cheapest way in spark?
+     *   scatter all then groupBy?
+     *   
+     * TODO: consider cost of regridding
+     * just a key lookup for equality
+     * bin resampling with partitioner should be OK
+     */
+    val ds0 = ModisReader().getDataset  // (band, ix, iy) -> radiance
+    val ds1 = GroupBy("ix", "iy")(ds0)  // (ix, iy) -> band -> radiance
+    val ds2 = Pivot(List(1.0, 4.0, 3.0), List("r","g","b"))(ds1) // (ix, iy) -> (r, g, b)
+    //val ds2 = Pivot(List(1.0, 1.0, 1.0), List("r","g","b"))(ds1) // (ix, iy) -> (r, g, b)
+
+    // Define regular grid to resample onto
+    val (nx, ny) = (300, 250)
+    val domainSet = LinearSet2D(0.1, -110, nx, 0.1, 10, ny)
+
+    val csx: DomainData => DomainData = geoLocation.data match {
+      case f: MemoizedFunction => (dd: DomainData) =>
+        f(dd).get.map(_.asInstanceOf[OrderedData]) //TODO: clean up
+    }
+    val data = BinResampling().resample(ds2.data, domainSet, csx) //26s vs 170! over substitution
+    /*
+     * TODO: instead of substitution
+     * bin resample simply needs stream of samples
+     * substitute on the fly instead of making new RDD
+     *   data:      (i, j) -> a
+     *   csx:       (i', j') -> (lon', lat')  as ArrayFunction2D, fast to eval
+     *   domainSet: (lon, lat) => cell index
+     *   new grid:  (lon, lat) -> a'
+     *   index = domainSet.indexOf(csx(data_sample.domain))
+     * optional csx arg to resample?
+     * without spark the transposed approach improved from 15 to 12s
+     */
+    val model = ds2.model //not really
+    val md = ds2.metadata //TODO: enhance, prov
+    val ds4 = Dataset(md, model, data)
+    //TextWriter().write(ds4)   
+    ImageWriter("/data/modis/modisRGB4.png").write(ds4)
   }
 }

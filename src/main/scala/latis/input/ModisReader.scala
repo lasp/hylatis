@@ -55,7 +55,7 @@ case class ModisReader() extends DatasetReader {
    */    
   val varNames = List(
     "MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB",    
-    //"MODIS_SWATH_Type_L1B/Data_Fields/EV_500_Aggr1km_RefSB",    
+    "MODIS_SWATH_Type_L1B/Data_Fields/EV_500_Aggr1km_RefSB",    
     //"MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_RefSB",    
     //"MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_Emissive",    
   )
@@ -77,16 +77,15 @@ case class ModisReader() extends DatasetReader {
       //TODO: put in Spark first? curry should cause repartitioning
       //  potentially expensive but could provide sorting with our partitioner
       
-      val ds2 = Curry()(ds)  // band -> (ix, iy) -> radiance
-      ds2.restructure(RddFunction)  //put into Spark
-      //ds2.unsafeForce  //TODO: broke on Union
+      val ds2 = ds //Curry()(ds)  // band -> (ix, iy) -> radiance
+//      ds2.restructure(RddFunction)  //put into Spark
+ds2.unsafeForce
     }
     
     // Define the binary operation to union the datasets
-//    val join: (Dataset,Dataset) => Dataset = Union().apply
+    val join: (Dataset,Dataset) => Dataset = Union().apply
     
     // Union all of the segments into a single Dataset
-//    varNames.map(getDataset(_)).reduce(join)
- varNames.map(getDataset(_)).head
+    varNames.map(getDataset(_)).reduce(join)
   }
 }

@@ -1,7 +1,8 @@
 package latis.ops
 
 import latis.data._
-import latis.model.DataType
+import latis.model._
+import latis.metadata.Metadata
 
 /**
  * Given the minimum and maximum coordinates for a 2-dimensional rectangular domain
@@ -14,7 +15,15 @@ class BoundingBoxEvaluation(x1: Double, y1: Double, x2: Double, y2: Double, nx: 
   //TODO: assert that x1 < x2 and y1 < y2, or get more clever about ordering
   //TODO: generalize to two nD points, shape
   //TODO: add bin/cell semantics
+  /*
+   * TODO: do in terms of LinearSet2D
+   *   deal with variation of defining a grid
+   *   
+   * this should be part of the higher level DSL
+   * at the functional algebra level, just define DomainSet and resample
+   */
 
+  
   /**
    * Define the target domain set.
    */

@@ -5,6 +5,7 @@ import latis.metadata.Metadata
 
 import java.net.URI
 import latis.util.LatisConfig
+import latis.data.ArrayFunction2D
 
 case class ModisGeolocationReader() extends DatasetReader {
   //TODO: define as Dataset, need a Dataset trait instead of case class
@@ -40,7 +41,8 @@ case class ModisGeolocationReader() extends DatasetReader {
   val adapter = NetcdfAdapter(model)
   
   def getDataset: Dataset = {
-    val data = adapter(uri)
+    // Use ArrayFunction2D to optimize evaluation by index domain values
+    val data = ArrayFunction2D.restructure(adapter(uri))
     Dataset(metadata, model, data)
   }
 }

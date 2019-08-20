@@ -43,10 +43,12 @@ case class ModisReader() extends DatasetReader {
    */
   val origModel = Function(
     Tuple(
-      Scalar("band"), Scalar("ix"), Scalar("iy")
+      Scalar(Metadata("id" -> "band", "type" -> "double")), 
+      Scalar(Metadata("id" -> "ix", "type" -> "int")), 
+      Scalar(Metadata("id" -> "iy", "type" -> "int"))
       //Tuple(Metadata("geoIndex"), Scalar("ix"), Scalar("iy"))
     ),
-    Scalar("radiance")
+    Scalar(Metadata("id" -> "radiance", "type" -> "float"))
   )
   
   /**
@@ -79,7 +81,7 @@ case class ModisReader() extends DatasetReader {
       
       val ds2 = ds //Curry()(ds)  // band -> (ix, iy) -> radiance
 //      ds2.restructure(RddFunction)  //put into Spark
-ds2.unsafeForce
+ds2.unsafeForce //need this until union supports streams
     }
     
     // Define the binary operation to union the datasets

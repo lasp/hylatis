@@ -11,14 +11,16 @@ import latis.model._
  *   (x, y) -> (r, g, b)
  * This assumes that every x-y domain set is the same (outer Function is Cartesian).
  */
-case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Double) extends UnaryOperation {
+//case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Double) extends UnaryOperation {
+case class RGBImagePivot(red: Double, green: Double, blue: Double) extends UnaryOperation {
   
 
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
     // Evaluate cube for each color
     val grids = Vector(red, green, blue).map { v =>
       data(DomainData(v)) match {
-        case Some(RangeData(sf: MemoizedFunction)) => sf //(x, y) -> a
+        case Some(RangeData(mf: MemoizedFunction)) => mf //(x, y) -> a
+        //case Some(RangeData(sf: SampledFunction)) => sf.unsafeForce //(x, y) -> a
         case _ => ??? //TODO: error
       }
     }
@@ -37,7 +39,8 @@ case class RGBImagePivot(pivotVar: String, red: Double, green: Double, blue: Dou
   
   override def applyToModel(model: DataType): DataType = model match {
     case Function(_, Function(domain, _)) => Function(
-      domain, Tuple(Scalar("r"), Scalar("g"), Scalar("b"))
+      domain, 
+      Tuple(Scalar("r"), Scalar("g"), Scalar("b"))
     )
   }
   

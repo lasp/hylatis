@@ -33,7 +33,7 @@ class TestGoesAbiReader extends JUnitSuite {
     val ops: Seq[UnaryOperation] = Seq(
       //Contains("wavelength", 1370.0, 2200.0, 3900.0),
       GeoGridImageResampling(-130, 0, -30, 50, 10000),
-      RGBImagePivot("wavelength", 1370.0, 2200.0, 3900.0)
+      RGBImagePivot(1370.0, 2200.0, 3900.0)
     )
     
     val ds = ops.foldLeft(goes)((ds, op) => op(ds))

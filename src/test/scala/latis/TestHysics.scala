@@ -307,7 +307,7 @@ class TestHysics extends JUnitSuite {
     
     val ops: Seq[UnaryOperation] = Seq(
       //TODO: selection in nested function not working:  Selection("ix >= 477"),
-      RGBImagePivot("wavelength", 630.87, 531.86, 463.79),
+      RGBImagePivot(630.87, 531.86, 463.79),
       //XYTransform()
     )
     

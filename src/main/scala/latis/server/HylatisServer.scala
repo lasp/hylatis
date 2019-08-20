@@ -84,7 +84,7 @@ class HylatisServer extends HttpServlet {
           as.length match {
             case 3 =>
               val Array(r,g,b) = as.map(_.toDouble)
-              RGBImagePivot("wavelength", r, g, b)
+              RGBImagePivot(r, g, b)
             case _ =>
               throw new UnsupportedOperationException("usage: rgbImagePivot(Wr,Wg,Wb)")
           }

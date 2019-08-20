@@ -5,6 +5,7 @@ import latis.model._
 import latis.util.GOESUtils._
 
 import scala.math._
+import latis.metadata.Metadata
 
 
 case class GeoGridImageResampling(
@@ -22,8 +23,9 @@ case class GeoGridImageResampling(
   val ny: Int = Math.round(pixels.toFloat / nx)
   
   /**
-   * Define the target domain set with iamge (row-column) ordering.
+   * Define the target domain set with image (row-column) ordering.
    */
+  //TODO: let image writer deal with ordering? we depend on numeric ordering
   lazy val grid: DomainSet = {
     val dx = (lon2 - lon1) / nx
     val dy = (lat2 - lat1) / ny

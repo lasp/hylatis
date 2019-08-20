@@ -237,13 +237,13 @@ class TestModis {
     val ds0 = ModisBandReaderOperation()(granules) //band -> (ix, iy) -> radiance
     
     val ds1 = ModisGeoSub()(ds0) //band -> (longitude, latitude) -> radiance
-    //println(ds1.data.asInstanceOf[RddFunction].rdd.count) // 18s for 7 bands
+    //println(ds1.data.asInstanceOf[RddFunction].rdd.count) // 18s for 7 bands with stride=10, 22s for 38 bands
 
     val ds2 = RGBImagePivot(1.0, 5.0, 3.0)(ds1) // (longitude, latitude) -> (r, g, b)
     
     // Define regular grid to resample onto
-    val s: Int = 1
-    val (nx, ny) = (300/s, 250/s)
+    val s = 0.5
+    val (nx, ny) = ((300/s).toInt, (250/s).toInt)
     val domainSet = BinSet2D(
       BinSet1D(-110, 0.1*s, nx),
       BinSet1D(10, 0.1*s, ny)

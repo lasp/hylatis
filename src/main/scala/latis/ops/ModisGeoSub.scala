@@ -4,30 +4,36 @@ import latis.data._
 import latis.input.ModisGeolocationReader
 import latis.metadata._
 import latis.model._
+import latis.util.SparkUtils
 
 /**
  * band -> (ix, iy) -> radiance  =>  band -> (longitude, latitude) -> radiance
  */
 case class ModisGeoSub() extends UnaryOperation {
-  //TODO: impl with RDD mapValues
   
-//  // (ix, iy) -> (longitude, latitude)
-//  lazy val geoLocation = ModisGeolocationReader().getDataset.data
-//  
-//  // (ix, iy) -> A  =>  (longitude, latitude) -> A
-//  val f: Sample => Sample = (sample: Sample) => sample match {
-//    case Sample(domain, range) =>
-//      val newDomain = geoLocation(domain) match {
-//        case Some(RangeData(lon: OrderedData, lat: OrderedData)) =>
-//          DomainData(lon, lat)
-//      }
-//      Sample(newDomain, range)
-//  }
+  /**
+   * Read the geo location data and broadcast it
+   */
+  def broadcastGeoLocation = {
+    val data: ArrayFunction2D = ModisGeolocationReader().getDataset.data.asInstanceOf[ArrayFunction2D]
+    SparkUtils.sparkContext.broadcast(data)
+  }
     
-  val g: RangeData => RangeData = (range: RangeData) => range match {
-    case RangeData(sf: SampledFunction) =>  //NetcdfFunction2
+  /**
+   * Define a function to substitute the domain indices
+   * with the geo locations.
+   * Note that this operates on the range only so we can use
+   * mapValues without disturbing the keys and partitions.
+   */
+  val g: RangeData => RangeData = {
+    // Get the broadcast geo locations
+    val bcGeoLoc = broadcastGeoLocation
+    
+    (range: RangeData) => range match {
+    case RangeData(sf: SampledFunction) =>
       // (ix, iy) -> (longitude, latitude)
-      val geoLocation = ModisGeolocationReader().getDataset.data
+      // Get the geo locations from the broadcast variable
+      val geoLocation: ArrayFunction2D = bcGeoLoc.value
       val samples = sf.unsafeForce.samples map {
         case Sample(domain, range) =>
           val newDomain = geoLocation(domain) match {
@@ -37,10 +43,13 @@ case class ModisGeoSub() extends UnaryOperation {
           Sample(newDomain, range)
       }
       RangeData(SeqFunction(samples))
+    }
   }
     
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction = data match {
     case rddF: RddFunction => RddFunction(rddF.rdd.mapValues(g))
+    case _ => throw new RuntimeException("ModisGeoSub only works in Spark")
+    //TODO: support non-spark usage
   }
   
   override def applyToModel(model: DataType): DataType = model match {

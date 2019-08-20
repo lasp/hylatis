@@ -2,6 +2,7 @@ package latis.ops
 
 import latis.data._
 import latis.model._
+import latis.metadata.Metadata
 
 /**
  * Given a dataset of the form:
@@ -40,7 +41,11 @@ case class RGBImagePivot(red: Double, green: Double, blue: Double) extends Unary
   override def applyToModel(model: DataType): DataType = model match {
     case Function(_, Function(domain, _)) => Function(
       domain, 
-      Tuple(Scalar("r"), Scalar("g"), Scalar("b"))
+      Tuple(
+        Scalar(Metadata("id" -> "r", "type" -> "double")), 
+        Scalar(Metadata("id" -> "g", "type" -> "double")), 
+        Scalar(Metadata("id" -> "b", "type" -> "double"))
+      )
     )
   }
   

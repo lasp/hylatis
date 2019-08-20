@@ -11,7 +11,7 @@ import latis.util.StreamUtils
 /**
  * Implement a SampledFunction that encapsulates a NetCDF file.
  */
-case class NetcdfFunction(ncFile: NetcdfFile, model: DataType) extends SampledFunction {
+case class NetcdfFunction(ncFile: NetcdfFile, model: DataType) extends MemoizedFunction {
   // Assume model is uncurried: (x, y, z) -> (a, b, c)
   // Assume domain variable are 1D
   //TODO: ensure all range variables have the same shape
@@ -34,7 +34,8 @@ case class NetcdfFunction(ncFile: NetcdfFile, model: DataType) extends SampledFu
   }
   
   
-  def streamSamples: Stream[IO, Sample] = {
+  //def streamSamples: Stream[IO, Sample] = {
+  def samples: Seq[Sample] = {
     val ncArrs: Seq[NArray] = model match {
       case Function(_, range) => 
         range.getScalars.map(_.id).map(getOrigName).map(readVar)
@@ -65,14 +66,15 @@ case class NetcdfFunction(ncFile: NetcdfFile, model: DataType) extends SampledFu
       range = RangeData(ncArrs.map(a => Data(a.getObject(index))): _*)
     } yield Sample(domain, range)
 
-    StreamUtils.seqToIOStream(samples)
+    //StreamUtils.seqToIOStream(samples)
+    samples
   }
     
-  /**
-   * Consider this SampledFunction empty if all the dimensions
-   * in the NetCDF file have zero length. Presumably, an empty
-   * NetCDF file would return an empty list of Dimensions.
-   */
-  def isEmpty: Boolean =
-    ncFile.getDimensions.asScala.forall(_.getLength == 0)
+//  /**
+//   * Consider this SampledFunction empty if all the dimensions
+//   * in the NetCDF file have zero length. Presumably, an empty
+//   * NetCDF file would return an empty list of Dimensions.
+//   */
+//  def isEmpty: Boolean =
+//    ncFile.getDimensions.asScala.forall(_.getLength == 0)
 }

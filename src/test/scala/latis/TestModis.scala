@@ -22,8 +22,12 @@ import latis.ops.Substitution
 import latis.ops._
 import scala.util.Random
 import latis.input.ModisGranuleListReader
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.io.Output
+import java.io.ObjectOutputStream
 
-object TestModis extends App {
+class TestModis {
+//object TestModis extends App {
   
   //@Test
   def reader() = {
@@ -225,44 +229,31 @@ object TestModis extends App {
      */
   }
   
-  /*
-   * 2019-08-19
-   * GOES does w -> (x, y) -> f, rather specialized
-   *   did we do it that way to avoid local collection of resampleable ArrayFunction?
-   * but modis gets OOM on pivot
-   * try again but avoid lookup?
-   * 
-   * Break modis data into individ band to load separately
-   * "uri" dataset: band -> uri
-   *   where uri encodes file name, variable name, index for slice
-   *   ModisBandReaderOperation
-   *   
-   */
-  //@Test
-  from_granules()
+
+
+  @Test
   def from_granules() = {
-    val gds = geoLocation.restructure(RddFunction)
-    val rdd = gds.data.asInstanceOf[RddFunction].rdd
-    println(rdd.toDebugString)
-    println(rdd.count)
+    val granules = ModisGranuleListReader().getDataset.restructure(RddFunction) // band -> uri
+    val ds0 = ModisBandReaderOperation()(granules) //band -> (ix, iy) -> radiance
     
-//    val granules = ModisGranuleListReader().getDataset.restructure(RddFunction)
-//    val ds0 = ModisBandReaderOperation()(granules) //band -> (ix, iy) -> radiance
-//    //TODO: only getting 5 bands in spark?
-////    val rdd = ds0.data.asInstanceOf[RddFunction].rdd
-////    rdd.take(1).head match {
-////      case Sample(d, r) => println(d, r)
-////    }
-//
-//    
-//    //val ds1 = ModisGeoSub()(ds0) //band -> (longitude, latitude) -> radiance
-//    //println(ds1.data.asInstanceOf[RddFunction].rdd.count)
-//
-//    val ds2 = RGBImagePivot(1.0, 5.0, 3.0)(ds0) // (longitude, latitude) -> (r, g, b)
-//
-//    //TextWriter().write(ds2)
-//    ImageWriter("/data/modis/rgbImage.png").write(ds2)
+    val ds1 = ModisGeoSub()(ds0) //band -> (longitude, latitude) -> radiance
+    //println(ds1.data.asInstanceOf[RddFunction].rdd.count) // 18s for 7 bands
+
+    val ds2 = RGBImagePivot(1.0, 5.0, 3.0)(ds1) // (longitude, latitude) -> (r, g, b)
+    
+    // Define regular grid to resample onto
+    val s: Int = 1
+    val (nx, ny) = (300/s, 250/s)
+    val domainSet = BinSet2D(
+      BinSet1D(-110, 0.1*s, nx),
+      BinSet1D(10, 0.1*s, ny)
+    )
+
+    val ds3 = GroupByBin(domainSet, NearestNeighborAggregation())(ds2)
+    //TextWriter().write(ds3)
+    ImageWriter("/data/modis/rgbImage.png").write(ds3)
   }
+  
   
   //@Test
   def transposed() = {

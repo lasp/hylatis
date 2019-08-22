@@ -27,8 +27,8 @@ lazy val hylatis = (project in file("."))
       "org.geotools"                % "gt-referencing"  % geotoolsVersion,
       "org.apache.commons"          % "commons-math3"   % "3.6.1",
       "io.findify"                 %% "s3mock"          % "0.2.4",
-      "edu.ucar"                    % "cdm"             % "5.0.0-SNAPSHOT" classifier "s3+hdfs",
-      "edu.ucar"                    % "httpservices"    % "5.0.0-SNAPSHOT",
+      "edu.ucar"                    % "cdm"             % "5.0.0",
+      "edu.ucar"                    % "httpservices"    % "5.0.0",
       "org.apache.spark"           %% "spark-sql"       % sparkVersion,
       "com.amazonaws"               % "aws-java-sdk-s3" % "1.11.489",
       "co.fs2"                     %% "fs2-core"        % fs2Version,
@@ -41,7 +41,7 @@ lazy val hylatis = (project in file("."))
       "Boundless" at "http://repo.boundlessgeo.com/main",
       "Artifactory External Snapshots" at artifactory + "ext-snapshot-local",
       "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases",
-      "Unidata Snaphots" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-snapshots"
+      //"Unidata Snaphots" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-snapshots"
     ),
     assembly / mainClass := Some("latis.server.HylatisServer"),
     assembly / assemblyMergeStrategy := {

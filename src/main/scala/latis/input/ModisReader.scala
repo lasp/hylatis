@@ -7,13 +7,19 @@ import latis.ops._
 import latis.util._
 
 import java.net.URI
+import org.apache.spark.storage.StorageLevel
 
 /**
  * Read a MODIS MYD021KM (1 km radiance) HDF-EOS file
  * and generate a spectral data cube by joining all the 
- * available bands. The cube will be curried by band:
- *   band -> (ix, iy) -> radiance
- * and restructured into a Spark RDD.
+ * available bands. The geo location data will be substituted 
+ * into the grid's domain set:
+ *   band -> (longitude, latitude) -> radiance
+ *   
+ * Each band is defined as a granule in the ModisGranuleListReader.
+ * This granule list is put into a Spark RDD and the
+ * ModisBandReaderOperation is applied to read the 2D grid for each
+ * band.
  * 
  * Note that there is no true wavelength coverage so we 
  * model the spectral dimension with the band number as
@@ -24,70 +30,43 @@ import java.net.URI
  * Note that there are no coordinate variables defined for
  * the x (along-track) and y (along-scan) dimensions. The
  * file has longitudes and latitudes (scaled) but they don't
- * define a Cartesian coordinate system.
+ * define a Cartesian coordinate system. The "MYD03" files
+ * contain the full resolution longitude and latitude data
+ * as provided by the ModisGeolocationReader. It is used
+ * via substitution. Note that the resulting grid does not
+ * adhere to natural ordering since the original data is a swath.
  */
 case class ModisReader() extends DatasetReader {
   
   /**
-   * Get the URI for the MODIS data file to read.
-   */
-  val uri: URI = LatisConfig.get("hylatis.modis.uri") match {
-    case Some(s) => new URI(s) //TODO: invalid URI
-    case _ => ??? //TODO: uri not defined
-  }
-      
-  /**
-   * Define the model for each uncurried component of the
-   * spectral dimension.
-   *   (band, ix, iy) -> radiance
-   */
-  val origModel = Function(
-    Tuple(
-      Scalar(Metadata("id" -> "band", "type" -> "double")), 
-      Scalar(Metadata("id" -> "ix", "type" -> "int")), 
-      Scalar(Metadata("id" -> "iy", "type" -> "int"))
-      //Tuple(Metadata("geoIndex"), Scalar("ix"), Scalar("iy"))
-    ),
-    Scalar(Metadata("id" -> "radiance", "type" -> "float"))
-  )
-  
-  /**
-   * The spectral segments are found in the following variables
-   * in the HDF file.
-   */    
-  val varNames = List(
-    "MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB",    
-    "MODIS_SWATH_Type_L1B/Data_Fields/EV_500_Aggr1km_RefSB",    
-    //"MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_RefSB",    
-    //"MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_Emissive",    
-  )
-  
-  /**
-   * Construct the final Dataset by building a Dataset for each component,
-   * currying them by the band, then unioning them together.
-   * Note that this will effectively sort by band with minimal data
-   * munging since each large grid will be encapsulated in the range
-   * of each of the 38 samples.
+   * Construct the Dataset by creating a granule list Dataset
+   * with URIs representing a 2D grid for a given band.
+   * Apply ModisBandReaderOperation to replace each URI
+   * with the grid then apply ModisGeoSub to replace the index 
+   * domain with longitude and latitude.
    */
   def getDataset: Dataset = {
+    val granules = ModisGranuleListReader().getDataset.restructure(RddFunction) // band -> uri
     
-    // Get a Dataset for one chunk of the spectral dimension
-    def getDataset(varName: String): Dataset = {
-      val data = ModisNetcdfAdapter(varName)(uri)
-      val ds = Dataset(Metadata("modis"), origModel, data)
-      
-      //TODO: put in Spark first? curry should cause repartitioning
-      //  potentially expensive but could provide sorting with our partitioner
-      
-      val ds2 = ds //Curry()(ds)  // band -> (ix, iy) -> radiance
-//      ds2.restructure(RddFunction)  //put into Spark
-ds2.unsafeForce //need this until union supports streams
+    val ops: Seq[UnaryOperation] = Seq(
+      ModisBandReaderOperation(),  //band -> (ix, iy) -> radiance
+      ModisGeoSub()                //band -> (longitude, latitude) -> radiance
+    )
+    
+    // Apply Operations
+    val ds = ops.foldLeft(granules)((ds, op) => op(ds))
+        
+    // Persist the RDD now that all operations have been applied
+    val data = ds.data match {
+      case rf: RddFunction => 
+        //TODO: config storage level
+        RddFunction(rf.rdd.persist(StorageLevel.MEMORY_AND_DISK_SER))
+      case sf => sf //no-op if not an RddFunction
     }
-    
-    // Define the binary operation to union the datasets
-    val join: (Dataset,Dataset) => Dataset = Union().apply
-    
-    // Union all of the segments into a single Dataset
-    varNames.map(getDataset(_)).reduce(join)
+
+    // Create and rename the new Dataset and add it to the LaTiS CacheManager.
+    val ds1 = ds.copy(data = data).rename("modis")
+    ds1.cache()
+    ds1
   }
 }

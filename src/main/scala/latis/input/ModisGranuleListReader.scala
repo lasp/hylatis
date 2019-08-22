@@ -14,7 +14,7 @@ case class ModisGranuleListReader() extends DatasetReader {
   
   val data = {
     val file = LatisConfig.get("hylatis.modis.uri").get
-    val samples = Seq(
+    val allSamples = Seq(
       Sample(DomainData(1.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB,0")),
       Sample(DomainData(2.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB,1")),
       Sample(DomainData(3.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_500_Aggr1km_RefSB,0")),
@@ -54,6 +54,12 @@ case class ModisGranuleListReader() extends DatasetReader {
       Sample(DomainData(35.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_Emissive,14")),
       Sample(DomainData(36.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_Emissive,15"))
     )
+
+    val samples = LatisConfig.getInt("hylatis.modis.nbands") match {
+      case Some(n) => allSamples.take(n)
+      case None    => allSamples
+    }
+    
     SampledFunction.fromSeq(samples)
   }
   

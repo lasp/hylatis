@@ -20,6 +20,7 @@ import latis.data.RddFunction
 import latis.util.CacheManager
 import cats.effect.IO
 import fs2.text
+import latis.data.BinSet2D
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
@@ -34,9 +35,9 @@ class HylatisServer extends HttpServlet {
     //  cached as "hysics"
     //TODO: lazy? need to force?
     //TODO: define HysicsDataset instead of going through reader?
-    HysicsReader().getDataset
-    GoesReader().getDataset
-    ModisReader().getDataset
+    //HysicsReader().getDataset
+    //GoesReader().getDataset
+    ModisReader().getDataset //http://localhost:8090/latis-hylatis/dap/modis.png?geoGridResample(-110,10,-80,35,75000)&rgbImagePivot(1.0,5.0,4.0)
   }
 
   override def doGet(
@@ -91,11 +92,13 @@ class HylatisServer extends HttpServlet {
         case ("uncurry", _) => Uncurry()
         case ("geoGridResample", args) => args.split(",") match {
           case Array(x1, y1, x2, y2, n) => 
-            GeoGridImageResampling(x1.toDouble, 
-                               y1.toDouble,
-                               x2.toDouble,
-                               y2.toDouble,
-                               n.toInt)
+            val domainSet = BinSet2D.fromExtents((x1.toDouble, y1.toDouble), (x2.toDouble, y2.toDouble), n.toInt)
+            Resample(domainSet)
+//            GeoGridImageResampling(x1.toDouble, 
+//                               y1.toDouble,
+//                               x2.toDouble,
+//                               y2.toDouble,
+//                               n.toInt)
           case _ => throw new UnsupportedOperationException("usage: geoGridResample(x1,y1,x2,y2,n)")
         }
         case ("gbox", args) => args.split(",") match {

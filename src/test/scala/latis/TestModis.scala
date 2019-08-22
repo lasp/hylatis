@@ -233,25 +233,26 @@ class TestModis {
 
   @Test
   def from_granules() = {
-    val granules = ModisGranuleListReader().getDataset.restructure(RddFunction) // band -> uri
-    val ds0 = ModisBandReaderOperation()(granules) //band -> (ix, iy) -> radiance
-    
-    val ds1 = ModisGeoSub()(ds0) //band -> (longitude, latitude) -> radiance
+    //val granules = ModisGranuleListReader().getDataset.restructure(RddFunction) // band -> uri
+    //val ds0 = ModisBandReaderOperation()(granules) //band -> (ix, iy) -> radiance
+    //val ds1 = ModisGeoSub()(ds0) //band -> (longitude, latitude) -> radiance
     //println(ds1.data.asInstanceOf[RddFunction].rdd.count) // 18s for 7 bands with stride=10, 22s for 38 bands
-
-    val ds2 = RGBImagePivot(1.0, 5.0, 3.0)(ds1) // (longitude, latitude) -> (r, g, b)
     
-    // Define regular grid to resample onto
-    val s = 0.5
-    val (nx, ny) = ((300/s).toInt, (250/s).toInt)
-    val domainSet = BinSet2D(
-      BinSet1D(-110, 0.1*s, nx),
-      BinSet1D(10, 0.1*s, ny)
-    )
+    //val ds1a = Contains("band", 1.0, 3.0, 5.0)(ds1)
+    //val ds1a = Selection("band < 6")(ds1)
+    //TextWriter().write(ds1a)
+    
+    val ds1 = ModisReader().getDataset
+    
+    val domainSet = BinSet2D.fromExtents((-110, 10), (-80, 35), 75000)
+    //domainSet.elements foreach println
+    val ds2 = Resample(domainSet)(ds1) //TODO: avoid regridding all bands
 
-    val ds3 = GroupByBin(domainSet, NearestNeighborAggregation())(ds2)
+    val ds3 = RGBImagePivot(1.0, 5.0, 3.0)(ds2) // (longitude, latitude) -> (r, g, b)
+
+    //val ds3 = GroupByBin(domainSet, NearestNeighborAggregation())(ds2)
     //TextWriter().write(ds3)
-    ImageWriter("/data/modis/rgbImage.png").write(ds3)
+    ImageWriter("/data/modis/rgbImage2.png").write(ds3)
   }
   
   

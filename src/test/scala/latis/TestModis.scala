@@ -248,7 +248,7 @@ class TestModis {
     //domainSet.elements foreach println
     val ds2 = Resample(domainSet)(ds1) //TODO: avoid regridding all bands
 
-    val ds3 = RGBImagePivot(1.0, 5.0, 3.0)(ds2) // (longitude, latitude) -> (r, g, b)
+    val ds3 = RGBImagePivot(1.0, 4.0, 3.0)(ds2) // (longitude, latitude) -> (r, g, b)
 
   /*
    * TODO: reorder domain to row-major (image/matrix) order

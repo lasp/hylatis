@@ -153,38 +153,54 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     }
 
     // Filter out NaN before finding min/max
-    val rmax = rb.filter(! _.isNaN()).max
-    val gmax = gb.filter(! _.isNaN()).max
-    val bmax = bb.filter(! _.isNaN()).max
-    val rmin = rb.filter(! _.isNaN()).min
-    val gmin = gb.filter(! _.isNaN()).min
-    val bmin = bb.filter(! _.isNaN()).min
+    val drop = 0.1
+    val rmax = rb.filter(! _.isNaN()).max * (1 - drop - 0.5)
+    val gmax = gb.filter(! _.isNaN()).max * (1 - drop - 0.5)
+    val bmax = bb.filter(! _.isNaN()).max * (1 - drop - 0.5)
+    val rmin = rb.filter(! _.isNaN()).min * (1 + drop)
+    val gmin = gb.filter(! _.isNaN()).min * (1 + drop)
+    val bmin = bb.filter(! _.isNaN()).min * (1 + drop)
 
     val width = xs.size
     val height = ys.size
     
     // Normalize to 0..1 based on range of min to max value.
-    //TODO: make histogram and drop outer n%
+    /*
+     * TODO: make histogram and drop outer n%
+     * try drop above
+     */
+    
     
     // Assume natural x-y ordering
     // Put into row-column order.
-    
     val data = for {
       row <- (0 until height)  //height - y -1
       col <- (0 until width)   //x
     } yield {
       val i = col * height + height - row -1
-      val r = {
-        val r = ((rb(i) - rmin) / (rmax - rmin)).toFloat
-        if (r.isNaN) 0 else r
+      val r: Float = {
+        ((rb(i) - rmin) / (rmax - rmin)).toFloat match {
+          case v if v.isNaN => 0
+          case v if v < 0   => 0
+          case v if v > 1   => 1
+          case v            => v
+        }
       }
-      val g = {
-        val g = ((gb(i) - gmin) / (gmax - gmin)).toFloat
-        if (g.isNaN) 0 else g
+      val g: Float = {
+        ((gb(i) - gmin) / (gmax - gmin)).toFloat match {
+          case v if v.isNaN => 0
+          case v if v < 0   => 0
+          case v if v > 1   => 1
+          case v            => v
+        }
       }
-      val b = {
-        val b = ((bb(i) - bmin) / (bmax - bmin)).toFloat
-        if (b.isNaN) 0 else b
+      val b: Float = {
+        ((bb(i) - bmin) / (bmax - bmin)).toFloat match {
+          case v if v.isNaN => 0
+          case v if v < 0   => 0
+          case v if v > 1   => 1
+          case v            => v
+        }
       }
       new Color(r, g, b).getRGB
     }

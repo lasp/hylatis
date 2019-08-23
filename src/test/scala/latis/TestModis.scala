@@ -250,6 +250,23 @@ class TestModis {
 
     val ds3 = RGBImagePivot(1.0, 5.0, 3.0)(ds2) // (longitude, latitude) -> (r, g, b)
 
+  /*
+   * TODO: reorder domain to row-major (image/matrix) order
+   * as part of RGBImagePivot?
+   *   should "Image" imply ordering change? or just the r,g,b color?
+   * transpose and invert y
+   * or is there faster index magic?
+   * avoid RDD shuffling
+   * groupBy with diff ordering?
+   * or do in ImageWriter?
+   *   we are traversing through all the samples
+   * add trait/metadata to dataset/SF that is order: natural, row-col, as-is
+   *   don't always order DomainData?
+   * construct a SF with an ordering (as well as interp?...)
+   *   sf.withOrdering(ord)?
+   *   
+   */
+    
     //val ds3 = GroupByBin(domainSet, NearestNeighborAggregation())(ds2)
     //TextWriter().write(ds3)
     ImageWriter("/data/modis/rgbImage2.png").write(ds3)

@@ -70,8 +70,9 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
 
   /**
    * Make an Image assuming a Dataset of the form: (row, col) -> (r, g, b)
+   * with row-major ordering.
    */
-  private def makeImageFromRGB(dataset: Dataset): BufferedImage = {
+  private def makeImageFromRGB0(dataset: Dataset): BufferedImage = {
     val rows = mutable.Set[Any]()
     val cols = mutable.Set[Any]()
     val rb = mutable.ArrayBuffer[Double]()
@@ -90,8 +91,6 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
         bb += b
     }
 
-    val width = cols.size
-    val height = rows.size
     // Filter out NaN before finding min/max
     val rmax = rb.filter(! _.isNaN()).max
     val gmax = gb.filter(! _.isNaN()).max
@@ -100,6 +99,9 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     val gmin = gb.filter(! _.isNaN()).min
     val bmin = bb.filter(! _.isNaN()).min
 
+    val width = cols.size
+    val height = rows.size
+    
     // Normalize to 0..1 based on range of min to max value.
     //TODO: make histogram and drop outer n%
     val data = for {
@@ -107,6 +109,71 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
       col <- (0 until width)
     } yield {
       val i = row * width + col
+      val r = {
+        val r = ((rb(i) - rmin) / (rmax - rmin)).toFloat
+        if (r.isNaN) 0 else r
+      }
+      val g = {
+        val g = ((gb(i) - gmin) / (gmax - gmin)).toFloat
+        if (g.isNaN) 0 else g
+      }
+      val b = {
+        val b = ((bb(i) - bmin) / (bmax - bmin)).toFloat
+        if (b.isNaN) 0 else b
+      }
+      new Color(r, g, b).getRGB
+    }    
+    
+    val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    image.setRGB(0, 0, width, height, data.toArray, 0, width)
+    image
+  }
+
+  /**
+   * Make an Image assuming a Dataset of the form: (x, y) -> (r, g, b)
+   * with natural ordering.
+   */
+  private def makeImageFromRGB(dataset: Dataset): BufferedImage = {
+    val xs = mutable.Set[Any]()
+    val ys = mutable.Set[Any]()
+    val rb = mutable.ArrayBuffer[Double]()
+    val gb = mutable.ArrayBuffer[Double]()
+    val bb = mutable.ArrayBuffer[Double]()
+    
+    // Make sense of a Seq of Samples.
+    //TODO: take advantage of ArrayFunction2D and such
+    unsafeStreamToSeq(dataset.data.streamSamples) foreach {
+      // Assumes Cartesian domain to determine the size of the image
+      case Sample(DomainData(x, y), RangeData(Number(r), Number(g), Number(b))) =>
+        xs += x
+        ys += y
+        rb += r
+        gb += g
+        bb += b
+    }
+
+    // Filter out NaN before finding min/max
+    val rmax = rb.filter(! _.isNaN()).max
+    val gmax = gb.filter(! _.isNaN()).max
+    val bmax = bb.filter(! _.isNaN()).max
+    val rmin = rb.filter(! _.isNaN()).min
+    val gmin = gb.filter(! _.isNaN()).min
+    val bmin = bb.filter(! _.isNaN()).min
+
+    val width = xs.size
+    val height = ys.size
+    
+    // Normalize to 0..1 based on range of min to max value.
+    //TODO: make histogram and drop outer n%
+    
+    // Assume natural x-y ordering
+    // Put into row-column order.
+    
+    val data = for {
+      row <- (0 until height)  //height - y -1
+      col <- (0 until width)   //x
+    } yield {
+      val i = col * height + height - row -1
       val r = {
         val r = ((rb(i) - rmin) / (rmax - rmin)).toFloat
         if (r.isNaN) 0 else r

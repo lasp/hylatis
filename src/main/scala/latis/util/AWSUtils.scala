@@ -2,11 +2,13 @@ package latis.util
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.AnonymousAWSCredentials
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.s3._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import java.net.URI
 import java.io.File
 import java.io.FileOutputStream
+import com.amazonaws.services.s3.AmazonS3URI
+import java.nio.file.Files
 
 object AWSUtils {
   
@@ -28,8 +30,16 @@ object AWSUtils {
    * from an S3 URI.
    */
   def parseS3URI(uri: URI): (String, String) = {
-    if (uri.getScheme == "s3") (uri.getHost, uri.getPath.drop(1))
-    else ??? //TODO: error
+    val s3uri = new AmazonS3URI(uri)
+    (s3uri.getBucket, s3uri.getKey)
+  }
+  
+  def copyS3ObjectToFile(uri: URI, file: File): Unit = {
+    val (bucket, key) = parseS3URI(uri)
+    val s3is = AWSUtils.s3Client.get.getObject(bucket, key).getObjectContent
+    Files.createDirectories(file.toPath.getParent)
+    Files.copy(s3is, file.toPath)
+    s3is.close
   }
 
 

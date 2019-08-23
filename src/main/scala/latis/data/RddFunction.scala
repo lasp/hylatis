@@ -8,6 +8,7 @@ import latis.util.HylatisPartitioner
 import org.apache.spark.rdd.PairRDDFunctions
 import latis.resample._
 import latis.ops._
+import org.apache.spark.HashPartitioner
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
@@ -186,9 +187,16 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
 
 object RddFunction extends FunctionFactory {
 
-  def fromSamples(samples: Seq[Sample]): MemoizedFunction =
-    RddFunction(sparkContext.parallelize(samples))
-    //TODO: "count" the data to load it; configurable "cache" option
+  def fromSamples(samples: Seq[Sample]): MemoizedFunction = {
+    // Put data into a Spark RDD[Sample] with a Partitioner
+    // with the number of partitions set to the number of Samples.
+    //TODO: try our Partitioner
+    val part = new HashPartitioner(samples.length)
+    val rdd = sparkContext.parallelize(samples)
+    rdd.partitionBy(part)
+    RddFunction(rdd)
+  }
+    
 
   override def restructure(data: SampledFunction): MemoizedFunction = data match {
     case rf: RddFunction => rf //no need to restructure

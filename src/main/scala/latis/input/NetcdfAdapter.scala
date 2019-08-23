@@ -7,6 +7,7 @@ import java.net.URI
 import ucar.nc2.NetcdfFile
 import latis.util.AWSUtils
 import java.nio.file._
+import latis.util.LatisConfig
 
 case class NetcdfAdapter(model: DataType) extends Adapter {
   //TODO: AdapterConfig?
@@ -16,25 +17,26 @@ case class NetcdfAdapter(model: DataType) extends Adapter {
     NetcdfFunction(open(uri), model)
   
   /**
-    * Return a NetcdfFile for the given URI.
-    */
+   * Return a NetcdfFile from the given URI.
+   */
   def open(uri: URI): NetcdfFile = {
+    //TODO: resource management, make sure this gets closed
     uri.getScheme match {
       case null => 
         NetcdfFile.open(uri.getPath) //assume file path
       case "s3" => 
-        //TODO: utils
+        // Create a local file name
         val (bucket, key) = AWSUtils.parseS3URI(uri)
-        val s3is = AWSUtils.s3Client.get.getObject(bucket, key).getObjectContent
-        val tmpDir = Files.createTempDirectory("latis").toString
-        val path = FileSystems.getDefault().getPath(tmpDir, key)
-        Files.copy(s3is, path)
-        s3is.close
-        NetcdfFile.open(path.toString)
-//        val uriExpression = uri.getScheme + "://" + uri.getHost + uri.getPath
-//        val raf = new ucar.unidata.io.s3.S3RandomAccessFile(uriExpression, 1<<15, 1<<24)
-//        NetcdfFile.open(raf, uriExpression, null, null)
-      //TODO:  "file"
+        val dir = LatisConfig.get("file.cache.dir") match {
+          case Some(dir) => dir
+          case None => Files.createTempDirectory("latis").toString
+        }
+        val file = Paths.get(dir, bucket, key).toFile
+        // If the file does not exist, make a local copy
+        if (! file.exists) AWSUtils.copyS3ObjectToFile(uri, file)
+        NetcdfFile.open(file.toString)
+      case "file" => 
+        NetcdfFile.open(uri.getPath)
       case _    =>
         NetcdfFile.open(uri.getScheme + "://" + uri.getHost + "/" + uri.getPath)
     }

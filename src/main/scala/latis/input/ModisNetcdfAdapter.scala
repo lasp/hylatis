@@ -7,6 +7,7 @@ import fs2.Stream
 import java.net.URI
 import ucar.nc2.NetcdfFile
 
+// read entire cube by reading each radiance variable then unioning
 case class ModisNetcdfAdapter(varName: String) extends Adapter {
   //TODO: AdapterConfig?
   //TODO: get orig varName from the model? metadata?

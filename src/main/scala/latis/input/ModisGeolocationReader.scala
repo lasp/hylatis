@@ -42,7 +42,6 @@ case class ModisGeolocationReader() extends DatasetReader {
   
   def getDataset: Dataset = {
     // Use ArrayFunction2D to optimize evaluation by index domain values
- val z = uri
     val data = ArrayFunction2D.restructure(adapter(uri))
     Dataset(metadata, model, data)
   }

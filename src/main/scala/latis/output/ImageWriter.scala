@@ -153,13 +153,13 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     }
 
     // Filter out NaN before finding min/max
-    val drop = 0.1
-    val rmax = rb.filter(! _.isNaN()).max * (1 - drop - 0.5)
-    val gmax = gb.filter(! _.isNaN()).max * (1 - drop - 0.5)
-    val bmax = bb.filter(! _.isNaN()).max * (1 - drop - 0.5)
-    val rmin = rb.filter(! _.isNaN()).min * (1 + drop)
-    val gmin = gb.filter(! _.isNaN()).min * (1 + drop)
-    val bmin = bb.filter(! _.isNaN()).min * (1 + drop)
+    //val drop = 0.1
+    val rmax = rb.filter(! _.isNaN()).max //* (1 - drop - 0.5)
+    val gmax = gb.filter(! _.isNaN()).max //* (1 - drop - 0.5)
+    val bmax = bb.filter(! _.isNaN()).max //* (1 - drop - 0.5)
+    val rmin = rb.filter(! _.isNaN()).min //* (1 + drop)
+    val gmin = gb.filter(! _.isNaN()).min //* (1 + drop)
+    val bmin = bb.filter(! _.isNaN()).min //* (1 + drop)
 
     val width = xs.size
     val height = ys.size

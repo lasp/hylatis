@@ -6,9 +6,9 @@ import com.amazonaws.services.s3._
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import java.net.URI
 import java.io.File
-import java.io.FileOutputStream
+import java.io._
 import com.amazonaws.services.s3.AmazonS3URI
-import java.nio.file.Files
+import java.nio.file._
 
 object AWSUtils {
   
@@ -38,7 +38,12 @@ object AWSUtils {
     val (bucket, key) = parseS3URI(uri)
     val s3is = AWSUtils.s3Client.get.getObject(bucket, key).getObjectContent
     Files.createDirectories(file.toPath.getParent)
-    Files.copy(s3is, file.toPath)
+    //TODO: deal with concurrency
+    try {
+      Files.copy(s3is, file.toPath)
+    } catch {
+      case faee: FileAlreadyExistsException => //ignore, assuming another thread is doing it
+    }
     s3is.close
   }
 

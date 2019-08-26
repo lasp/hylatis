@@ -6,12 +6,9 @@ import latis.util.StreamUtils._
 import scala.collection._
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
-import java.io.File
 import java.awt.Color
 import java.io.OutputStream
 import java.io.FileOutputStream
-import latis.metadata._
-import org.apache.spark.sql.catalyst.expressions.IsNaN
 
 /**
  * Create an png image of a Dataset of one of the shapes:
@@ -21,6 +18,7 @@ import org.apache.spark.sql.catalyst.expressions.IsNaN
  * the first row at the top.
  */
 class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
+  //TODO: work with http4s encoder idioms
   /*
    * TODO: define an Image type to enforce that it works with this writer
    * deal with non row-major ordering
@@ -29,19 +27,40 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
 
   def write(dataset: Dataset): Unit = {
     // Construct a BufferedImage based on the shape of the data
-    val image: BufferedImage = dataset.model match {
-      case Function(domain, range) => domain match {
-        case Tuple(_, _) => range match { // 2D
-          case _: Scalar      => makeImageFromPackedColor(dataset)
-          case Tuple(_, _, _) => makeImageFromRGB(dataset)
-          case _                  => ??? //TODO: invalid range type
-        }
-        case _ => ??? //TODO: invalid domain type
-      }
-      case _ => ??? //TODO: invalid data type
-    }
-    
+    val image: BufferedImage = ImageWriter.encode(dataset)
+    // Write image to the OutputStream in the desired format
     ImageIO.write(image, format, out)
+  }
+  
+}
+
+
+object ImageWriter {
+  //Available Java ImageIO writer plug-ins: JPEG, PNG, GIF, BMP and WBMP, +
+  //JAI has more; jpeg2000?
+  
+  def apply(out: OutputStream, format: String): ImageWriter = 
+    new ImageWriter(out, format)
+  
+  def apply(file: String, format: String): ImageWriter = 
+    ImageWriter(new FileOutputStream(file), format)
+    
+  def apply(file: String): ImageWriter = {
+    val format = file.substring(file.lastIndexOf(".") + 1) //file suffix //TODO: util function
+    ImageWriter(new FileOutputStream(file), format)
+  }
+  
+  
+  def encode(dataset: Dataset): BufferedImage = dataset.model match {
+    case Function(domain, range) => domain match {
+      case Tuple(_, _) => range match { // 2D
+        case _: Scalar      => makeImageFromPackedColor(dataset)
+        case Tuple(_, _, _) => makeImageFromRGB(dataset)
+        case _                  => ??? //TODO: invalid range type
+      }
+      case _ => ??? //TODO: invalid domain type
+    }
+    case _ => ??? //TODO: invalid data type
   }
   
   /**
@@ -210,21 +229,4 @@ class ImageWriter(out: OutputStream, format: String) { //extends Writer(out) {
     image
   }
 
-}
-
-
-object ImageWriter {
-  //Available Java ImageIO writer plug-ins: JPEG, PNG, GIF, BMP and WBMP, +
-  //JAI has more; jpeg2000?
-  
-  def apply(out: OutputStream, format: String): ImageWriter = 
-    new ImageWriter(out, format)
-  
-  def apply(file: String, format: String): ImageWriter = 
-    ImageWriter(new FileOutputStream(file), format)
-    
-  def apply(file: String): ImageWriter = {
-    val format = file.substring(file.lastIndexOf(".") + 1) //file suffix //TODO: util function
-    ImageWriter(new FileOutputStream(file), format)
-  }
 }

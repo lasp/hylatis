@@ -7,19 +7,18 @@ import java.net.URI
 import latis.input.ModisNetcdfAdapter2
 import latis.input.ModisGeolocationReader
 
-case class ModisBandReaderOperation() extends MapOperation {
+case class ModisBandReaderOperation() extends MapRangeOperation {
   
-  def makeMapFunction(model: DataType): Sample => Sample =
-    (sample: Sample) => sample match {
-      case Sample(domain, RangeData(Text(s))) =>
+  def mapFunction(model: DataType): RangeData => RangeData =
+    (range: RangeData) => range match {
+      case RangeData(Text(s)) =>
         val ss = s.split(",")
         val uri = new URI(ss(0))
         val vname = ss(1)
         val bandIndex = ss(2).toInt
         val adapter = ModisNetcdfAdapter2(vname, bandIndex)
         val data = adapter(uri)
-        val range = RangeData(data)
-        Sample(domain, range)
+        RangeData(data)
     }
     
   override def applyToModel(model: DataType): DataType = model match {

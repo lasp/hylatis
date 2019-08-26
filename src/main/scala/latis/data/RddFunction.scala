@@ -50,6 +50,9 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
     
   override def map(f: Sample => Sample): RddFunction =
     RddFunction(rdd.map(f))
+    
+  override def mapRange(f: RangeData => RangeData): RddFunction =
+    RddFunction(rdd.mapValues(f))
  
   override def flatMap(f: Sample => MemoizedFunction): RddFunction =
     RddFunction(rdd.flatMap(s => f(s).samples))
@@ -175,6 +178,16 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
                   
     RddFunction(rdd2)
   }
+    
+  /**
+   * Join two RddFunctions assuming they have the same domain set.
+   */
+  def join(that: RddFunction): RddFunction = {
+    val rdd = (this.rdd join that.rdd) mapValues {
+      case (r1: RangeData, r2: RangeData) => r1 ++ r2
+    }
+    RddFunction(rdd)
+  }
   
   override def union(that: SampledFunction) = that match {
     case rf: RddFunction =>
@@ -193,7 +206,7 @@ object RddFunction extends FunctionFactory {
     //TODO: try our Partitioner
     val part = new HashPartitioner(samples.length)
     val rdd = sparkContext.parallelize(samples)
-    rdd.partitionBy(part)
+                          .partitionBy(part)
     RddFunction(rdd)
   }
     

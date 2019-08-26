@@ -18,7 +18,7 @@ case class RGBImagePivot(red: Double, green: Double, blue: Double) extends Unary
 
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
     // Evaluate cube for each color
-    val grids = Vector(red, green, blue).map { v =>
+    val grids: Vector[MemoizedFunction] = Vector(red, green, blue).map { v =>
       data(DomainData(v)) match {
         case Some(RangeData(mf: MemoizedFunction)) => mf //(x, y) -> a
         //case Some(RangeData(sf: SampledFunction)) => sf.unsafeForce //(x, y) -> a
@@ -26,17 +26,27 @@ case class RGBImagePivot(red: Double, green: Double, blue: Double) extends Unary
       }
     }
     
+    val join = (sf1: MemoizedFunction, sf2: MemoizedFunction) => sf1 join sf2
     grids.reduce(join)
   }
+  /*
+   * TODO: can we take advantage of RDD join? without re-partitioning?
+   * reduceByKey: assumes duplicate keys in same RDD
+   * 
+   * join takes a partitioner arg, just give it the same one?
+   * returns (K, (V, W)), need to concat ranges
+   * is this effectively an intersection (inner)? (since we guarantee uniq keys, not a product)
+   * 
+   */
   
-  private def join(sf1: MemoizedFunction, sf2: MemoizedFunction): MemoizedFunction = {
-    val samples = (sf1.samples zip sf2.samples) map { 
-      // Assume same domain
-      case (Sample(d, r1), Sample(_, r2)) => Sample(d, r1 ++ r2)
-    }
-    
-    SampledFunction.fromSeq(samples)
-  }
+//  private def join(sf1: MemoizedFunction, sf2: MemoizedFunction): MemoizedFunction = {
+//    val samples = (sf1.samples zip sf2.samples) map { 
+//      // Assume same domain
+//      case (Sample(d, r1), Sample(_, r2)) => Sample(d, r1 ++ r2)
+//    }
+//    
+//    SampledFunction.fromSeq(samples)
+//  }
   
   override def applyToModel(model: DataType): DataType = model match {
     case Function(_, Function(domain, _)) => Function(

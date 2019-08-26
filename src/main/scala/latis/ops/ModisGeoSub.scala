@@ -9,7 +9,8 @@ import latis.util.SparkUtils
 /**
  * band -> (ix, iy) -> radiance  =>  band -> (longitude, latitude) -> radiance
  */
-case class ModisGeoSub() extends UnaryOperation {
+case class ModisGeoSub() extends MapRangeOperation {
+  //TODO: make a Dataset that wraps a broadcast variable
   
   /**
    * Read the geo location data and broadcast it
@@ -25,7 +26,7 @@ case class ModisGeoSub() extends UnaryOperation {
    * Note that this operates on the range only so we can use
    * mapValues without disturbing the keys and partitions.
    */
-  val g: RangeData => RangeData = {
+  override def mapFunction(model: DataType): RangeData => RangeData = {
     // Get the broadcast geo locations
     val bcGeoLoc = broadcastGeoLocation
     
@@ -46,12 +47,12 @@ case class ModisGeoSub() extends UnaryOperation {
     }
   }
     
-  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = data match {
-    case rddF: RddFunction => RddFunction(rddF.rdd.mapValues(g))
-    case _ => throw new RuntimeException("ModisGeoSub only works in Spark")
-    //TODO: support non-spark usage
-  }
-  
+//  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = data match {
+//    case rddF: RddFunction => RddFunction(rddF.rdd.mapValues(g))
+//    case _ => throw new RuntimeException("ModisGeoSub only works in Spark")
+//    //TODO: support non-spark usage
+//  }
+//  
   override def applyToModel(model: DataType): DataType = model match {
     case Function(domain, _) =>
       val range = Function(

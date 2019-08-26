@@ -244,6 +244,7 @@ class TestModis {
     
     val ds1 = ModisReader().getDataset
     
+    //val domainSet = BinSet2D.fromExtents((-120, 30), (-80, 60), 75000) //1945 image
     val domainSet = BinSet2D.fromExtents((-110, 10), (-80, 35), 75000)
     //domainSet.elements foreach println
     val ds2 = Resample(domainSet)(ds1) //TODO: avoid regridding all bands

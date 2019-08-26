@@ -11,7 +11,7 @@ import latis.metadata.Metadata
  * assume resampling applies to nested function
  */
 case class Resample(domainSet: DomainSet)
-extends MapOperation {
+extends MapRangeOperation {
   //TODO: nothing specifically "geo" about this, or grid
   //TODO: Resample vs Resampling
   //  ResampleGrid vs GridResampling
@@ -62,15 +62,15 @@ extends MapOperation {
    *  Make function to resample the nested Function
    *  in the range of each sample.
    */
-  def makeMapFunction(model: DataType): Sample => Sample = {
+  def mapFunction(model: DataType): RangeData => RangeData = {
     // Use GroupByBin with NearestNeighbor aggregation
     val gbb = GroupByBin(domainSet, NearestNeighborAggregation())
     val innerModel = model match {
       case Function(_, range) => range
     }
-    (sample: Sample) => sample match {
-      case Sample(domain, RangeData(sf: SampledFunction)) =>
-        Sample(domain, RangeData(gbb.applyToData(sf, innerModel)))
+    (range: RangeData) => range match {
+      case RangeData(sf: SampledFunction) =>
+        RangeData(gbb.applyToData(sf, innerModel))
     }
     
 //    // Default case: simply delegate to sf.resample

@@ -12,7 +12,7 @@ case class GeoGridImageResampling(
   lon1: Double, lat1: Double, 
   lon2: Double, lat2: Double, 
   pixels: Int
-) extends MapOperation {
+) extends MappingOperation {
   //TODO: assert lon1 < lon2, lat1 < lat2, and within bounds [-180,180), [-90, -90]
   
   /**
@@ -39,7 +39,7 @@ case class GeoGridImageResampling(
   /**
    *  Make function to evaluate the nested Function in the range of each sample.
    */
-  def makeMapFunction(model: DataType): Sample => Sample = 
+  def mapFunction(model: DataType): Sample => Sample = 
     (sample: Sample) => sample match {
       case Sample(domain, RangeData(sf: SampledFunction)) =>
         Sample(domain, RangeData(sf.resample(grid)))

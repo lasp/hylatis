@@ -5,10 +5,10 @@ import latis.data._
 import latis.util.HysicsUtils
 import latis.metadata._
 
-case class XYTransform() extends MapOperation {
+case class XYTransform() extends MappingOperation {
   // (ix, iy) -> ?  =>  (x, y) -> ?
   
-  override def makeMapFunction(model: DataType):  Sample => Sample =
+  override def mapFunction(model: DataType):  Sample => Sample =
     (sample: Sample) => sample match {
       case Sample(DomainData(Index(ix), Index(iy)), range) =>
         val (x, y) = HysicsUtils.indexToXY((ix, iy))

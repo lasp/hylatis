@@ -21,6 +21,32 @@ import latis.ops.Uncurry
 
 class TestHysics extends JUnitSuite {
   
+  @Test
+  def make_image = {
+    // wavelength -> (iy, ix) -> radiance
+    val hysics = HysicsReader().getDataset
+    
+    val image = RGBImagePivot(630.87, 531.86, 463.79)(hysics)
+    ImageWriter("/data/hysics/hysicsRGB.png").write(image)
+  }
+  
+  //@Test
+  def bulk_load = {
+    // wavelength -> (iy, ix) -> radiance
+    val hysics = HysicsReader().getDataset
+    
+    val ops: Seq[UnaryOperation] = Seq(
+      //TODO: selection in nested function not working:  Selection("ix >= 477"),
+      RGBImagePivot(630.87, 531.86, 463.79),
+      //XYTransform()
+    )
+    
+    //val image = DatasetSource.fromName("hysics").getDataset(ops)
+    val image = ops.foldLeft(hysics)((ds, op) => op(ds))
+    //TextWriter(System.out).write(image)
+    ImageWriter("hysicsRGB.png").write(image)
+  }
+  
 //  //@Test
 //  def inspect_wavelength_file(): Unit = {
 //    val lines = Source.fromFile("/data_systems/data/test/hylatis/wavelength.txt").getLines()
@@ -299,23 +325,6 @@ class TestHysics extends JUnitSuite {
 //    val image = DatasetSource.fromName("hysics").getDataset(ops)
 //    ImageWriter("xyRGB.png").write(image)
 //  }
-  
-  @Test
-  def bulk_load = {
-    // (iy, ix, wavelength) -> radiance
-    val hysics = HysicsReader().getDataset
-    
-    val ops: Seq[UnaryOperation] = Seq(
-      //TODO: selection in nested function not working:  Selection("ix >= 477"),
-      RGBImagePivot(630.87, 531.86, 463.79),
-      //XYTransform()
-    )
-    
-    //val image = DatasetSource.fromName("hysics").getDataset(ops)
-    val image = ops.foldLeft(hysics)((ds, op) => op(ds))
-    //TextWriter(System.out).write(image)
-    ImageWriter("hysicsRGB.png").write(image)
-  }
 
 }
 

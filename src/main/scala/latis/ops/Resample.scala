@@ -10,8 +10,7 @@ import latis.metadata.Metadata
 /*
  * assume resampling applies to nested function
  */
-case class Resample(domainSet: DomainSet)
-extends MapRangeOperation {
+case class Resample(domainSet: DomainSet) extends MapRangeOperation {
   //TODO: nothing specifically "geo" about this, or grid
   //TODO: Resample vs Resampling
   //  ResampleGrid vs GridResampling

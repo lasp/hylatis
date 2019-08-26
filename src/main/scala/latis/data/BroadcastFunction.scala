@@ -7,6 +7,7 @@ import latis.util.SparkUtils
  * Seq[Sample].
  */
 case class BroadcastFunction(private val _samples: Seq[Sample]) extends MemoizedFunction {
+  //TODO: broadcast any MemoizedFunction, delegate to it?
   
   private val broadcast = SparkUtils.sparkContext.broadcast(_samples)
   

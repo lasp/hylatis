@@ -106,6 +106,20 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
        .flatMap(p => agg(p._1, p._2))
        .sortBy(s => s.domain)
   }
+  
+    /*
+     * Could groupBy be impl'd via flatMap?
+     * RDD flatMap vs groupBy
+     *   would we be giving up optimization of spark gb?
+     * flatMap: S => TraversableOnce[S]
+     *   "flattens" the Traversable
+     *   SF would have to impl TraversableOnce
+     *   what would it meen to flatten a SF? 
+     *     no nested Functions?
+     *     that sounds like what Aggregation could do
+     *     do we always want that kind of flattening?
+     * groupBy: S => (S, Iterable[S])
+     */
    
   override def groupBy(paths: SamplePath*): RddFunction = {
     //TODO: no-op if empty

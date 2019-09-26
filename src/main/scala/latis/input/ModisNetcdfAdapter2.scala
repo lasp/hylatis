@@ -31,6 +31,7 @@ case class ModisNetcdfAdapter2(varName: String, bandIndex: Int) extends Adapter 
         }
         val file = Paths.get(dir, bucket, key).toFile
         // If the file does not exist, make a local copy
+        //TODO: deal with concurrency
         if (! file.exists) AWSUtils.copyS3ObjectToFile(uri, file)
         NetcdfFile.open(file.toString)
       case "file" => 

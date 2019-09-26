@@ -8,10 +8,12 @@ import ucar.nc2.NetcdfFile
 import latis.util.AWSUtils
 import java.nio.file._
 import latis.util.LatisConfig
+import latis.util.ConfigLike
 
-case class NetcdfAdapter(model: DataType) extends Adapter {
-  //TODO: AdapterConfig?
-  //TODO: consider using ucar.nc2.NetcdfDataset, enhanced
+case class NetcdfAdapter(
+  model: DataType, 
+  config: NetcdfAdapter.Config = NetcdfAdapter.Config()
+) extends Adapter {
   
   def apply(uri: URI): SampledFunction =
     NetcdfFunction(open(uri), model)
@@ -45,7 +47,7 @@ case class NetcdfAdapter(model: DataType) extends Adapter {
 }
 
 /*
- * TODO: use NetcdfAdapter.Config
+ * TODO: NetcdfAdapter.Config
  *   scale_attribute = scale_factor
  *   offset_attribute = add_offset
  *   scale = 1
@@ -56,3 +58,10 @@ case class NetcdfAdapter(model: DataType) extends Adapter {
  *   Map id => value?
  */
 
+object NetcdfAdapter {
+  
+  case class Config(properties: (String, String)*) extends ConfigLike {
+    val scaleAtt : String = getOrElse("scaleAttribute", "scale_factor")
+    val offsetAtt: String = getOrElse("offsetAttribute", "add_offset")
+  }
+}

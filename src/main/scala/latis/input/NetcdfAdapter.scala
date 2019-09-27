@@ -10,6 +10,7 @@ import java.nio.file._
 import latis.util.LatisConfig
 import latis.util.ConfigLike
 import ucar.nc2.dataset.NetcdfDataset
+import ucar.ma2.Section
 
 case class NetcdfAdapter(
   model: DataType, 
@@ -17,7 +18,7 @@ case class NetcdfAdapter(
 ) extends Adapter {
   
   def apply(uri: URI): SampledFunction =
-    NetcdfFunction(open(uri), model)
+    NetcdfFunction(open(uri), model, config.section)
   
   /**
    * Return a NetcdfFile from the given URI.
@@ -47,22 +48,10 @@ case class NetcdfAdapter(
   }
 }
 
-/*
- * TODO: NetcdfAdapter.Config
- *   scale_attribute = scale_factor
- *   offset_attribute = add_offset
- *   scale = 1
- *   offset = 0
- * which would win?
- * but could be diff for each variable
- * generally need support for variable level properties
- *   Map id => value?
- */
 
 object NetcdfAdapter {
   
   case class Config(properties: (String, String)*) extends ConfigLike {
-    val scaleAtt : String = getOrElse("scaleAttribute", "scale_factor")
-    val offsetAtt: String = getOrElse("offsetAttribute", "add_offset")
+    val section: Option[Section] = get("section").map(new Section(_))
   }
 }

@@ -6,23 +6,21 @@ import ucar.nc2.{Variable => NcVariable, NetcdfFile}
 import fs2.Stream
 import cats.effect.IO
 import scala.collection.JavaConverters._
-import latis.util.StreamUtils
-import latis.data.Data.DoubleValue
 import ucar.nc2.dataset.NetcdfDataset
+import latis.data.Data._
 
 /**
- * Implement a SampledFunction that encapsulates a NetCDF file.
+ * Implement a SampledFunction that encapsulates a NetCDF dataset.
  * Capture only the variables that are represented in the given model.
+ * The model must be uncurried (no nested Functions) with one-dimensional
+ * domain variables and range variables with the same shape (i.e. Cartesian).
  */
 case class NetcdfFunction(
   ncDataset: NetcdfDataset, 
   model: DataType, 
   section: Option[Section] = None
 ) extends SampledFunction {
-  // Assume model is uncurried: (x, y, z) -> (a, b, c)
-  // Assume domain variable are 1D coordinate variables (Cartesian)
   //TODO: ensure all range variables have the same shape
-  //TODO: use enhanced NetcdfDataset? understands valid range, missing, scale, offset
   
   /**
    * Provide a Stream of Samples from the NetcdfFile.
@@ -36,31 +34,6 @@ case class NetcdfFunction(
   lazy val ncStream: Stream[IO, NetcdfFile] = 
     Stream.bracket(IO(ncDataset))(nc => IO(nc.close()))
   
-  
-  /*
-   * TODO: apply operations
-   * make new NetcdfFunction with diff model?
-   * use "section" metadata? for selections
-   *   can't modify model here, use config?
-   * projections supported via simply reading what is in the model
-   * 
-   * Operation modifies model eagerly
-   *   this can't modify the model
-   *   construct with sections for each variable?
-   *   config? consider tsml atts to specify subsets
-   *     try to be true to data file, apply subset as ops
-   *     even removing a dimension via evaluation?
-   *     easy to specify section
-   *     can use indices
-   * manage range for each domain variable
-   *   as constructor arg?
-   *   make new instance with application of operation   
-   * 
-   * Config by variable?
-   * just another dot (".") layer with id?
-   *   time.section? or section.time? section: Map id => value  
-   */
-  
   /**
    * Get the name of the NetCDF variable given the identifier from the model.
    */
@@ -68,28 +41,22 @@ case class NetcdfFunction(
     case Some(v) => v.metadata.getProperty("origName").getOrElse(id)
     case None => ??? //TODO: error, variable not found
   }
-
-
-  def readVar(id: String): NcArray = {
-    val ncvar = ncDataset.findVariable(getOrigName(id))
-  //TODO: apply ops via a section
-  val origin = Array(0,0)
-  val shape = ncvar.getShape
-  val stride = Array(2712,2712)  
-    
-    val section = new Section(origin, shape, stride)
-    ncvar.read(section)
-  }
   
-  
+  /**
+   * Transform domain variable data to a DomainSet.
+   */
   def ncArrayToDomainSet(arr: NcArray): DomainSet = arr.copyTo1DJavaArray match {
-    //TODO: support any Data in new data branch
-    case a: Array[Short] => DomainSet(a.map(v => DomainData(DoubleValue(v.toDouble))))
-    case a: Array[Float] => DomainSet(a.map(v => DomainData(DoubleValue(v.toDouble))))
+    //TODO: support any Data in new data branch with diff support for ordering
+    case a: Array[Short]  => DomainSet(a.map(v => DomainData(ShortValue(v))))
+    case a: Array[Float]  => DomainSet(a.map(v => DomainData(FloatValue(v))))
     case a: Array[Double] => DomainSet(a.map(v => DomainData(DoubleValue(v))))
   }
   
-  private val variableMap: Map[String, NcVariable] = {
+  /**
+   * Define a Map of model id to the corresponding NetCDF Variable.
+   * Note, this will access the file but not read data arrays.
+   */
+  private lazy val variableMap: Map[String, NcVariable] = {
     val ids = model.getScalars.map(_.id)
     val pairs = ids map { id =>
       (id, ncDataset.findVariable(getOrigName(id))) //TODO: error if any null, fail fast?
@@ -101,24 +68,29 @@ case class NetcdfFunction(
    * Define the default Section based on the shape for the first range variable.
    */
   def defaultSection: Section = model match {
+    //TODO: look for metadata before looking at file
     case Function(_, range) => 
       val shape = variableMap(range.getScalars.head.id).getShape
       new Section(shape)
   }
   
-  def stride(ns: Int*): NetcdfFunction = {
-    val newSection = section match {
-      case Some(sect) =>
-        NetcdfFunction.applyStrideToSection(sect, ns.toArray)
-      case None => defaultSection
-    }
+  /**
+   * Apply the stride operation by modifying the Section and
+   * returning a new NetcdfFunction.
+   */
+  def stride(ns: Seq[Int]): NetcdfFunction = {
+    val currentSection = section getOrElse defaultSection
+    val newSection = NetcdfFunction.applyStrideToSection(currentSection, ns.toArray)
     this.copy(section = Option(newSection))
+    //TODO: consider shared open NetCDF file
   }
   
   /**
-   * Define a function to transform a NetcdfFile into Samples.
+   * Define a function to transform a NetcdfFile into a Stream of Samples.
    */
   val readData: NetcdfFile => Stream[IO, Sample] = (netcdfFile: NetcdfFile) => {
+    //TODO: seems a shame to build a memoized SetFunction just to make a Stream
+    //TODO: read chunks or slices by outer dimension
     
     val (domainArrays, rangeArrays) = model match {
       case Function(domain, range) => (
@@ -127,9 +99,9 @@ case class NetcdfFunction(
       )
     }
     
-    val totalLength = rangeArrays.head.getSize.toInt
-    
     val domainSet = ProductSet(domainArrays.map(ncArrayToDomainSet): _*)
+    
+    val totalLength = rangeArrays.head.getSize.toInt
     
     val rangeValues = for {
       index <- 0 until totalLength
@@ -137,11 +109,22 @@ case class NetcdfFunction(
       
     SetFunction(domainSet, rangeValues).streamSamples
   }
-  /*
-   * TODO: seems a shame to build a memoized SetFunction just to make a Stream
-   * TODO: read chunks or slices by outer dimension
-   * 
+
+  /**
+   * Read the NetCDF variable with the given model id.
    */
+  def readVar(id: String): NcArray = {
+    //val ncvar = ncDataset.findVariable(getOrigName(id)) //TODO: handle error, not found
+    val ncvar = variableMap(id) //TODO: handle error, not found
+    val fullSection = section getOrElse defaultSection
+    // For domain variables, extract the nc Range for that dimension.
+    val path = model.getPath(id).get //TODO: or else error, not found
+    val varSection = path.head match { //assumes no nesting, uncurried
+      case DomainPosition(i) => new Section(fullSection.getRange(i))
+      case _ => fullSection
+    }
+    ncvar.read(varSection)
+  }
 
     
   /**
@@ -160,14 +143,13 @@ object NetcdfFunction {
   def applyStrideToSection(section: Section, stride: Array[Int]): Section = {
     //TODO: check rank
     val origin = section.getOrigin
-    val shape  = section.getShape 
-//    zip stride map {
-//      case (a, b) => a / b
-//    }
-    val newStride = section.getStride zip stride map {
-      case (a, b) => a * b
+    val size = section.getShape zip section.getStride map {
+      case (shape, stride) => shape * stride
     }
-    new Section(origin, shape, newStride)
+    val newStride = section.getStride zip stride map {
+      case (s1, s2) => s1 * s2
+    }
+    new Section(origin, size, newStride)
   }
 }
 

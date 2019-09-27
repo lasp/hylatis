@@ -9,13 +9,16 @@ case class GoesImageReader(uri: URI) extends AdaptedDatasetReader {
    
   def model = Function(
     Tuple(
-      Scalar(Metadata("row")    + ("type" -> "int")), 
-      Scalar(Metadata("column") + ("type" -> "int"))
+      Scalar(Metadata("y") + ("type" -> "short")), 
+      Scalar(Metadata("x") + ("type" -> "short"))
     ),
-    Scalar(Metadata("radiance") + ("type" -> "double"))
+    Scalar(
+      Metadata("radiance")
+      + ("type" -> "short")
+      + ("origName" -> "Rad")
+    )
   )
 
-
-  def adapter: Adapter = new GoesNetcdfAdapter()
+  def adapter: Adapter = new NetcdfAdapter(model)
 
 }

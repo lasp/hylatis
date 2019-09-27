@@ -23,6 +23,8 @@ import cats.effect.IO
 import latis.util.GOESUtils.GOESGeoCalculator
 import fs2._
 import latis.util.StreamUtils._
+import latis.util.StreamUtils
+import ucar.ma2.Section
 
 class TestGoesAbiReader extends JUnitSuite {
 
@@ -49,11 +51,30 @@ class TestGoesAbiReader extends JUnitSuite {
 //  }
   
   
-//  @Test
-//  def read_NetCDF_file_image = {
-//    val ds = GoesImageReader(new URI("file://data/s3/goes-001/goes0001.nc")).getDataset()
-//    Writer.write(ds)
-//  }
+  @Test
+  def read_NetCDF_file_image = {
+    val s1 = new Section(Array(20,30))
+    //val s2 = s1.shiftOrigin(Array(1,1)).shiftOrigin(Array(1,1)) //same size
+    //val s0 = new Section(s1.getOrigin, s1.getShape, Array(2,3)) //"shape" is really max index, unless you shift origin
+    //val s0a = new Section(s0.getOrigin, s0.getShape, Array(3,2)) //second application of stride in relative to that section, not orig indices
+    //val s2 = s1.compose(s0a)
+    val s0 = NetcdfFunction.applyStrideToSection(s1, Array(2,3))
+    val s2 = NetcdfFunction.applyStrideToSection(s0, Array(3,2))
+    println(s1, s1.computeSize())
+    println(s0, s0.computeSize())
+    println(s2, s2.computeSize())
+    
+    val s = new Section(Array(0,0), Array(20,30), Array(2,3))
+    println(s)
+    println(s.getShape.toList)
+    println(s.computeSize())
+    
+//    val ds = GoesImageReader(new URI("file:///data/goes/2018_230_17/OR_ABI-L1b-RadF-M3C16_G16_s20182301700501_e20182301711279_c20182301711333.nc")).getDataset
+//    //val s = ds.data.streamSamples.take(5)
+//    //StreamUtils.unsafeStreamToSeq(s) foreach println
+//    TextWriter(System.out).write(ds)
+    
+  }
   
   //@Test
   def aws_full_disk_image = {

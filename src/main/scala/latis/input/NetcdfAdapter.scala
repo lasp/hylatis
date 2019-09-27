@@ -9,6 +9,7 @@ import latis.util.AWSUtils
 import java.nio.file._
 import latis.util.LatisConfig
 import latis.util.ConfigLike
+import ucar.nc2.dataset.NetcdfDataset
 
 case class NetcdfAdapter(
   model: DataType, 
@@ -21,11 +22,11 @@ case class NetcdfAdapter(
   /**
    * Return a NetcdfFile from the given URI.
    */
-  def open(uri: URI): NetcdfFile = {
+  def open(uri: URI): NetcdfDataset = {
     //TODO: resource management, make sure this gets closed
     uri.getScheme match {
       case null => 
-        NetcdfFile.open(uri.getPath) //assume file path
+        NetcdfDataset.openDataset(uri.getPath) //assume file path
       case "s3" => 
         // Create a local file name
         val (bucket, key) = AWSUtils.parseS3URI(uri)
@@ -37,11 +38,11 @@ case class NetcdfAdapter(
         // If the file does not exist, make a local copy
         //TODO: deal with concurrency
         if (! file.exists) AWSUtils.copyS3ObjectToFile(uri, file)
-        NetcdfFile.open(file.toString)
+        NetcdfDataset.openDataset(file.toString)
       case "file" => 
-        NetcdfFile.open(uri.getPath)
+        NetcdfDataset.openDataset(uri.getPath)
       case _    =>
-        NetcdfFile.open(uri.getScheme + "://" + uri.getHost + "/" + uri.getPath)
+        NetcdfDataset.openDataset(uri.getScheme + "://" + uri.getHost + "/" + uri.getPath)
     }
   }
 }

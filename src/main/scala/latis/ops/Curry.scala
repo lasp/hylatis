@@ -53,8 +53,8 @@ case class Curry() extends UnaryOperation {
     // Define a cats.Eq instance for Any to be used by Stream.groupAdjacentBy
     val eq = new cats.Eq[Data] {
       def eqv(a: Data, b: Data): Boolean = (a, b) match {
-        case (a: Number, b: Number) => (a compare b) == 0
-        case (a: Text, b: Text)     => (a compare b) == 0
+        case (Number(a), Number(b)) => (a compare b) == 0
+        case (Text(a), Text(b))     => (a compare b) == 0
         case _ => false
       }
     }

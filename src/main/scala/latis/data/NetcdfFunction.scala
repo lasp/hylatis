@@ -47,8 +47,8 @@ case class NetcdfFunction(
    */
   def ncArrayToDomainSet(arr: NcArray): DomainSet = arr.copyTo1DJavaArray match {
     //TODO: support any Data in new data branch with diff support for ordering
-    case a: Array[Short]  => DomainSet(a.map(v => DomainData(ShortValue(v))))
-    case a: Array[Float]  => DomainSet(a.map(v => DomainData(FloatValue(v))))
+    case a: Array[Short]  => DomainSet(a.map(v => DomainData(DoubleValue(v))))
+    case a: Array[Float]  => DomainSet(a.map(v => DomainData(DoubleValue(v))))
     case a: Array[Double] => DomainSet(a.map(v => DomainData(DoubleValue(v))))
   }
   
@@ -105,7 +105,7 @@ case class NetcdfFunction(
     
     val rangeValues = for {
       index <- 0 until totalLength
-    } yield RangeData(rangeArrays.map(a => Data(a.getObject(index))): _*)
+    } yield RangeData(rangeArrays.map(a => Data(a.getObject(index))))
       
     SetFunction(domainSet, rangeValues).streamSamples
   }

@@ -42,7 +42,7 @@ class TestImageWriter extends JUnitSuite {
       Tuple(Scalar("row"), Scalar("col")),
       Tuple(Scalar("r"), Scalar("g"), Scalar("b"))
     )
-    val data = SampledFunction.fromSeq(samples)
+    val data = SampledFunction(samples)
     
     Dataset(md, model, data)
   }

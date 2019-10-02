@@ -32,6 +32,6 @@ class GoesGranuleListAdapter extends Adapter {
       Sample(DomainData(13300.0), RangeData(s"$base/OR_ABI-L1b-RadF-M3C16_G16_s20182301700501_e20182301711279_c20182301711333.nc"))  //5424	13.3
     )
     
-    SampledFunction.fromSeq(samples)
+    SampledFunction(samples)
   }
 }

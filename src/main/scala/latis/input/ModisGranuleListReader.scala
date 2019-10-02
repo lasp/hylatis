@@ -60,7 +60,7 @@ case class ModisGranuleListReader() extends DatasetReader {
       case None    => allSamples
     }
     
-    SampledFunction.fromSeq(samples)
+    SampledFunction(samples)
   }
   
   def getDataset = Dataset(Metadata("modis_granules"), model, data)

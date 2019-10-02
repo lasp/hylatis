@@ -60,7 +60,7 @@ class S3GranuleListAdapter(pattern: Regex, model: DataType)
         pattern.findFirstMatchIn(key).flatMap { mtch =>
           // This match should be safe because we checked that the
           // model has this structure in the apply method.
-          val rtypes: Vector[Scalar] = model match {
+          val rtypes: List[Scalar] = model match {
             case Function(_, r) => r.getScalars
           }
 

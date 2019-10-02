@@ -1,6 +1,5 @@
 package latis.data
 
-import latis.resample._
 
 /**
  * Define a SampledFunction whose domain is defined
@@ -43,9 +42,7 @@ case class LinearFunction1D(scale: Double, offset: Double, values: Array[RangeDa
    * to provide cell-centered semantics.
    */
   override def apply(
-    value: DomainData, 
-    interpolation: Interpolation = NoInterpolation(),
-    extrapolation: Extrapolation = NoExtrapolation()
+    value: DomainData
   ): Option[RangeData] = value match {
     //Note, adding the 0.5 then floor effectively rounds to the nearest index.
     //We could use "round" but it's not clear if rounding up at 0.5 is guaranteed.

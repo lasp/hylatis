@@ -6,7 +6,6 @@ import fs2._
 import cats.effect.IO
 import latis.util.HylatisPartitioner
 import org.apache.spark.rdd.PairRDDFunctions
-import latis.resample._
 import latis.ops._
 import org.apache.spark.HashPartitioner
 
@@ -19,9 +18,7 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
   //Note, PairRDDFunctions has an implicit Ordering[K] arg with default value of null
       
   override def apply(
-    value: DomainData, 
-    interpolation: Interpolation = NoInterpolation(),
-    extrapolation: Extrapolation = NoExtrapolation()
+    value: DomainData
   ): Option[RangeData] = {
     //TODO: support interpolation
     rdd.lookup(value).headOption
@@ -129,7 +126,7 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
 
     // Define a function to extract the new domain from a Sample
     val groupByFunction: Sample => DomainData = (sample: Sample) => sample match {
-      case Sample(domain, _) => DomainData.fromSeq(gbIndices.map(domain(_)))
+      case Sample(domain, _) => DomainData(gbIndices.map(domain(_)))
     }
 
     // Define an aggregation function to construct a (nested) Function from the newly grouped Samples
@@ -139,12 +136,12 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
           case Sample(domain, range) =>
             // Remove the groupBy variables from the domain
             Sample(
-              DomainData.fromSeq(domain.zipWithIndex.filterNot(p => gbIndices.contains(p._2)).map(_._1)),
+              DomainData(domain.zipWithIndex.filterNot(p => gbIndices.contains(p._2)).map(_._1)),
               range
             )
         }
         //val stream: Stream[IO, Sample] = Stream.eval(IO(ss)).flatMap(Stream.emits(_))
-        Sample(domain, RangeData(SampledFunction.fromSeq(ss))) 
+        Sample(domain, RangeData(SampledFunction(ss))) 
       }
         
     //val partitioner = new HylatisPartitioner(4)

@@ -3,7 +3,6 @@ package latis.data
 import scala.language.postfixOps
 import scala.math._
 import latis.util.GOESUtils.GOESGeoCalculator
-import latis.resample._
 
 /**
  * Hack for GOES demo
@@ -13,9 +12,7 @@ case class GoesArrayFunction2D(array: Array[Array[RangeData]]) extends MemoizedF
   val calc = GOESGeoCalculator("GOES_EAST")
 
   override def apply(
-    value: DomainData, 
-    interpolation: Interpolation = NoInterpolation(),
-    extrapolation: Extrapolation = NoExtrapolation()
+    value: DomainData
   ): Option[RangeData] = value match {
     //TODO: support any integral type
     //TODO: handle index out of bounds

@@ -5,7 +5,7 @@ import latis.data._
 import latis.util.HysicsUtils
 import latis.metadata._
 
-case class XYTransform() extends MappingOperation {
+case class XYTransform() extends MapOperation {
   // (ix, iy) -> ?  =>  (x, y) -> ?
   
   override def mapFunction(model: DataType):  Sample => Sample =

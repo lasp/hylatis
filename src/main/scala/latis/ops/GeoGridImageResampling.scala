@@ -12,7 +12,7 @@ case class GeoGridImageResampling(
   lon1: Double, lat1: Double, 
   lon2: Double, lat2: Double, 
   pixels: Int
-) extends MappingOperation {
+) extends MapOperation {
   //TODO: assert lon1 < lon2, lat1 < lat2, and within bounds [-180,180), [-90, -90]
   
   /**

@@ -38,7 +38,7 @@ case class ModisGeoSub() extends MapRangeOperation {
       val samples = sf.unsafeForce.samples map {
         case Sample(domain, range) =>
           val newDomain = geoLocation(domain) match {
-            case Some(RangeData(lon: OrderedData, lat: OrderedData)) =>
+            case Some(RangeData(lon: Data, lat: Data)) =>
               DomainData(lon, lat)
           }
           Sample(newDomain, range)

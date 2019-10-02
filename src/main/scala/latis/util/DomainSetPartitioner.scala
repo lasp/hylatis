@@ -3,7 +3,7 @@ package latis.util
 import org.apache.spark.Partitioner
 import latis.data._
 
-case class DomainSetPartitioner(domainSet: RegularSet1D) extends Partitioner {
+case class DomainSetPartitioner(domainSet: LinearSet1D) extends Partitioner {
   // Just use the first value (dimension) in the domain
   // Make an extra partition samples that don't fall within this DomainSet.
   

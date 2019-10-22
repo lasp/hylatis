@@ -25,6 +25,6 @@ case class HysicsImageReader(uri: URI) extends AdaptedDatasetReader {
   /**
    * Use the MatrixTextAdapter to read each "slit" image.
    */
-  def adapter: Adapter = new MatrixTextAdapter(model, TextAdapter.Config())
+  def adapter: Adapter = new MatrixTextAdapter(model, new TextAdapter.Config())
 
 }

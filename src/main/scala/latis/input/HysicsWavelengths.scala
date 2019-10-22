@@ -40,7 +40,7 @@ object HysicsWavelengths {
     val base = LatisConfig.get("hylatis.hysics.base-uri").getOrElse(notFound)
     val uri = new URI(s"$base/wavelength.txt")
 
-    val data = new MatrixTextAdapter(model, TextAdapter.Config())(uri) match {
+    val data = new MatrixTextAdapter(model, new TextAdapter.Config())(uri) match {
       case ArrayFunction2D(data2d) => ArrayFunction1D(data2d(0))
     }
     

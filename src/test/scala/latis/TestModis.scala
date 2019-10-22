@@ -15,7 +15,6 @@ import scala.collection.mutable.Buffer
 import latis.util.StreamUtils
 import cats.effect.IO
 import latis.data.SetFunction
-import latis.resample.BinResampling
 import java.io.FileOutputStream
 import latis.input.ModisGeolocationReader
 import latis.ops.Substitution
@@ -159,11 +158,12 @@ class TestModis {
     // Resample nested Functions
     // map over outer samples
  
-    val resampleGrid = (sample: Sample) => sample match {
-      case Sample(domain, RangeData(sf: MemoizedFunction)) =>
-        val grid = BinResampling().resample(sf, domainSet)
-        Sample(domain, RangeData(grid))
-    }
+    val resampleGrid = (sample: Sample) => ???
+//    sample match {
+//      case Sample(domain, RangeData(sf: MemoizedFunction)) =>
+//        val grid = BinResampling().resample(sf, domainSet)
+//        Sample(domain, RangeData(grid))
+//    }
 
     val data = ds.data.map(resampleGrid) // < 0.5 s
     //TODO: fill missing cells via interp

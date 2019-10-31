@@ -17,23 +17,24 @@ lazy val hylatis = (project in file("."))
   .settings(
     name := "latis-hylatis",
     libraryDependencies ++= Seq(
-      // "io.latis-data"           %% "latis-core"      % latisVersion,
-      // "io.latis-data"           %% "latis-spark"     % latisVersion,
-      "org.eclipse.jetty"           % "jetty-server"    % jettyVersion,
-      "org.eclipse.jetty"           % "jetty-servlet"   % jettyVersion,
-      "org.geotools"                % "gt-main"         % geotoolsVersion,
-      "org.geotools"                % "gt-epsg-hsql"    % geotoolsVersion,
-      "org.geotools"                % "gt-api"          % geotoolsVersion,
-      "org.geotools"                % "gt-referencing"  % geotoolsVersion,
-      "org.apache.commons"          % "commons-math3"   % "3.6.1",
-      "io.findify"                 %% "s3mock"          % "0.2.4",
-      "edu.ucar"                    % "cdm"             % "5.0.0",
-      "edu.ucar"                    % "httpservices"    % "5.0.0",
-      "org.apache.spark"           %% "spark-sql"       % sparkVersion,
-      "com.amazonaws"               % "aws-java-sdk-s3" % "1.11.489",
-      "co.fs2"                     %% "fs2-core"        % fs2Version,
-      "co.fs2"                     %% "fs2-io"          % fs2Version,
-      "com.typesafe"                % "config"          % "1.3.4"
+      // "io.latis-data"   %% "latis-core"       % latisVersion,
+      // "io.latis-data"   %% "latis-spark"      % latisVersion,
+      "org.eclipse.jetty"   % "jetty-server"     % jettyVersion,
+      "org.eclipse.jetty"   % "jetty-servlet"    % jettyVersion,
+      "org.geotools"        % "gt-main"          % geotoolsVersion,
+      "org.geotools"        % "gt-epsg-hsql"     % geotoolsVersion,
+      "org.geotools"        % "gt-api"           % geotoolsVersion,
+      "org.geotools"        % "gt-referencing"   % geotoolsVersion,
+      "org.apache.commons"  % "commons-math3"    % "3.6.1",
+      "io.findify"         %% "s3mock"           % "0.2.4",
+      "edu.ucar"            % "cdm"              % "5.0.0",
+      "edu.ucar"            % "httpservices"     % "5.0.0",
+      "org.apache.spark"   %% "spark-sql"        % sparkVersion,
+      "com.amazonaws"       % "aws-java-sdk-s3"  % "1.11.489",
+      "co.fs2"             %% "fs2-core"         % fs2Version,
+      "co.fs2"             %% "fs2-io"           % fs2Version,
+      "com.typesafe"        % "config"           % "1.3.4",
+      ("sh.almond"          % "scala-kernel-api" % "0.6.0" % Provided).cross(CrossVersion.full)
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(
@@ -41,7 +42,7 @@ lazy val hylatis = (project in file("."))
       "Boundless" at "http://repo.boundlessgeo.com/main",
       "Artifactory External Snapshots" at artifactory + "ext-snapshot-local",
       "Unidata" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases",
-      //"Unidata Snaphots" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-snapshots"
+      "jitpack" at "https://jitpack.io"
     ),
     assembly / mainClass := Some("latis.server.HylatisServer"),
     assembly / assemblyMergeStrategy := {

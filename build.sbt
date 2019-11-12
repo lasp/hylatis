@@ -73,8 +73,9 @@ lazy val hylatis = (project in file("."))
 lazy val commonSettings = compilerFlags ++ Seq(
   // Test suite dependencies
   libraryDependencies ++= Seq(
-    "junit"          % "junit"     % "4.12"  % Test,
-    "org.scalatest" %% "scalatest" % "3.0.5" % Test
+    "junit"           % "junit"      % "4.12"   % Test,
+    "org.scalatest"  %% "scalatest"  % "3.0.5"  % Test,
+    "org.scalacheck" %% "scalacheck" % "1.14.1" % Test
   )
 )
 

@@ -65,7 +65,7 @@ class HylatisServer extends HttpServlet {
       case "png" => ImageWriter(response.getOutputStream, "png").write(ds)
       case _ => //TODO: fix writing to output stream
         val writer = OutputStreamWriter.unsafeFromOutputStream[IO](response.getOutputStream)
-        TextEncoder.encode(ds)
+        new TextEncoder().encode(ds)
                    .through(text.utf8Encode)
                    .through(writer.write)
                    .compile.drain.unsafeRunSync()

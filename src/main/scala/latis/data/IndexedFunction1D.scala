@@ -7,7 +7,7 @@ import scala.collection.Searching._
  * For evaluation, this uses a binary search on the domain values
  * to get the index into the range values.
  */
-case class IndexedFunction1D(xs: Seq[Data], vs: Seq[RangeData]) extends IndexedFunction {
+case class IndexedFunction1D(xs: Seq[Datum], vs: Seq[RangeData]) extends IndexedFunction {
   //TODO: assert that sizes are consistent
   //Note, using Seq instead of invariant Array to get variance
   //TODO: prevent diff types of OrderedData, e.g. mixing NumberData and TextData, or IntData and DoubleData

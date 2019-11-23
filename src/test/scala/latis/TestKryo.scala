@@ -23,13 +23,13 @@ object TestKryo extends App {
   //val o = (Vector(Data(1), Data(1.0), Data("1")), Vector(Data(2), Data(2.0), Data("1"))) //263, 663
   //val o = (List(Data(1), Data(1.0), Data("1")), List(Data(2), Data(2.0), Data("1"))) //213, 435
   //val o = (Array(Data(1), Data(1.0), Data("1")), Array(Data(2), Data(2.0), Data("1"))) //145, 343
-  val o = (Array(Data(1), Data(1.0), Data("1")).toSeq, Array(Data(2), Data(2.0), Data("1")).toSeq) //WrappedArray 198, 491
+  //val o = (Array(Data(1), Data(1.0), Data("1")).toSeq, Array(Data(2), Data(2.0), Data("1")).toSeq) //WrappedArray 198, 491
   //val o = (3, Array(Data(1), Data(1.0), Data("1"), Data(2), Data(2.0), Data("1"))) //143, 410
   //val o = (3, Array(1, 1.0, "1", 2, 2.0,"1")) //54, 282
   //val o = (3, List(1, 1.0, "1", 2, 2.0,"1")) //122, 371
   //val o = (3, Vector(1, 1.0, "1", 2, 2.0,"1")) //126, 541
   
-  //val o = DoubleValue(1.0) //9, 64
+  val o = DoubleValue(1.0) //9, 64
   //val o = Data(1.0) //9, 64
   //val o = Array(Data(1.0)) //40, 103
   //val o = Foo(1.0) //9, 42

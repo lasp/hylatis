@@ -12,7 +12,7 @@ import latis.util.SparkUtils
 import latis.metadata._
 import latis.model._
 import latis.data._
-import latis.ops._
+import latis.dataset._
 import java.net.URL
 import java.net.URI
 import java.io.File
@@ -44,7 +44,7 @@ class TestImageWriter extends JUnitSuite {
     )
     val data = SampledFunction(samples)
     
-    Dataset(md, model, data)
+    new MemoizedDataset(md, model, data)
   }
   
   //@Test

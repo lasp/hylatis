@@ -1,18 +1,19 @@
 package latis.input
 
 import latis.data._
-
 import cats.effect.IO
 import fs2.Stream
 import java.net.URI
+
 import ucar.nc2.NetcdfFile
+
+import latis.ops.Operation
 
 // read entire cube by reading each radiance variable then unioning
 case class ModisNetcdfAdapter(varName: String) extends Adapter {
   //TODO: AdapterConfig?
   //TODO: get orig varName from the model? metadata?
-  
-  def apply(uri: URI): SampledFunction =
+  def getData(uri: URI, ops: Seq[Operation]): SampledFunction =
     NetcdfFunction0(open(uri), varName)
   
   /**

@@ -5,8 +5,11 @@ import latis.model._
 import latis.metadata.Metadata
 import latis.ops._
 import latis.util._
-
 import java.net.URI
+
+import latis.dataset.AdaptedDataset
+import latis.dataset.Dataset
+import latis.dataset.MemoizedDataset
 
 /**
  * Read a MODIS MYD021KM (1 km radiance) HDF-EOS file
@@ -26,7 +29,7 @@ import java.net.URI
  * file has longitudes and latitudes (scaled) but they don't
  * define a Cartesian coordinate system.
  */
-case class ModisReader0() extends DatasetReader {
+case class ModisReader0() { //extends DatasetReader {
   
   /**
    * Get the URI for the MODIS data file to read.
@@ -73,8 +76,8 @@ case class ModisReader0() extends DatasetReader {
     
     // Get a Dataset for one chunk of the spectral dimension
     def getDataset(varName: String): Dataset = {
-      val data = ModisNetcdfAdapter(varName)(uri)
-      val ds = Dataset(Metadata("modis"), origModel, data)
+      val data = ModisNetcdfAdapter(varName).getData(uri).unsafeForce
+      val ds = new MemoizedDataset(Metadata("modis"), origModel, data)
       
       //TODO: put in Spark first? curry should cause repartitioning
       //  potentially expensive but could provide sorting with our partitioner
@@ -85,8 +88,10 @@ ds2.unsafeForce //need this until union supports streams
     }
     
     // Define the binary operation to union the datasets
-    val join: (Dataset,Dataset) => Dataset = Union().apply
-    
+    val join: (Dataset,Dataset) => Dataset =
+      (ds1: Dataset, ds2: Dataset) => //Union().apply
+        ds2.withOperation(PartiallyAppliedBinaryOperation(Union(), ds1))
+
     // Union all of the segments into a single Dataset
     varNames.map(getDataset(_)).reduce(join)
   }

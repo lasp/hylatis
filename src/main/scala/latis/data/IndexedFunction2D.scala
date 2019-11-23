@@ -9,7 +9,7 @@ import scala.collection.Searching._
  * For evaluation, this uses a binary search on the domain values
  * to get the indices into the range values.
  */
-case class IndexedFunction2D(xs: Seq[Data], ys: Seq[Data], vs: Seq[Seq[RangeData]]) extends IndexedFunction {
+case class IndexedFunction2D(xs: Seq[Datum], ys: Seq[Datum], vs: Seq[Seq[RangeData]]) extends IndexedFunction {
   //TODO: assert that sizes are consistent
   
   override def apply(

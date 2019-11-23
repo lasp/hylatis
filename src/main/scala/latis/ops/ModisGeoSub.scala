@@ -16,7 +16,7 @@ case class ModisGeoSub() extends MapRangeOperation {
    * Read the geo location data and broadcast it
    */
   def broadcastGeoLocation = {
-    val data: ArrayFunction2D = ModisGeolocationReader().getDataset.data.asInstanceOf[ArrayFunction2D]
+    val data: ArrayFunction2D = ??? //ModisGeolocationReader().getDataset.data.asInstanceOf[ArrayFunction2D]
     SparkUtils.sparkContext.broadcast(data)
   }
     
@@ -38,7 +38,7 @@ case class ModisGeoSub() extends MapRangeOperation {
       val samples = sf.unsafeForce.samples map {
         case Sample(domain, range) =>
           val newDomain = geoLocation(domain) match {
-            case Some(RangeData(lon: Data, lat: Data)) =>
+            case Some(RangeData(lon: Datum, lat: Datum)) =>
               DomainData(lon, lat)
           }
           Sample(newDomain, range)

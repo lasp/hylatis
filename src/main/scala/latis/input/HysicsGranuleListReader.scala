@@ -1,18 +1,16 @@
 package latis.input
 
-import java.net.URL
-import scala.io.Source
-import latis.ops._
 import latis.data._
 import latis.metadata._
-import scala.collection.mutable.ArrayBuffer
 import latis.model._
-import latis.util.HysicsUtils
-//import latis.util.AWSUtils
+import latis.ops._
 import java.net.URI
-import latis.util.LatisConfig
-import fs2._
+
 import cats.effect.IO
+import fs2._
+
+import latis.dataset.Dataset
+import latis.util.LatisException
 
 /**
  * This reader provides a sequence of Hysics image file URLs:
@@ -21,27 +19,34 @@ import cats.effect.IO
  * directory/bucket where the Hysics images files live.
  * The files are named "img0001.txt" through "img4200.txt".
  */
-case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetReader {
-  
-  val model = Function(
-    Scalar(Metadata("iy") + ("type" -> "int")),  //TODO: use "i" or "index" then rename as needed
-    Scalar(Metadata("uri") + ("type" -> "string"))
-  )
-   
-  override def metadata = Metadata(
+//class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetReader {
+object HysicsGranuleListReader extends AdaptedDatasetReader {
+
+  def metadata: Metadata = Metadata(
     "id" -> "hysics_image_files"
+  )
+
+  def model: DataType = Function(
+    Scalar(Metadata("ix") + ("type" -> "int")),
+    Scalar(Metadata("uri") + ("type" -> "string"))
   )
     
   def adapter: Adapter = new Adapter() {
-    def apply(uri: URI): SampledFunction = {
+    //TODO: use GranuleListAdapter
+
+    override def canHandleOperation(op: Operation): Boolean = op match {
+      case _: Stride => true
+      case _         => false
+    }
+
+    def getData(uri: URI, ops: Seq[Operation]): SampledFunction = {
       val base = uri.toString //"s3:/hylatis-hysics-001/des_veg_cloud"
-      val imageCount = LatisConfig.getOrElse("hylatis.hysics.image-count", 4200)
-      // Use image count to compute a stride.
-      //TODO: use more suitable operations instead of this property
-      val stride: Int = 4200 / imageCount
-    
+      val stride: Int = ops.collectFirst {
+        case Stride(stride) => stride.head
+      }.getOrElse(1)
+
       val samples: Stream[IO, Sample] = Stream.range(0, 4200, stride) map { i =>
-        val uri = f"${base}/img${i+1}%04d.txt"
+        val uri = f"$base/img${i+1}%04d.txt"
         Sample(DomainData(i), RangeData(uri))
       }
 
@@ -51,12 +56,20 @@ case class HysicsGranuleListReader(uri: URI) extends AdaptedDatasetReader {
   
 }
   
-object HysicsGranuleListReader {
-  
-  def apply() = {
-    val defaultURI = "s3://hylatis-hysics-001/des_veg_cloud"
-    val uri = LatisConfig.getOrElse("hylatis.hysics.base-uri", defaultURI)
-    new HysicsGranuleListReader(URI.create(uri))
-  }
-
-}
+//object HysicsGranuleListReader {
+//
+//  def read(uri: URI): Dataset = {
+//    (new HysicsGranuleListReader).read(uri).getOrElse {
+//      val msg = s"Failed to read Hysics granule list dataset: $uri"
+//      throw LatisException(msg)
+//    }
+//  }
+//}
+//
+//  def apply() = {
+//    val defaultURI = "s3://hylatis-hysics-001/des_veg_cloud"
+//    val uri = LatisConfig.getOrElse("hylatis.hysics.base-uri", defaultURI)
+//    new HysicsGranuleListReader(URI.create(uri))
+//  }
+//
+//}

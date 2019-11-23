@@ -60,7 +60,7 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
   override def groupBy(
     groupByFunction: Sample => Option[DomainData], 
     aggregation: Aggregation = NoAggregation()
-  ): MemoizedFunction = RddFunction {
+  )(implicit ordering: Ordering[DomainData]): MemoizedFunction = RddFunction {
     /*
      * TODO: optional Partitioner arg, default to this SF domainSet? but might not be cheap
      * use domainSet from GBB
@@ -118,7 +118,7 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
      * groupBy: S => (S, Iterable[S])
      */
    
-  override def groupBy(paths: SamplePath*): RddFunction = {
+  override def groupBy(paths: SamplePath*)(implicit ordering: Ordering[DomainData]): RddFunction = {
     //TODO: no-op if empty
     // Gather the indices into the Domain of the Sample 
     // for the variables that are being grouped.
@@ -200,13 +200,13 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
     RddFunction(rdd)
   }
   
-  override def union(that: SampledFunction) = that match {
-    case rf: RddFunction =>
-      // Note, spark union does not remove duplicates
-      //TODO: consider cogroup => RDD[(K, (Iterable[S], Iterable[S]))]
-      RddFunction(this.rdd.union(rf.rdd).distinct.sortBy(identity))
-    case _ => ??? //TODO: union expects both to be RddFunctions
-  }
+  //override def union(that: SampledFunction) = that match {
+  //  case rf: RddFunction =>
+  //    // Note, spark union does not remove duplicates
+  //    //TODO: consider cogroup => RDD[(K, (Iterable[S], Iterable[S]))]
+  //    RddFunction(this.rdd.union(rf.rdd).distinct.sortBy(identity))
+  //  case _ => ??? //TODO: union expects both to be RddFunctions
+  //}
 }
 
 object RddFunction extends FunctionFactory {

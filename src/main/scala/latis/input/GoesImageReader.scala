@@ -21,4 +21,5 @@ case class GoesImageReader(uri: URI) extends AdaptedDatasetReader {
 
   def adapter: Adapter = new NetcdfAdapter(model)
 
+  def metadata: Metadata = Metadata("goes_image")
 }

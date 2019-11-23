@@ -23,9 +23,9 @@ case class GoesImageReaderOperation() extends UnaryOperation {
     (sample: Sample) => sample match {
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
-      case Sample(domain, RangeData(Text(uri))) =>
-        val image = GoesImageReader(new URI(uri)).getDataset // (iy, ix) -> radiance
-        Sample(domain, RangeData(image.data))
+      case Sample(domain, RangeData(Text(uri))) => ???
+        //val image = GoesImageReader(new URI(uri)).getDataset // (iy, ix) -> radiance
+        //Sample(domain, RangeData(image.data))
     }
   }
   

@@ -7,12 +7,13 @@ import scala.collection.Searching._
  */
 trait IndexedFunction extends MemoizedFunction {
     
-  def searchDomain(values: Seq[Data], data: Data): SearchResult = (values.head, data) match {
-    case (_: Number, data: Number) => 
-      values.asInstanceOf[Seq[Number]].search(data) 
-    case (_: Text, data: Text) => 
-      values.asInstanceOf[Seq[Text]].search(data)
-    case _ => ??? //TODO error, invalid types
-  }
+  def searchDomain(values: Seq[Datum], data: Datum): SearchResult = ???
+  //  (values.head, data) match {
+  //  case (_: Number, data: Number) =>
+  //    values.asInstanceOf[Seq[Number]].search(data)
+  //  case (_: Text, data: Text) =>
+  //    values.asInstanceOf[Seq[Text]].search(data)
+  //  case _ => ??? //TODO error, invalid types
+  //}
 
 }

@@ -33,7 +33,13 @@ class S3StreamSource extends StreamSource {
 
       //TODO: handle errors
       val s3 = AWSUtils.s3Client.get
-      val is: InputStream = s3.getObject(bucket, key).getObjectContent
+      var is: InputStream = null
+      try {
+        is = s3.getObject(bucket, key).getObjectContent
+      } catch {
+        case e =>
+          println(e)
+      }
       val fis = IO(is)
       Some(readInputStream(fis, 4096, ec))
     } else None

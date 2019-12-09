@@ -101,7 +101,13 @@ class DataGenerator(nX: Int, nY: Int, nZ: Int, nP: Int) {
       val (x, y, z) = to3D(i)
       val r = voxel(x, y, z)
 
-      Sample(List(Data(x), Data(y), Data(z)), List(Data(r)))
+      Sample(
+        List(
+          Data.DoubleValue(x.toDouble),
+          Data.DoubleValue(y.toDouble),
+          Data.DoubleValue(z.toDouble)),
+        List(Data.DoubleValue(r))
+      )
     }
   }
 }

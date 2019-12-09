@@ -70,6 +70,16 @@ lazy val hylatis = (project in file("."))
     //unmanagedSourceDirectories in Compile += (resourceDirectory in Compile).value / "datasets"
   )
 
+lazy val dataGenerator = project
+  .dependsOn(`latis3-core`)
+  .settings(commonSettings)
+  .settings(
+    name := "data-generator",
+    libraryDependencies ++= Seq(
+      "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
+    )
+  )
+
 lazy val commonSettings = compilerFlags ++ Seq(
   // Test suite dependencies
   libraryDependencies ++= Seq(

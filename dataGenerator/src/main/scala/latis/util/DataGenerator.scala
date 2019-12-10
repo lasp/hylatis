@@ -34,7 +34,8 @@ import latis.data.Sample
  * @param nZ size in Z dimension (nZ > 0)
  * @param nP number of partitions (nP > 0)
  */
-class DataGenerator(nX: Int, nY: Int, nZ: Int, nP: Int) {
+@SerialVersionUID(1L)
+class DataGenerator(nX: Int, nY: Int, nZ: Int, nP: Int) extends Serializable {
   require(nX > 0, "nX must be a positive integer")
   require(nY > 0, "nY must be a positive integer")
   require(nZ > 0, "nZ must be a positive integer")

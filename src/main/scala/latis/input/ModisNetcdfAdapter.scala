@@ -50,7 +50,7 @@ case class NetcdfFunction0(ncFile: NetcdfFile, varName: String) extends SampledF
   //TODO: override "force" to make ArrayFunctionND
   //TODO: use model instead of single varName
   
-  def streamSamples: Stream[IO, Sample] = {
+  def samples: Stream[IO, Sample] = {
     //Assume 3D array, for now
     // (band, along-track, along-scan) -> f
     // (w, x, y) -> f

@@ -30,7 +30,7 @@ class TestHysics extends JUnitSuite {
     val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud")
     val ds = HysicsGranuleListReader
       .read(uri)
-      .withOperation(Stride(Seq(100)))
+      .withOperation(Stride(Seq(1000)))
     TextWriter().write(ds)
   }
 
@@ -54,7 +54,7 @@ class TestHysics extends JUnitSuite {
       .withOperation(Uncurry()) // (ix, iy, iw) -> radiance
       .withOperation(Selection("iy < 3")) //note: not supported in nested function yet
       .withOperation(Selection("iw < 3"))
-      .withOperation(Curry(2))
+      .withOperation(Curry(2)) // (ix, iy) -> iw -> radiance
       //.unsafeForce()
 
     //val out = new FileOutputStream("/data/tmp/hysics.asc")

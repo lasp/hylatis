@@ -25,7 +25,7 @@ case class GoesArrayFunction2D(array: Array[Array[RangeData]]) extends MemoizedF
       Option(array(i)(j))
   }
   
-  def samples: Seq[Sample] = 
+  def sampleSeq: Seq[Sample] =
     Seq.tabulate(array.length, array(0).length) { 
       (i, j) => Sample(DomainData(i, j), array(i)(j)) 
     } flatten
@@ -53,4 +53,3 @@ case class GoesArrayFunction2D(array: Array[Array[RangeData]]) extends MemoizedF
 //  }
 //    
 //}
-  

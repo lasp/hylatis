@@ -30,7 +30,7 @@ case class GoesImageReaderOperation() extends UnaryOperation {
   }
   
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction =
-    data.map(makeMapFunction(model))
+    ??? //data.map(makeMapFunction(model))
   
   // wavelength -> (row, column) -> radiance
   override def applyToModel(model: DataType): DataType =

@@ -26,7 +26,7 @@ case class IndexedFunction2D(xs: Seq[Datum], ys: Seq[Datum], vs: Seq[Seq[RangeDa
   /**
    * Provide a sequence of samples to fulfill the MemoizedFunction trait.
    */
-  def samples: Seq[Sample] = {
+  def sampleSeq: Seq[Sample] = {
     for {
       ia <- 0 until xs.length
       ib <- 0 until ys.length

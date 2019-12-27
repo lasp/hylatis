@@ -10,7 +10,7 @@ import latis.model._
  * this union can happen as the data are being streamed.
  * Note, this does not affect the model.
  */
-case class Union() extends BinaryOperation {
+case class Union() { //extends BinaryOperation {
   
   /**
    * Returns the model of the first dataset 
@@ -30,6 +30,6 @@ case class Union() extends BinaryOperation {
     model2: DataType,
     data2: SampledFunction
   ): SampledFunction = 
-    data1 union data2
+    ??? //data1 union data2
 
 }

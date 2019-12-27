@@ -29,7 +29,7 @@ case class NetcdfFunction(
   /**
    * Provide a Stream of Samples from the NetcdfFile.
    */
-  def streamSamples = ncStream.flatMap(readData)
+  def samples = ncStream.flatMap(readData)
   
   /**
    * Bracket the NetcdfFile in a Stream so it will manage
@@ -112,7 +112,7 @@ case class NetcdfFunction(
     //  index <- 0 until totalLength
     //} yield RangeData(rangeArrays.map(a => a.getObject(index)))
       
-    SetFunction(domainSet, rangeValues).streamSamples
+    SetFunction(domainSet, rangeValues).samples
   }
 
   /**

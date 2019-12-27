@@ -15,7 +15,7 @@ class TestWavelengths extends JUnitSuite {
     //val ds = HysicsWavelengthsReader(new URI("s3://hylatis-hysics-001/des_veg_cloud/wavelength.txt")).getDataset
     val ds = Dataset.fromName("hysics_wavelengths") //HysicsWavelengths()
     //Writer.write(ds)
-    ds.unsafeForce().data.samples.head match {
+    ds.unsafeForce().data.sampleSeq.head match {
       case Sample(_, RangeData(Number(w))) =>
         assertEquals(349.3, w, 0)
     }

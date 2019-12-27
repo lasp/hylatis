@@ -26,7 +26,7 @@ case class RGBImagePivot(red: Double, green: Double, blue: Double) extends Unary
       }
     }
     
-    grids.reduce((f1, f2) => f1 join f2)
+    ??? //grids.reduce((f1, f2) => f1 join f2)
   }
   
   override def applyToModel(model: DataType): DataType = model match {

@@ -26,7 +26,7 @@ case class IndexedFunction1D(xs: Seq[Datum], vs: Seq[RangeData]) extends Indexed
   /**
    * Provide a sequence of samples to fulfill the MemoizedFunction trait.
    */
-  def samples: Seq[Sample] =
+  def sampleSeq: Seq[Sample] =
     (xs zip vs) map { case (x, v) => Sample(DomainData(x), v) }
 
 }

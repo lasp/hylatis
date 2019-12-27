@@ -65,7 +65,7 @@ case class NetcdfFunction2(ncFile: NetcdfFile, varName: String, bandIndex: Int) 
   //TODO: override "force" to make ArrayFunctionND
   //TODO: use model instead of single varName
   
-  def samples: Seq[Sample] = {
+  def sampleSeq: Seq[Sample] = {
     //Assume 3D array, for now
     // (band, along-track, along-scan) -> f
     // (w, x, y) -> f

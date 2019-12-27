@@ -90,7 +90,7 @@ ds2.unsafeForce //need this until union supports streams
     // Define the binary operation to union the datasets
     val join: (Dataset,Dataset) => Dataset =
       (ds1: Dataset, ds2: Dataset) => //Union().apply
-        ds2.withOperation(PartiallyAppliedBinaryOperation(Union(), ds1))
+        ??? //ds2.withOperation(PartiallyAppliedBinaryOperation(Union(), ds1))
 
     // Union all of the segments into a single Dataset
     varNames.map(getDataset(_)).reduce(join)

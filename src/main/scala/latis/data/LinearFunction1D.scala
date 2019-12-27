@@ -25,7 +25,7 @@ case class LinearFunction1D(scale: Double, offset: Double, values: Array[RangeDa
    * Provide a Seq of Samples with domain values computed
    * from scale and offset.
    */
-  def samples: Seq[Sample] = {
+  def sampleSeq: Seq[Sample] = {
     val n = values.length
     for {
       i <- (0 until n)

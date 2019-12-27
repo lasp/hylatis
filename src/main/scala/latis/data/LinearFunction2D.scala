@@ -20,7 +20,7 @@ case class LinearFunction2D(
    * Provide a Seq of Samples with domain values computed
    * from scale and offset.
    */
-  def samples: Seq[Sample] = for {
+  def sampleSeq: Seq[Sample] = for {
       ix <- (0 until nx)
       iy <- (0 until ny)
     } yield Sample(

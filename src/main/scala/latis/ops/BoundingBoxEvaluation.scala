@@ -11,7 +11,7 @@ import latis.metadata.Metadata
  * box requests won't overlap. This is consistent with capturing the grid cell
  * centers with a half cell offset.
  */
-class BoundingBoxEvaluation(x1: Double, y1: Double, x2: Double, y2: Double, nx: Int, ny: Int) extends UnaryOperation {
+class BoundingBoxEvaluation(x1: Double, y1: Double, x2: Double, y2: Double, nx: Int, ny: Int) { //extends UnaryOperation {
   //TODO: assert that x1 < x2 and y1 < y2, or get more clever about ordering
   //TODO: generalize to two nD points, shape
   //TODO: add bin/cell semantics
@@ -37,7 +37,7 @@ class BoundingBoxEvaluation(x1: Double, y1: Double, x2: Double, y2: Double, nx: 
     DomainSet(dds)
   }
   
-  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = data.resample(grid)
+  def applyToData(data: SampledFunction, model: DataType): SampledFunction = ??? //data.resample(grid)
 }
 
 object BoundingBoxEvaluation {

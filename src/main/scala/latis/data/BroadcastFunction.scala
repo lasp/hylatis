@@ -11,5 +11,5 @@ case class BroadcastFunction(private val _samples: Seq[Sample]) extends Memoized
   
   private val broadcast = SparkUtils.sparkContext.broadcast(_samples)
   
-  def samples: Seq[Sample] = broadcast.value
+  def sampleSeq: Seq[Sample] = broadcast.value
 }

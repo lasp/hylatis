@@ -3,18 +3,19 @@ package latis.input
 import latis.data._
 import latis.util.AWSUtils
 import latis.util.LatisConfig
-
 import java.nio.file._
 import java.net.URI
+
 import ucar.nc2.NetcdfFile
+
+import latis.ops.Operation
 
 case class ModisNetcdfAdapter2(varName: String, bandIndex: Int) extends Adapter {
   //TODO: AdapterConfig?
   //TODO: get orig varName from the model? metadata?
-  
-  def apply(uri: URI): SampledFunction = {
+
+  def getData(uri: URI, ops: Seq[Operation]): SampledFunction =
     NetcdfFunction2(open(uri), varName, bandIndex)
-  }
   
   //TODO: util or inherit from NetcdfAdapter
   def open(uri: URI): NetcdfFile = {
@@ -64,7 +65,7 @@ case class NetcdfFunction2(ncFile: NetcdfFile, varName: String, bandIndex: Int) 
   //TODO: override "force" to make ArrayFunctionND
   //TODO: use model instead of single varName
   
-  def samples: Seq[Sample] = {
+  def sampleSeq: Seq[Sample] = {
     //Assume 3D array, for now
     // (band, along-track, along-scan) -> f
     // (w, x, y) -> f

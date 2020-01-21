@@ -23,14 +23,14 @@ case class GoesImageReaderOperation() extends UnaryOperation {
     (sample: Sample) => sample match {
       //  assume uri is first in range for now
       //TODO: enforce by projecting only "uri"?
-      case Sample(domain, RangeData(Text(uri))) =>
-        val image = GoesImageReader(new URI(uri)).getDataset // (iy, ix) -> radiance
-        Sample(domain, RangeData(image.data))
+      case Sample(domain, RangeData(Text(uri))) => ???
+        //val image = GoesImageReader(new URI(uri)).getDataset // (iy, ix) -> radiance
+        //Sample(domain, RangeData(image.data))
     }
   }
   
   override def applyToData(data: SampledFunction, model: DataType): SampledFunction =
-    data.map(makeMapFunction(model))
+    ??? //data.map(makeMapFunction(model))
   
   // wavelength -> (row, column) -> radiance
   override def applyToModel(model: DataType): DataType =

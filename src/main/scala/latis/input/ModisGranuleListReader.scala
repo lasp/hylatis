@@ -4,8 +4,9 @@ import latis.data._
 import latis.metadata._
 import latis.model._
 import latis.util.LatisConfig
+import latis.dataset._
 
-case class ModisGranuleListReader() extends DatasetReader {
+case class ModisGranuleListReader() { //extends DatasetReader {
   
   val model = Function(
     Scalar(Metadata("id" -> "band", "type" -> "double")),
@@ -63,5 +64,5 @@ case class ModisGranuleListReader() extends DatasetReader {
     SampledFunction(samples)
   }
   
-  def getDataset = Dataset(Metadata("modis_granules"), model, data)
+  def getDataset = new MemoizedDataset(Metadata("modis_granules"), model, data)
 }

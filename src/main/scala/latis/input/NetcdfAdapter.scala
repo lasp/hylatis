@@ -2,22 +2,26 @@ package latis.input
 
 import latis.data._
 import latis.model._
-
 import java.net.URI
+
 import ucar.nc2.NetcdfFile
+
 import latis.util.AWSUtils
 import java.nio.file._
+
 import latis.util.LatisConfig
 import latis.util.ConfigLike
 import ucar.nc2.dataset.NetcdfDataset
 import ucar.ma2.Section
+
+import latis.ops.Operation
 
 case class NetcdfAdapter(
   model: DataType, 
   config: NetcdfAdapter.Config = NetcdfAdapter.Config()
 ) extends Adapter {
   
-  def apply(uri: URI): SampledFunction =
+  def getData(uri: URI, ops: Seq[Operation]): SampledFunction =
     NetcdfFunction(open(uri), model, config.section)
   
   /**

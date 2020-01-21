@@ -1,7 +1,7 @@
 package latis.ops
 
-import latis.model.Dataset
 import latis.data._
+import latis.model._
 
 /**
  * Given two Datasets of the same type, 
@@ -10,16 +10,26 @@ import latis.data._
  * this union can happen as the data are being streamed.
  * Note, this does not affect the model.
  */
-case class Union() extends BinaryOperation {
+case class Union() { //extends BinaryOperation {
   
-  def apply(ds1: Dataset, ds2: Dataset): Dataset = {
-    
-    val metadata = ds1.metadata //TODO: combine metadata, prov
-    
-    val model = ds1.model //TODO: ensure the models match
-    
-    val data: SampledFunction = ds1.data union ds2.data
-    
-    Dataset(metadata, model, data)
+  /**
+   * Returns the model of the first dataset 
+   * since they are required to be the same.
+   */
+  def applyToModel(model1: DataType, model2: DataType): DataType = {
+    //TODO require consistent models
+    model1
   }
+  
+  /**
+   * Combines the Data of two Datasets.
+   */
+  def applyToData(
+    model1: DataType,
+    data1: SampledFunction,
+    model2: DataType,
+    data2: SampledFunction
+  ): SampledFunction = 
+    ??? //data1 union data2
+
 }

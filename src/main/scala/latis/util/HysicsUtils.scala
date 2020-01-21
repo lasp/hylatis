@@ -6,6 +6,12 @@ import org.geotools.referencing.GeodeticCalculator
 
 //So far, just des_veg_cloud geo ref stuff
 object HysicsUtils {
+  /*
+  TODO: update coord system:
+    x: along trajectory (originally y)
+    y: along scan such that x cross y is up (originally x, but not sure about order
+    the x,y defs have been updated but indexToXY on down needs to be avaluated
+   */
   
   //TODO: consider life cycle of mutable geo calc; not thread safe
   lazy val geoCalc = {
@@ -15,8 +21,8 @@ object HysicsUtils {
     gc
   }
 
-  //val nx = 480
-  //val ny = 4200
+  //val ny = 480
+  //val nx = 4200
   /**
    * Azimuth (radians clockwise from north) of flight path based on linear assumption
    * and GeodeticCalculator. (HYLATIS-35)
@@ -24,25 +30,25 @@ object HysicsUtils {
   val azimuth = -59.00 * Pi / 180.0
   
   /**
-   * Step size in meters of pixels along the slit (x). Linear approximation.
+   * Step size in meters of pixels along the slit (y). Linear approximation.
    */
-  val dx = 12.358
+  val dy = 12.358
   
   /**
-   * Step size in meters of slit images along the flight path direction (y).
+   * Step size in meters of slit images along the flight path direction (x).
    * Linear approximation.
    */
-  val dy = 0.92167
+  val dx = 0.92167
   
   /**
-   * Compute x value of the ith pixel center with origin at the slit center.
+   * Compute y value of the ith pixel center with origin at the slit center.
    */
-  def x(i: Int): Double = dx * (i - 239.5) //center on slit, nx = 480
+  def y(i: Int): Double = dy * (i - 239.5) //center on slit, ny = 480
   
   /**
-   * Compute y value of the jth pixel center.
+   * Compute x value of the jth pixel center.
    */
-  def y(j: Int): Double = dy * j
+  def x(j: Int): Double = dx * j
   
   /**
    * Function to transform spatial indices to x/y coordinates.

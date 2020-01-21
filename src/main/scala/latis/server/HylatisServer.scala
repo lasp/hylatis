@@ -1,26 +1,26 @@
 package latis.server
 
+import java.net.URLDecoder
+
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.servlet.ServletContextHandler
 
-import javax.servlet.http._
-
-import latis.ops._
-import latis.output._
-import latis.input._
-import latis.util.RegEx._
-import java.net.URLDecoder
-import latis.model._
-import latis.metadata._
-import latis.util.StreamUtils._
-import latis.util.SparkUtils._
-import latis.util.SparkUtils
-import latis.data.RddFunction
-import latis.util.CacheManager
 import cats.effect.IO
 import fs2.text
+import javax.servlet.http.HttpServlet
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+
 import latis.data.BinSet2D
+import latis.dataset.Dataset
+import latis.ops._
+import latis.output.ImageWriter
+import latis.output.OutputStreamWriter
+import latis.output.TextEncoder
+import latis.util.RegEx.OPERATION
+import latis.util.RegEx.SELECTION
+import latis.util.StreamUtils.contextShift
 
 class HylatisServer extends HttpServlet {
   //TODO: make catalog of datasets from *completed* spark datasets
@@ -37,7 +37,7 @@ class HylatisServer extends HttpServlet {
     //TODO: define HysicsDataset instead of going through reader?
     //HysicsReader().getDataset
     //GoesReader().getDataset
-    ModisReader().getDataset //http://localhost:8090/latis-hylatis/dap/modis.png?geoGridResample(-110,10,-80,35,75000)&rgbImagePivot(1.0,5.0,4.0)
+    //ModisReader().getDataset //http://localhost:8090/latis-hylatis/dap/modis.png?geoGridResample(-110,10,-80,35,75000)&rgbImagePivot(1.0,5.0,4.0)
   }
 
   override def doGet(
@@ -55,11 +55,9 @@ class HylatisServer extends HttpServlet {
     }
 
 
-    //Dataset.fromName(datasetName)
-    //need to make sure CacheManager tries first
-    val ds0 = CacheManager.getDataset(datasetName).getOrElse(Dataset.fromName(datasetName))
+    val ds0 = Dataset.fromName(datasetName)
     // Apply operations
-    val ds  = ops.foldLeft(ds0)((ds, op) => op(ds))
+    val ds  = ops.foldLeft(ds0)((ds, op) => ds.withOperation(op))
 
     suffix match {
       case "png" => ImageWriter(response.getOutputStream, "png").write(ds)

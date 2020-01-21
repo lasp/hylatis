@@ -20,13 +20,13 @@ case class RGBImagePivot(red: Double, green: Double, blue: Double) extends Unary
     // Evaluate cube for each color
     val grids: Vector[MemoizedFunction] = Vector(red, green, blue).map { v =>
       data(DomainData(v)) match {
-        case Some(RangeData(mf: MemoizedFunction)) => mf //(x, y) -> a
+        case Right(RangeData(mf: MemoizedFunction)) => mf //(x, y) -> a
         //case Some(RangeData(sf: SampledFunction)) => sf.unsafeForce //(x, y) -> a
         case _ => ??? //TODO: error
       }
     }
     
-    grids.reduce((f1, f2) => f1 join f2)
+    ??? //grids.reduce((f1, f2) => f1 join f2)
   }
   
   override def applyToModel(model: DataType): DataType = model match {

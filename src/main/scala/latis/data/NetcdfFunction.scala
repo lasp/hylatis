@@ -1,13 +1,17 @@
 package latis.data
 
-import latis.model._
-import ucar.ma2.{Array => NcArray, Section}
-import ucar.nc2.{Variable => NcVariable, NetcdfFile}
-import fs2.Stream
-import cats.effect.IO
 import scala.collection.JavaConverters._
+
+import cats.effect.IO
+import fs2.Stream
+import ucar.ma2.Section
+import ucar.ma2.{Array => NcArray}
+import ucar.nc2.NetcdfFile
+import ucar.nc2.{Variable => NcVariable}
 import ucar.nc2.dataset.NetcdfDataset
+
 import latis.data.Data._
+import latis.model._
 
 /**
  * Implement a SampledFunction that encapsulates a NetCDF dataset.
@@ -25,7 +29,7 @@ case class NetcdfFunction(
   /**
    * Provide a Stream of Samples from the NetcdfFile.
    */
-  def streamSamples = ncStream.flatMap(readData)
+  def samples = ncStream.flatMap(readData)
   
   /**
    * Bracket the NetcdfFile in a Stream so it will manage
@@ -103,11 +107,12 @@ case class NetcdfFunction(
     
     val totalLength = rangeArrays.head.getSize.toInt
     
-    val rangeValues = for {
-      index <- 0 until totalLength
-    } yield RangeData(rangeArrays.map(a => Data(a.getObject(index))))
+    val rangeValues: IndexedSeq[RangeData] = ???
+    //  for {
+    //  index <- 0 until totalLength
+    //} yield RangeData(rangeArrays.map(a => a.getObject(index)))
       
-    SetFunction(domainSet, rangeValues).streamSamples
+    SetFunction(domainSet, rangeValues).samples
   }
 
   /**

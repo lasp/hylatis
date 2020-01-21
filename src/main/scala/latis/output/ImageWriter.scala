@@ -9,6 +9,7 @@ import javax.imageio.ImageIO
 import java.awt.Color
 import java.io.OutputStream
 import java.io.FileOutputStream
+import latis.dataset.Dataset
 
 /**
  * Create an png image of a Dataset of one of the shapes:
@@ -72,7 +73,7 @@ object ImageWriter {
     val rows = mutable.Set[Any]()
     val cols = mutable.Set[Any]()
     val buffer = mutable.ArrayBuffer[Int]()
-    unsafeStreamToSeq(dataset.data.streamSamples) foreach {
+    unsafeStreamToSeq(dataset.samples) foreach {
       case Sample(DomainData(row, col), RangeData(Number(v))) =>
         rows += row
         cols += col
@@ -100,7 +101,7 @@ object ImageWriter {
     
     // Make sense of a Seq of Samples.
     //TODO: take advantage of ArrayFunction2D and such
-    unsafeStreamToSeq(dataset.data.streamSamples) foreach {
+    unsafeStreamToSeq(dataset.samples) foreach {
       // Assumes Cartesian domain to determine the size of the image
       case Sample(DomainData(row, col), RangeData(Number(r), Number(g), Number(b))) =>
         rows += row
@@ -161,7 +162,7 @@ object ImageWriter {
     
     // Make sense of a Seq of Samples.
     //TODO: take advantage of ArrayFunction2D and such
-    unsafeStreamToSeq(dataset.data.streamSamples) foreach {
+    unsafeStreamToSeq(dataset.samples) foreach {
       // Assumes Cartesian domain to determine the size of the image
       case Sample(DomainData(x, y), RangeData(Number(r), Number(g), Number(b))) =>
         xs += x

@@ -16,6 +16,7 @@ import fs2.Stream
 
 import latis.data._
 import latis.model._
+import latis.ops._
 import latis.util.AWSUtils
 
 /**
@@ -54,32 +55,32 @@ class S3GranuleListAdapter(pattern: Regex, model: DataType)
     keys.zipWithIndex
   }
 
-  def parseRecord(r: (String, Long)): Option[Sample] =
-    r match {
-      case (key, index) =>
-        pattern.findFirstMatchIn(key).flatMap { mtch =>
-          // This match should be safe because we checked that the
-          // model has this structure in the apply method.
-          val rtypes: List[Scalar] = model match {
-            case Function(_, r) => r.getScalars
-          }
+  def parseRecord(r: (String, Long)): Option[Sample] = ???
+    //r match {
+    //  case (key, index) =>
+    //    pattern.findFirstMatchIn(key).flatMap { mtch =>
+    //      // This match should be safe because we checked that the
+    //      // model has this structure in the apply method.
+    //      val rtypes: List[Scalar] = model match {
+    //        case Function(_, r) => r.getScalars
+    //      }
+    //
+    //      val rdata: Option[RangeData] = rtypes.traverse {
+    //        // A scalar named "key" will get the object's key.
+    //        case s if s.id == "key" => Option(s.parseValue(key))
+    //        // Look for the scalar ID in the named capture groups.
+    //        case s => ???
+    //      //    Try(Option(mtch.group(s.id)))
+    //      //      .toOption
+    //      //      .flatten
+    //      //      .map(s.parseValue(_))
+    //      }
+    //
+    //      rdata.map(Sample(DomainData(index), _))
+    //    }
+    //}
 
-          val rdata: Option[RangeData] = rtypes.traverse {
-            // A scalar named "key" will get the object's key.
-            case s if s.id == "key" => Option(s.parseValue(key))
-            // Look for the scalar ID in the named capture groups.
-            case s =>
-              Try(Option(mtch.group(s.id)))
-                .toOption
-                .flatten
-                .map(s.parseValue(_))
-          }
-
-          rdata.map(Sample(DomainData(index), _))
-        }
-    }
-
-  override def apply(uri: URI): SampledFunction = {
+  override def getData(uri: URI, ops: Seq[Operation]): SampledFunction = {
     // This adapter only makes sense for functions.
     val (dtypes, rtypes) = model match {
       case Function(d, r) => (d.getScalars, r.getScalars)
@@ -112,7 +113,7 @@ class S3GranuleListAdapter(pattern: Regex, model: DataType)
       )
     }
 
-    super.apply(uri)
+    super.getData(uri)
   }
 
   private def getS3URI(uri: URI): IO[AmazonS3URI] =

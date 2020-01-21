@@ -9,7 +9,8 @@ import org.geotools.referencing.CRS
 import org.geotools.referencing.GeodeticCalculator
 
 import latis.data._
-import latis.model.Dataset
+import latis.dataset.Dataset
+import latis.dataset.MemoizedDataset
 import latis.util.StreamUtils._
 
 
@@ -84,9 +85,9 @@ object TestGeoLocation extends App {
    */
 
   // Read GPS locations for center of each slit image
-  val gpsDataset: Dataset = ??? // DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
+  val gpsDataset: MemoizedDataset = ??? // DatasetSource.fromName("hysics_des_veg_cloud_gps").getDataset()
   //Writer().write(ds)
-  val lonLats: Seq[(Double, Double)] = unsafeStreamToSeq(gpsDataset.data.streamSamples).map {
+  val lonLats: Seq[(Double, Double)] = unsafeStreamToSeq(gpsDataset.data.samples).map {
     //case Sample(_, Array(_, Real(lat), Real(lon))) => (lon, lat)
     case Sample(_, RangeData(Number(lat), Number(lon))) => (lon, lat)
   }

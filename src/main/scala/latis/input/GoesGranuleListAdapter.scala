@@ -6,8 +6,10 @@ import latis.data._
 import fs2._
 import cats.effect.IO
 
+import latis.ops.Operation
+
 class GoesGranuleListAdapter extends Adapter {
-  def apply(uri: URI): SampledFunction = {
+  def getData(uri: URI, ops: Seq[Operation]): SampledFunction = {
     val base = uri.toString //defined in goes_image_files.fdml
 
     // Wavelengths from https://www.ncdc.noaa.gov/data-access/satellite-data/goes-r-series-satellites/glossary converted to nm
@@ -34,4 +36,5 @@ class GoesGranuleListAdapter extends Adapter {
     
     SampledFunction(samples)
   }
+
 }

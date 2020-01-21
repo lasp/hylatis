@@ -1,34 +1,24 @@
 package latis.input
 
-import latis.model._
-import latis.metadata._
+import java.net.URI
+
 import latis.data._
+import latis.dataset._
+import latis.metadata._
+import latis.model._
 import latis.util.LatisConfig
-import java.net.URI
-import java.net.URI
 
-class HysicsWavelengths extends DatasetResolver {
-  //TODO: factor out superclass that tests companion object id?
-  
-  /**
-   * Support the DatasetResolver interface.
-   */
-  def getDataset(id: String): Option[Dataset] = {
-    if (id == HysicsWavelengths.id) Option(HysicsWavelengths())
-    else None
-  }
-}
+class HysicsWavelengths extends StaticDatasetResolver {
+  //TODO: make this a Reader since it can use diff URIs
 
-object HysicsWavelengths {
-  
-  val id = "hysics_wavelengths"
+  def datasetIdentifier: String = "hysics_wavelengths"
   
   /**
    * Construct a Dataset for the Hysics wavelength data.
    *   iw -> wavelength
    */
-  def apply(): Dataset = {
-    val metadata = Metadata("id" -> id)
+  def getDataset(): Dataset = {
+    val metadata = Metadata("id" -> datasetIdentifier)
     
     // iw -> wavelength
     val model = Function(
@@ -40,10 +30,10 @@ object HysicsWavelengths {
     val base = LatisConfig.get("hylatis.hysics.base-uri").getOrElse(notFound)
     val uri = new URI(s"$base/wavelength.txt")
 
-    val data = new MatrixTextAdapter(model, new TextAdapter.Config())(uri) match {
+    val data = MatrixTextAdapter(model).getData(uri) match {
       case ArrayFunction2D(data2d) => ArrayFunction1D(data2d(0))
     }
     
-    Dataset(metadata, model, data)
+    new MemoizedDataset(metadata, model, data)
   }
 }

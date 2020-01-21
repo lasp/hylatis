@@ -6,6 +6,8 @@ import ucar.nc2._
 
 import latis.data._
 import ucar.ma2.Section
+
+import latis.ops.Operation
 import latis.util.LatisConfig
 
 /**
@@ -21,7 +23,7 @@ case class GoesNetcdfAdapter() extends Adapter {
    * The actual return type is IndexedFunction2D,
    * which extends Function which itself extends Data.
    */
-  def apply(netCDFUri: URI): SampledFunction = {
+  def getData(netCDFUri: URI, ops: Seq[Operation]): SampledFunction = {
     val netCDFFile: NetcdfFile = open(netCDFUri)
     val radianceVariable = netCDFFile.findVariable("Rad") 
     val section = new Section(s"(0:5423:$scaleFactor, 0:5423:$scaleFactor)")
@@ -57,5 +59,5 @@ case class GoesNetcdfAdapter() extends Adapter {
 //      NetcdfFile.open(uri.getScheme + "://" + uri.getHost + "/" + uri.getPath)
 //    }
   }
-  
+
 }

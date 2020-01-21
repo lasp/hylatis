@@ -63,7 +63,7 @@ case class Resample(domainSet: DomainSet) extends MapRangeOperation {
    */
   def mapFunction(model: DataType): RangeData => RangeData = {
     // Use GroupByBin with NearestNeighbor aggregation
-    val gbb = GroupByBin(domainSet, NearestNeighborAggregation())
+    val gbb = GroupByBin(domainSet) //, NearestNeighborAggregation())
     val innerModel = model match {
       case Function(_, range) => range
     }

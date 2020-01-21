@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 import latis.util.HysicsUtils
 import latis.util.AWSUtils
 import java.net.URI
-import latis.model.Dataset
+import latis.dataset.Dataset
 import latis.util.CacheManager
 import org.apache.spark.storage.StorageLevel
 
@@ -19,50 +19,58 @@ import org.apache.spark.storage.StorageLevel
  * Cache the RDD and the LaTiS Dataset so we don't have to reload 
  * it into spark each time.
  */
-case class HysicsReader() extends DatasetReader {
-  //TODO: make a DatasetResolver, see HysicsWavelengths
-  //  or reader of any given set of hysics files
+//class HysicsReader extends DatasetReader {
+//
+//  // Used by the DatasetReader ServiceLoader
+//  override def read(uri: URI): Option[Dataset] = {
+//    // Don't bother trying if this is not a Hysics dataset
+//    if (!uri.toString.contains("hysics")) None
+//    else Option(HysicsReader.read(uri))
+//  }
+//}
+
+object HysicsReader {
   
-  def getDataset: Dataset = {
-    // Load the granule list dataset into spark
-    val reader = HysicsGranuleListReader() // hysics_image_files
-    // iy -> uri
-    val ds = reader.getDataset
-      //TODO: use config option to specify whether to use spark
-      //.unsafeForce //causes latis to use the MemoizedFunction since StreamFunction is not complete
-      .restructure(RddFunction) //memoize data in the form of a Spark RDD
-
-    // Define operations to be applied to this dataset to complete the cube
-    val ops: Seq[UnaryOperation] = Seq(
-      HysicsImageReaderOperation(), // Load data from each granule; iy -> (ix, iw) -> radiance
-      Uncurry(),  // Uncurry the dataset: (iy, ix, iw) -> radiance
-      GroupBy("iw")  // iw -> (iy, ix) -> radiance
-    )
-    
-    // Apply Operations
-    val ds2 = ops.foldLeft(ds)((ds, op) => op(ds))
-
-    // Get the dataset of Hysics wavelengths: iw -> wavelength
-    val wds = HysicsWavelengths()
-    //TODO: cache to spark via broadcast?
-    
-    // Substitute wavelength values: wavelength -> (iy, ix) -> radiance
-    //TODO: handle binary operations better, AST?
-    val ds3 = Substitution()(ds2, wds)
-    
-    // Persist the RDD now that all operations have been applied
-    val data = ds3.data match {
-      case rf: RddFunction => 
-        //TODO: config storage level
-        RddFunction(rf.rdd.persist(StorageLevel.MEMORY_AND_DISK_SER))
-      case sf => sf //no-op if not an RddFunction
-    }
-
-    // Create and rename the new Dataset and add it to the LaTiS CacheManager.
-    val ds4 = ds3.copy(data = data).rename("hysics")
-    ds4.cache()
-    ds4
-  }
+  //def read(uri: URI): Dataset = {
+  //  // Load the granule list dataset into spark
+  //  val reader = HysicsGranuleListReader.readDataset(uri) // hysics_image_files
+  //  // iy -> uri
+  //  val ds = reader.getDataset
+  //    //TODO: use config option to specify whether to use spark
+  //    //.unsafeForce //causes latis to use the MemoizedFunction since StreamFunction is not complete
+  //    .restructure(RddFunction) //memoize data in the form of a Spark RDD
+  //
+  //  // Define operations to be applied to this dataset to complete the cube
+  //  val ops: Seq[UnaryOperation] = Seq(
+  //    HysicsImageReaderOperation(), // Load data from each granule; iy -> (ix, iw) -> radiance
+  //    Uncurry(),  // Uncurry the dataset: (iy, ix, iw) -> radiance
+  //    GroupBy("iw")  // iw -> (iy, ix) -> radiance
+  //  )
+  //
+  //  // Apply Operations
+  //  val ds2 = ops.foldLeft(ds)((ds, op) => op(ds))
+  //
+  //  // Get the dataset of Hysics wavelengths: iw -> wavelength
+  //  val wds = HysicsWavelengths()
+  //  //TODO: cache to spark via broadcast?
+  //
+  //  // Substitute wavelength values: wavelength -> (iy, ix) -> radiance
+  //  //TODO: handle binary operations better, AST?
+  //  val ds3 = Substitution()(ds2, wds)
+  //
+  //  // Persist the RDD now that all operations have been applied
+  //  val data = ds3.data match {
+  //    case rf: RddFunction =>
+  //      //TODO: config storage level
+  //      RddFunction(rf.rdd.persist(StorageLevel.MEMORY_AND_DISK_SER))
+  //    case sf => sf //no-op if not an RddFunction
+  //  }
+  //
+  //  // Create and rename the new Dataset and add it to the LaTiS CacheManager.
+  //  val ds4 = ds3.copy(data = data).rename("hysics")
+  //  ds4.cache()
+  //  ds4
+  //}
   
 }
 

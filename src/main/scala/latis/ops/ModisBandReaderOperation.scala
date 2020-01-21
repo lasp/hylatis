@@ -17,7 +17,7 @@ case class ModisBandReaderOperation() extends MapRangeOperation {
         val vname = ss(1)
         val bandIndex = ss(2).toInt
         val adapter = ModisNetcdfAdapter2(vname, bandIndex)
-        val data = adapter(uri)
+        val data = adapter.getData(uri)
         RangeData(data)
     }
     

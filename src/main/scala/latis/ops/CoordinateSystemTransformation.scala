@@ -1,6 +1,6 @@
 package latis.ops
 
-case class CoordinateSystemTransformation() extends UnaryOperation {
+case class CoordinateSystemTransformation() { //extends UnaryOperation {
   /*
    * Allow this to be composed with other operations
    * avoid shuffling afger temporary change of domain values

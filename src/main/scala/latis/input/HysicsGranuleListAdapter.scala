@@ -2,13 +2,15 @@ package latis.input
 
 import java.net.URI
 
-import latis.data._
-import latis.util.LatisConfig
-import fs2._
 import cats.effect.IO
+import fs2._
+
+import latis.data._
+import latis.ops.Operation
+import latis.util.LatisConfig
 
 class HysicsGranuleListAdapter extends Adapter {
-  def apply(uri: URI): SampledFunction = {
+  def getData(uri: URI, ops: Seq[Operation]): SampledFunction = {
       val base = uri.toString //"s3:/hylatis-hysics-001/des_veg_cloud"
       val imageCount = LatisConfig.getOrElse("hylatis.hysics.image-count", 4200)
       // Use image count to compute a stride.

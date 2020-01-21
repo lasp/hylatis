@@ -2,6 +2,8 @@ package latis.data
 
 import scala.collection.Searching._
 
+import latis.util.LatisException
+
 /**
  * Manage two-dimensional Cartesian SampledFunction Data as columnar arrays.
  * The Cartesian nature allows the domain values for each dimension to be
@@ -12,15 +14,18 @@ import scala.collection.Searching._
 case class IndexedFunction2D(xs: Seq[Datum], ys: Seq[Datum], vs: Seq[Seq[RangeData]]) extends IndexedFunction {
   //TODO: assert that sizes are consistent
   
-  override def apply(
-    dd: DomainData
-  ): Option[RangeData] = dd match {
+  override def apply(value: DomainData): Either[LatisException, RangeData] = value match {
     case DomainData(x, y) =>
       (searchDomain(xs, x), searchDomain(ys, y)) match {
-        case (Found(i), Found(j)) => Option(vs(i)(j))
-        case _ => ??? //TODO: interpolate
+        case (Found(i), Found(j)) => Right(vs(i)(j))
+        //TODO: interpolate
+        case _ =>
+          val msg = s"No sample found matching $value"
+          Left(LatisException(msg))
       }
-    case _ => ??? //TODO: error, invalid type
+    case _ =>
+      val msg = s"Invalid evaluation value for IndexedFunction2D: $value"
+      Left(LatisException(msg))
   }
   
   /**
@@ -28,8 +33,8 @@ case class IndexedFunction2D(xs: Seq[Datum], ys: Seq[Datum], vs: Seq[Seq[RangeDa
    */
   def sampleSeq: Seq[Sample] = {
     for {
-      ia <- 0 until xs.length
-      ib <- 0 until ys.length
+      ia <- xs.indices
+      ib <- ys.indices
     } yield Sample(DomainData(xs(ia), ys(ib)), vs(ia)(ib))
   }
 }

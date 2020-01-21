@@ -23,6 +23,7 @@ import latis.util.LatisOrdering
  * Assume no named Tuples or nested Tuples in domain, for now.
  */
 case class Curry(arity: Int = 1) extends GroupOperation {
+  //TODO: arity vs dimension/rank for nested tuples in the domain, ignoring nesting for now
   //TODO: Provide description for prov
   //TODO: avoid adding prov if this is a no-op
   /*
@@ -59,7 +60,9 @@ case class Curry(arity: Int = 1) extends GroupOperation {
   }
 
   def domainType(model: DataType): DataType = model match {
-    case Function(Tuple(es @ _*), _) => Tuple(es.take(arity))
+      // Ignore nested tuples
+    case Function(d, _) => Tuple(d.getScalars.take(arity))
+    //case Function(Tuple(es @ _*), _) => Tuple(es.take(arity))
   }
 
   def aggregation: Aggregation = {
@@ -70,7 +73,9 @@ case class Curry(arity: Int = 1) extends GroupOperation {
         }
 
       override def applyToModel(model: DataType): DataType = model match {
-        case Function(Tuple(es @ _*), range) => Function(Tuple(es.drop(arity)), range)
+          // Ignore nested tuples
+        case Function(d, range) => Function(Tuple(d.getScalars.drop(arity)), range)
+        //case Function(Tuple(es @ _*), range) => Function(Tuple(es.drop(arity)), range)
           //TODO: beef up edge cases
       }
     }

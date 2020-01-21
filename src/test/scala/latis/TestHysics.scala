@@ -1,26 +1,23 @@
 package latis
 
-import java.io.FileOutputStream
-
 import org.junit._
-import org.junit.Assert._
 import org.scalatest.junit.JUnitSuite
-import scala.io.Source
 
-import latis.input._
-import latis.output._
-import latis.util.SparkUtils
-import latis.metadata._
 import latis.data._
-import latis.util.LatisConfig
+import latis.dataset.DatasetFunction
+import latis.input._
+import latis.metadata._
+import latis.model._
+import latis.model.Tuple
+import latis.output._
+import latis.util.HysicsUtils
+import latis.util.LatisException
 //import latis.ops.HysicsImageOp
-import latis.ops._
-import java.net.URL
 import java.net.URI
-import java.io.File
-import latis.util.AWSUtils
+
 import io.findify.s3mock._
-import latis.ops.Operation
+
+import latis.ops._
 import latis.ops.Uncurry
 
 class TestHysics extends JUnitSuite {
@@ -44,17 +41,148 @@ class TestHysics extends JUnitSuite {
   }
 
   @Test
+  def read_wavelengths(): Unit = {
+    val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/wavelength.txt")
+    val ds = HysicsWavelengthReader.read(uri)
+    TextWriter().write(ds)
+  }
+
+  val xyCSX: DatasetFunction = {
+    val md = Metadata("hysics_xy_csx")
+    val model = Function(
+      Tuple(
+        Scalar(Metadata("ix") + ("type" -> "int")),
+        Scalar(Metadata("iy") + ("type" -> "int"))
+      ),
+      Tuple(
+        Scalar(Metadata("x") + ("type" -> "double")),
+        Scalar(Metadata("y") + ("type" -> "double"))
+      )
+    )
+
+    val f: DomainData => Either[LatisException, RangeData] = {
+      (dd: DomainData) => dd match {
+        case DomainData(Index(ix), Index(iy)) =>
+          Right(DomainData(
+            HysicsUtils.x(ix),
+            HysicsUtils.y(iy)
+          ))
+      }
+    }
+
+    DatasetFunction(md, model, f)
+  }
+
+  val geoCSX: DatasetFunction = {
+    val md = Metadata("hysics_geo_csx")
+    val model = Function(
+      Tuple(
+        Scalar(Metadata("x") + ("type" -> "double")),
+        Scalar(Metadata("y") + ("type" -> "double"))
+      ),
+      Tuple(
+        Scalar(Metadata("lon") + ("type" -> "double")),
+        Scalar(Metadata("lat") + ("type" -> "double"))
+      )
+    )
+
+    val f: DomainData => Either[LatisException, RangeData] = {
+      (dd: DomainData) => dd match {
+        case DomainData(Number(x), Number(y)) =>
+          HysicsUtils.hysicsToGeo((x, y)) match {
+            case (lon, lat) => Right(DomainData(lon, lat))
+          }
+      }
+    }
+
+    DatasetFunction(md, model, f)
+  }
+
+  def geoSet: DomainSet = {
+    val model = Tuple(
+      Scalar(Metadata("lon") + ("type" -> "double")),
+      Scalar(Metadata("lat") + ("type" -> "double"))
+    )
+    val xset = BinSet1D(-108.187, 0.011, 3)
+    val yset = BinSet1D(34.70, 0.015, 3)
+    BinSet2D(xset, yset)
+    //TODO: allow setting model of BinSet2D
+  }
+
+  @Test
+  def geo_domain_set(): Unit = {
+    geoSet.elements.foreach(println)
+  }
+
+  // (w -> f) => (R, G, B)
+  def extractRGB(): MemoizedFunction => Either[LatisException, RangeData] =
+    (spectrum: MemoizedFunction) => {
+      //spectrum.samples.map {
+      //  case Sample(Number(w), Number(f)) =>
+      //}
+      //TODO: take wavelengths as args
+      //TODO: use interpolation, though not good idea for spectra
+      val wr: Double = 630.87
+      val wg: Double = 531.86
+      val wb: Double = 463.79
+      for {
+        r <- spectrum(DomainData(wr))
+        g <- spectrum(DomainData(wg))
+        b <- spectrum(DomainData(wb))
+      } yield RangeData(r ++ g ++ b)
+    }
+  /*
+  Composition, apply to range of orig Dataset
+    impl as mapRange
+    DatasetFunction?
+      model: (wavelength -> radiance) => (R, G, B)
+      special "spectrum" type of Function?
+
+   */
+
+
+  @Test
   def read_cube(): Unit = {
     val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud")
+    val wluri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/wavelength.txt")
+    val wlds = HysicsWavelengthReader.read(wluri)
+
+    /*
+    TODO: give ordering to RDD.groupBy
+       need to start with cube in x, y, w ordered
+       use partitioner that uses 1st var in domain to get partition
+       need to understand Hysics data ordering
+       wavelengths descend, x and y are ok
+         order="descending" in metadata?
+
+    TODO: resample onto lon, lat grid
+      use GroupByBin, NN agg
+      define regular lon-lat domain set
+      for each sample, convert x,y to lon,lat
+        then domainSet.indexOf to get the bin
+      use substitution to apply csx?
+        avoid reshuffling
+
+    TODO: define function: spectrum => (r, g, b)
+      apply as mapRange
+      NDVI veg index
+     */
+
     val ds = HysicsGranuleListReader
       .read(uri) //ix -> uri
       .withOperation(Stride(2000))
-      .restructureWith(RddFunction)
+      //.restructureWith(RddFunction)  //use Spark
       .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
       .withOperation(Uncurry()) // (ix, iy, iw) -> radiance
       .withOperation(Selection("iy < 3")) //note: not supported in nested function yet
       .withOperation(Selection("iw < 3"))
-      .withOperation(Curry(2)) // (ix, iy) -> iw -> radiance
+      .withOperation(Substitution(wlds.asFunction()).compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
+    // This is the canonical form of the cube
+      .withOperation(Curry(2)) // (x, y) -> (wavelength) -> radiance
+      //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
+      .withOperation(Substitution(geoCSX)) // (lon, lat) -> (wavelength) -> radiance
+      .withOperation(GroupByBin(geoSet, HeadAggregation()))
+
       //.unsafeForce()
 
     //val out = new FileOutputStream("/data/tmp/hysics.asc")

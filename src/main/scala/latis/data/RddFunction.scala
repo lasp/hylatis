@@ -10,9 +10,11 @@ import org.apache.spark.rdd.PairRDDFunctions
 
 import latis.ops._
 import org.apache.spark.HashPartitioner
+import org.apache.spark.Partitioner
 
 import latis.model.DataType
 import latis.ops.MapRangeOperation
+import latis.util.LatisException
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
@@ -23,11 +25,14 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
   //Note, PairRDDFunctions has an implicit Ordering[K] arg with default value of null
   //See OrderedRDDFunctions sortByKey
 
-  override def apply(
-    value: DomainData
-  ): Option[RangeData] = {
+  override def apply(value: DomainData): Either[LatisException, RangeData] = {
     //TODO: support interpolation
-    rdd.lookup(value).headOption
+    rdd.lookup(value).headOption match {
+      case Some(r) => Right(r)
+      case None =>
+        val msg = s"No sample found matching $value"
+        Left(LatisException(msg))
+    }
   }
   /*
    * lookup:
@@ -47,17 +52,43 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
 
 
   override def applyOperation(op: UnaryOperation, model: DataType): SampledFunction = op match {
+    //TODO: repartition as needed
     case filter: Filter => RddFunction(rdd.filter(filter.predicate(model)))
     case MapOperation(f) => RddFunction(rdd.map(f(model)))
     case flatMapOp: FlatMapOperation => RddFunction(rdd.flatMap(flatMapOp.flatMapFunction(model)(_).sampleSeq))
     case mapRange: MapRangeOperation => RddFunction(rdd.mapValues(mapRange.mapFunction(model)))
     case groupOp: GroupOperation => RddFunction(
-      rdd.groupBy(groupOp.groupByFunction(model)(_).get) //TODO: deal with None
-        .mapValues(groupOp.aggregation.aggregateFunction(model)(_))
+      gb(groupOp, model)
+      //rdd.groupBy(groupOp.groupByFunction(model)(_).get) //TODO: deal with None
+      //  .mapValues(groupOp.aggregation.aggregateFunction(model)(_))
     )
     case _ => super.applyOperation(op, model)
   }
+/*
+TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
+  should it do another map to add empty (filled?) bins?
+    would like to avoid shuffle
+  could be done as a join?
+    but how to generalized?
+    could it avoid shuffle?
+ */
+  def gb(groupOp: GroupOperation, model: DataType): RDD[Sample] = {
+    val f: Sample => DomainData =
+      groupOp.groupByFunction(model)(_).get //TODO: deal with None
+    val p = Partitioner.defaultPartitioner(rdd)
+    //TODO: fix ordering
+    implicit val ord: Ordering[DomainData] = groupOp.ordering(model)
+    val z = rdd.groupBy(f, p) //ShuffledRDD with HashPartitioner but no keyOrdering
+    val x = z.mapValues(groupOp.aggregation.aggregateFunction(model)(_))
+    x
+  }
 
+  /*
+  TODO: get dd from each group for NNAgg
+    then can't use mapValues
+    NNAgg is the only one that needs it
+    separate impl for GBBwithNNAgg?
+   */
 
 //
 //  /**

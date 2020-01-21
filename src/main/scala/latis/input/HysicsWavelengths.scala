@@ -1,12 +1,12 @@
 package latis.input
 
-import latis.model._
-import latis.metadata._
+import java.net.URI
+
 import latis.data._
-import latis.util.LatisConfig
-import java.net.URI
-import java.net.URI
 import latis.dataset._
+import latis.metadata._
+import latis.model._
+import latis.util.LatisConfig
 
 class HysicsWavelengths extends StaticDatasetResolver {
   //TODO: make this a Reader since it can use diff URIs

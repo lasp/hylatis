@@ -26,26 +26,27 @@ case class ModisGeoSub() { //extends MapRangeOperation {
    * Note that this operates on the range only so we can use
    * mapValues without disturbing the keys and partitions.
    */
-  def mapFunction(model: DataType): RangeData => RangeData = {
-    // Get the broadcast geo locations
-    val bcGeoLoc = broadcastGeoLocation
-    
-    (range: RangeData) => range match {
-    case RangeData(sf: SampledFunction) =>
-      // (ix, iy) -> (longitude, latitude)
-      // Get the geo locations from the broadcast variable
-      val geoLocation: ArrayFunction2D = bcGeoLoc.value
-      val samples = sf.unsafeForce.sampleSeq map {
-        case Sample(domain, range) =>
-          val newDomain = geoLocation(domain) match {
-            case Right(RangeData(lon: Datum, lat: Datum)) =>
-              DomainData(lon, lat)
-          }
-          Sample(newDomain, range)
-      }
-      RangeData(SeqFunction(samples))
-    }
-  }
+  def mapFunction(model: DataType): RangeData => RangeData = ???
+  //{
+  //  // Get the broadcast geo locations
+  //  val bcGeoLoc = broadcastGeoLocation
+  //
+  //  (range: RangeData) => range match {
+  //  case RangeData(sf: SampledFunction) =>
+  //    // (ix, iy) -> (longitude, latitude)
+  //    // Get the geo locations from the broadcast variable
+  //    val geoLocation: ArrayFunction2D = bcGeoLoc.value
+  //    val samples = sf.unsafeForce.sampleSeq map {
+  //      case Sample(domain, range) =>
+  //        val newDomain = geoLocation(domain) match {
+  //          case Right(RangeData(lon: Datum, lat: Datum)) =>
+  //            DomainData(lon, lat)
+  //        }
+  //        Sample(newDomain, range)
+  //    }
+  //    RangeData(SeqFunction(samples))
+  //  }
+  //}
     
 //  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = data match {
 //    case rddF: RddFunction => RddFunction(rddF.rdd.mapValues(g))

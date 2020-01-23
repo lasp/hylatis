@@ -13,17 +13,17 @@ case class GoesArrayFunction2D(array: Array[Array[RangeData]]) extends MemoizedF
   
   val calc = GOESGeoCalculator("GOES_EAST")
 
-  override def apply(value: DomainData): Either[LatisException, RangeData] = value match {
-    //TODO: support any integral type
-    //TODO: handle index out of bounds
-    case DomainData(Index(i), Index(j)) => Right(array(i)(j))
-    // If doubla values, assume lat,lon (image order)
-    case DomainData(Number(lat), Number(lon)) => 
-      val (y, x) = calc.geoToYX((lat, lon)).get
-      val i = round(y).toInt
-      val j = round(x).toInt
-      Right(array(i)(j))
-  }
+  //override def apply(value: DomainData): Either[LatisException, RangeData] = value match {
+  //  //TODO: support any integral type
+  //  //TODO: handle index out of bounds
+  //  case DomainData(Index(i), Index(j)) => Right(array(i)(j))
+  //  // If doubla values, assume lat,lon (image order)
+  //  case DomainData(Number(lat), Number(lon)) =>
+  //    val (y, x) = calc.geoToYX((lat, lon)).get
+  //    val i = round(y).toInt
+  //    val j = round(x).toInt
+  //    Right(array(i)(j))
+  //}
   
   def sampleSeq: Seq[Sample] =
     Seq.tabulate(array.length, array(0).length) { 

@@ -1,5 +1,7 @@
 package latis
 
+import org.checkerframework.checker.units.qual
+import org.checkerframework.checker.units.qual.g
 import org.junit._
 import org.scalatest.junit.JUnitSuite
 
@@ -132,10 +134,10 @@ class TestHysics extends JUnitSuite {
       val wg: Double = 2298.6 //531.86
       val wb: Double = 2295.5 //463.79
       for {
-        r <- spectrum(DomainData(wr))
-        g <- spectrum(DomainData(wg))
-        b <- spectrum(DomainData(wb))
-      } yield TupleData(r ++ g ++ b)
+        r <- spectrum(TupleData(DomainData(wr)))
+        g <- spectrum(TupleData(DomainData(wg)))
+        b <- spectrum(TupleData(DomainData(wb)))
+      } yield TupleData(r.elements ++ g.elements ++ b.elements)
       //TODO: add fill values
     }
 
@@ -198,12 +200,18 @@ class TestHysics extends JUnitSuite {
     val ds = HysicsGranuleListReader
       .read(uri) //ix -> uri
       .withOperation(Stride(2000))
-      //.restructureWith(RddFunction)  //use Spark
+      .restructureWith(RddFunction)  //use Spark
       .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
       .withOperation(Uncurry()) // (ix, iy, iw) -> radiance
       .withOperation(Selection("iy < 3")) //note: not supported in nested function yet
       .withOperation(Selection("iw < 3"))
-      .withOperation(Substitution(wlds.asFunction()) ) //.compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
+      .withOperation(Substitution(wlds.asFunction()).compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
+    /*
+    TODO: wl substitution failing, MemoizedFunction not serializable, but worked before?
+      changed DatasetFunction f to take TupleData instead of DomainData
+      Dataset.asFunction does unsafe force of ds to get MF that goes in closure
+        this makes sense but how did it work before?
+     */
     // This is the canonical form of the cube
       .withOperation(Curry(2)) // (x, y) -> (wavelength) -> radiance
       //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)

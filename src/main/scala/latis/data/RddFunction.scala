@@ -25,15 +25,15 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
   //Note, PairRDDFunctions has an implicit Ordering[K] arg with default value of null
   //See OrderedRDDFunctions sortByKey
 
-  override def apply(value: DomainData): Either[LatisException, RangeData] = {
-    //TODO: support interpolation
-    rdd.lookup(value).headOption match {
-      case Some(r) => Right(r)
-      case None =>
-        val msg = s"No sample found matching $value"
-        Left(LatisException(msg))
-    }
-  }
+  //override def apply(value: DomainData): Either[LatisException, RangeData] = {
+  //  //TODO: support interpolation
+  //  rdd.lookup(value).headOption match {
+  //    case Some(r) => Right(r)
+  //    case None =>
+  //      val msg = s"No sample found matching $value"
+  //      Left(LatisException(msg))
+  //  }
+  //}
   /*
    * lookup:
    * "This operation is done efficiently if the RDD has a known partitioner by only searching the partition that the key maps to."

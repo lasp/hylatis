@@ -15,16 +15,16 @@ case class IndexedFunction1D(xs: Seq[Datum], vs: Seq[RangeData]) extends Indexed
   //TODO: prevent diff types of OrderedData, e.g. mixing NumberData and TextData, or IntData and DoubleData
   // [T <: OrderedData]
 
-  override def apply(value: DomainData): Either[LatisException, RangeData] = value match {
-    case DomainData(d) =>
-      searchDomain(xs, d) match {
-        case Found(i) => Right(vs(i))
-        //case InsertionPoint(i) => ??? //TODO: interpolate
-        case _ =>
-          val msg = s"No sample found matching $value"
-          Left(LatisException(msg))
-      }
-  }
+  //override def apply(value: DomainData): Either[LatisException, RangeData] = value match {
+  //  case DomainData(d) =>
+  //    searchDomain(xs, d) match {
+  //      case Found(i) => Right(vs(i))
+  //      //case InsertionPoint(i) => ??? //TODO: interpolate
+  //      case _ =>
+  //        val msg = s"No sample found matching $value"
+  //        Left(LatisException(msg))
+  //    }
+  //}
   
   /**
    * Provide a sequence of samples to fulfill the MemoizedFunction trait.

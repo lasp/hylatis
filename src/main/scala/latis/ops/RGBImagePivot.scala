@@ -16,18 +16,19 @@ import latis.metadata.Metadata
 case class RGBImagePivot(red: Double, green: Double, blue: Double) extends UnaryOperation {
   
 
-  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = {
-    // Evaluate cube for each color
-    val grids: Vector[MemoizedFunction] = Vector(red, green, blue).map { v =>
-      data(DomainData(v)) match {
-        case Right(RangeData(mf: MemoizedFunction)) => mf //(x, y) -> a
-        //case Some(RangeData(sf: SampledFunction)) => sf.unsafeForce //(x, y) -> a
-        case _ => ??? //TODO: error
-      }
-    }
-    
-    ??? //grids.reduce((f1, f2) => f1 join f2)
-  }
+  override def applyToData(data: SampledFunction, model: DataType): SampledFunction = ???
+  //{
+  //  // Evaluate cube for each color
+  //  val grids: Vector[MemoizedFunction] = Vector(red, green, blue).map { v =>
+  //    data(DomainData(v)) match {
+  //      case Right(RangeData(mf: MemoizedFunction)) => mf //(x, y) -> a
+  //      //case Some(RangeData(sf: SampledFunction)) => sf.unsafeForce //(x, y) -> a
+  //      case _ => ??? //TODO: error
+  //    }
+  //  }
+  //
+  //  ??? //grids.reduce((f1, f2) => f1 join f2)
+  //}
   
   override def applyToModel(model: DataType): DataType = model match {
     case Function(_, Function(domain, _)) => Function(

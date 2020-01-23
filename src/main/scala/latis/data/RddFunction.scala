@@ -56,7 +56,9 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
     case filter: Filter => RddFunction(rdd.filter(filter.predicate(model)))
     case MapOperation(f) => RddFunction(rdd.map(f(model)))
     case flatMapOp: FlatMapOperation => RddFunction(rdd.flatMap(flatMapOp.flatMapFunction(model)(_).sampleSeq))
-    case mapRange: MapRangeOperation => RddFunction(rdd.mapValues(mapRange.mapFunction(model)))
+    case mapRange: MapRangeOperation => RddFunction(
+      rdd.mapValues(rd => mapRange.mapFunction(model)(TupleData(rd)).elements)
+    )
     case groupOp: GroupOperation => RddFunction(
       gb(groupOp, model)
       //rdd.groupBy(groupOp.groupByFunction(model)(_).get) //TODO: deal with None

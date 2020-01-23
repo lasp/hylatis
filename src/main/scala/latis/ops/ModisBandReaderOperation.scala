@@ -7,7 +7,7 @@ import java.net.URI
 import latis.input.ModisNetcdfAdapter2
 import latis.input.ModisGeolocationReader
 
-case class ModisBandReaderOperation() extends MapRangeOperation {
+case class ModisBandReaderOperation() { //extends MapRangeOperation {
   
   def mapFunction(model: DataType): RangeData => RangeData =
     (range: RangeData) => range match {
@@ -21,7 +21,8 @@ case class ModisBandReaderOperation() extends MapRangeOperation {
         RangeData(data)
     }
     
-  override def applyToModel(model: DataType): DataType = model match {
+  //override
+  def applyToModel(model: DataType): DataType = model match {
     case Function(domain, _) =>
       val range = Function(
         Tuple(

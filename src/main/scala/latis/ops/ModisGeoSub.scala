@@ -9,7 +9,7 @@ import latis.util.SparkUtils
 /**
  * band -> (ix, iy) -> radiance  =>  band -> (longitude, latitude) -> radiance
  */
-case class ModisGeoSub() extends MapRangeOperation {
+case class ModisGeoSub() { //extends MapRangeOperation {
   //TODO: make a Dataset that wraps a broadcast variable
   
   /**
@@ -53,7 +53,8 @@ case class ModisGeoSub() extends MapRangeOperation {
 //    //TODO: support non-spark usage
 //  }
 //  
-  override def applyToModel(model: DataType): DataType = model match {
+  //override
+  def applyToModel(model: DataType): DataType = model match {
     case Function(domain, _) =>
       val range = Function(
         Tuple(

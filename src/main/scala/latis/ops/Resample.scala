@@ -10,7 +10,7 @@ import latis.metadata.Metadata
 /*
  * assume resampling applies to nested function
  */
-case class Resample(domainSet: DomainSet) extends MapRangeOperation {
+case class Resample(domainSet: DomainSet) { //extends MapRangeOperation {
   //TODO: nothing specifically "geo" about this, or grid
   //TODO: Resample vs Resampling
   //  ResampleGrid vs GridResampling
@@ -82,7 +82,8 @@ case class Resample(domainSet: DomainSet) extends MapRangeOperation {
   /**
    *  Replace the domain in nested Function of the model.
    */
-  override def applyToModel(model: DataType): DataType = model match {
+  //override
+  def applyToModel(model: DataType): DataType = model match {
     case Function(domain, Function(_, range)) => Function(
       domain, Function(domainSet.model, range)
     )

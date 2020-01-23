@@ -19,7 +19,7 @@ import latis.util.LatisException
  */
 case class HysicsImageReaderOperation() extends MapRangeOperation {
 
-  def mapFunction(model: DataType): RangeData => RangeData = {
+  def mapFunction(model: DataType): TupleData => TupleData = {
     // Get the position of the uri variable
     val pos: Int = model.getPath("uri") match {
       case Some(RangePosition(i) :: Nil) => i
@@ -28,11 +28,11 @@ case class HysicsImageReaderOperation() extends MapRangeOperation {
         throw LatisException(msg)
     }
 
-    (range: RangeData) => range(pos) match {
+    (range: TupleData) => range.elements(pos) match {
       case Text(uri) =>
         // (iy, iw) -> radiance
-        val image = HysicsImageReader.read(new URI(uri)).unsafeForce().data
-        RangeData(image)
+        val image: MemoizedFunction = HysicsImageReader.read(new URI(uri)).unsafeForce().data
+        TupleData(List(image))
       case _ => throw LatisException("uri is not defined as text")
     }
   }

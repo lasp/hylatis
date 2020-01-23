@@ -14,10 +14,10 @@ package object dsl {
 
     def info: String = lhs.toString()
 
-    def resample(min: (Double, Double), max: (Double, Double), count: Int): Dataset = {
-      val domainSet = BinSet2D.fromExtents(min, max, count)
-      lhs.withOperation(Resample(domainSet))
-    }
+    //def resample(min: (Double, Double), max: (Double, Double), count: Int): Dataset = {
+    //  val domainSet = BinSet2D.fromExtents(min, max, count)
+    //  lhs.withOperation(Resample(domainSet))
+    //}
 
     def makeRGBImage(r: Double, g: Double, b: Double): Dataset =
       lhs.withOperation(RGBImagePivot(r, g, b))

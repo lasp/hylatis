@@ -60,13 +60,14 @@ class TestHysics extends JUnitSuite {
       )
     )
 
-    val f: DomainData => Either[LatisException, RangeData] = {
-      (dd: DomainData) => dd match {
-        case DomainData(Index(ix), Index(iy)) =>
-          Right(DomainData(
+    val f: TupleData => Either[LatisException, TupleData] = {
+      (td: TupleData) => td.elements match {
+        case List(Index(ix), Index(iy)) =>
+          val dd = DomainData(
             HysicsUtils.x(ix),
             HysicsUtils.y(iy)
-          ))
+          )
+          Right(TupleData(dd))
       }
     }
 
@@ -86,11 +87,13 @@ class TestHysics extends JUnitSuite {
       )
     )
 
-    val f: DomainData => Either[LatisException, RangeData] = {
-      (dd: DomainData) => dd match {
-        case DomainData(Number(x), Number(y)) =>
+    val f: TupleData => Either[LatisException, TupleData] = {
+      (td: TupleData) => td.elements match {
+        case List(Number(x), Number(y)) =>
           HysicsUtils.hysicsToGeo((x, y)) match {
-            case (lon, lat) => Right(DomainData(lon, lat))
+            case (lon, lat) =>
+              val dd = DomainData(lon, lat)
+              Right(TupleData(dd))
           }
       }
     }
@@ -114,30 +117,54 @@ class TestHysics extends JUnitSuite {
     geoSet.elements.foreach(println)
   }
 
-  // (w -> f) => (R, G, B)
-  def extractRGB(): MemoizedFunction => Either[LatisException, RangeData] =
-    (spectrum: MemoizedFunction) => {
+  // (w -> f) => (r, g, b)
+  def extractRGB(): TupleData => Either[LatisException, TupleData] =
+    (td: TupleData) => {
+      val spectrum: MemoizedFunction = td.elements.head match {
+        case mf: MemoizedFunction => mf
+      }
       //spectrum.samples.map {
       //  case Sample(Number(w), Number(f)) =>
       //}
       //TODO: take wavelengths as args
       //TODO: use interpolation, though not good idea for spectra
-      val wr: Double = 630.87
-      val wg: Double = 531.86
-      val wb: Double = 463.79
+      val wr: Double = 2301.7 //630.87
+      val wg: Double = 2298.6 //531.86
+      val wb: Double = 2295.5 //463.79
       for {
         r <- spectrum(DomainData(wr))
         g <- spectrum(DomainData(wg))
         b <- spectrum(DomainData(wb))
-      } yield RangeData(r ++ g ++ b)
+      } yield TupleData(r ++ g ++ b)
+      //TODO: add fill values
     }
+
+  def rgbDF(): DatasetFunction = {
+    val model = Function(
+      Function(
+        Scalar(Metadata("wavelength") + ("type" -> "double")),
+        Scalar(Metadata("radiance") + ("type" -> "double"))
+      ),
+      Tuple(
+        Scalar(Metadata("r") + ("type" -> "double")),
+        Scalar(Metadata("g") + ("type" -> "double")),
+        Scalar(Metadata("b") + ("type" -> "double"))
+      )
+    )
+    val md = Metadata("rgbDF")
+    val f = extractRGB()
+    DatasetFunction(md, model, f)
+  }
   /*
   Composition, apply to range of orig Dataset
     impl as mapRange
     DatasetFunction?
       model: (wavelength -> radiance) => (R, G, B)
       special "spectrum" type of Function?
-
+      f: Data => Data  e.g. SampledFunction => TupleData
+      what about using scala Function: Function2 with arity 2...
+    ds.composeWith?
+    CompositionOp construct with DatasetFunction, akin to Substitution: substituteWith
    */
 
 
@@ -176,12 +203,13 @@ class TestHysics extends JUnitSuite {
       .withOperation(Uncurry()) // (ix, iy, iw) -> radiance
       .withOperation(Selection("iy < 3")) //note: not supported in nested function yet
       .withOperation(Selection("iw < 3"))
-      .withOperation(Substitution(wlds.asFunction()).compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
+      .withOperation(Substitution(wlds.asFunction()) ) //.compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
     // This is the canonical form of the cube
       .withOperation(Curry(2)) // (x, y) -> (wavelength) -> radiance
       //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
-      .withOperation(Substitution(geoCSX)) // (lon, lat) -> (wavelength) -> radiance
-      .withOperation(GroupByBin(geoSet, HeadAggregation()))
+    //  .withOperation(Substitution(geoCSX)) // (lon, lat) -> (wavelength) -> radiance
+    //  .withOperation(GroupByBin(geoSet, HeadAggregation()))
+      .withOperation(Composition(rgbDF()))
 
       //.unsafeForce()
 

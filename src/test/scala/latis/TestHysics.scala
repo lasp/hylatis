@@ -177,7 +177,8 @@ class TestHysics extends JUnitSuite {
     val wlds = HysicsWavelengthReader.read(wluri)
 
     /*
-    TODO: give ordering to RDD.groupBy
+    TODO: samples not ordered in spark!
+       give ordering to RDD.groupBy
        need to start with cube in x, y, w ordered
        use partitioner that uses 1st var in domain to get partition
        need to understand Hysics data ordering
@@ -185,34 +186,29 @@ class TestHysics extends JUnitSuite {
          order="descending" in metadata?
 
     TODO: resample onto lon, lat grid
-      use GroupByBin, NN agg
-      define regular lon-lat domain set
-      for each sample, convert x,y to lon,lat
-        then domainSet.indexOf to get the bin
-      use substitution to apply csx?
-        avoid reshuffling
+      GBB with NN leaves empty bins
+        also not a good way to get target (bin center) to it
+        using first/head instead
+      NN should be able to look beyond one cell
+      need to go back to interp/extrap
 
-    TODO: define function: spectrum => (r, g, b)
-      apply as mapRange
-      NDVI veg index
+    TODO: NDVI veg index?
      */
 
     val ds = HysicsGranuleListReader
       .read(uri) //ix -> uri
-      .withOperation(Stride(2000))
-      .restructureWith(RddFunction)  //use Spark
+      .withOperation(Stride(100)) //4200
+      //.restructureWith(RddFunction)  //use Spark
       .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
+        /*
+        TODO: generalize ReaderOperation
+          substitution: replace uri with data from reader
+         */
       .withOperation(Uncurry()) // (ix, iy, iw) -> radiance
-      .withOperation(Selection("iy < 3")) //note: not supported in nested function yet
+      .withOperation(Selection("iy < 30")) //note: not supported in nested function yet
       .withOperation(Selection("iw < 3"))
       .withOperation(Substitution(wlds.asFunction()).compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
-    /*
-    TODO: wl substitution failing, MemoizedFunction not serializable, but worked before?
-      changed DatasetFunction f to take TupleData instead of DomainData
-      Dataset.asFunction does unsafe force of ds to get MF that goes in closure
-        this makes sense but how did it work before?
-     */
-    // This is the canonical form of the cube
+    // This is the canonical form of the cube, cache here
       .withOperation(Curry(2)) // (x, y) -> (wavelength) -> radiance
       //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
     //  .withOperation(Substitution(geoCSX)) // (lon, lat) -> (wavelength) -> radiance
@@ -222,7 +218,8 @@ class TestHysics extends JUnitSuite {
       //.unsafeForce()
 
     //val out = new FileOutputStream("/data/tmp/hysics.asc")
-    TextWriter().write(ds)
+    //TextWriter().write(ds)
+    ImageWriter("/data/hysics/hysicsRGB.png").write(ds)
   }
 
   //@Test

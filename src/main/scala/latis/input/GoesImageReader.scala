@@ -2,24 +2,25 @@ package latis.input
 
 import latis.metadata._
 import latis.model._
-import java.net.URI
 
 
-case class GoesImageReader(uri: URI) extends AdaptedDatasetReader {
-   
-  def model = Function(
+object GoesImageReader extends AdaptedDatasetReader {
+
+  def metadata: Metadata = Metadata("goes_image") //TODO: make unique, from URI?
+
+  def model: DataType = Function(
     Tuple(
-      Scalar(Metadata("y") + ("type" -> "short")), 
-      Scalar(Metadata("x") + ("type" -> "short"))
+      //Note, raw values are shorts but sclae and offset are applied
+      Scalar(Metadata("y") + ("type" -> "float")),
+      Scalar(Metadata("x") + ("type" -> "float"))
     ),
     Scalar(
       Metadata("radiance")
-      + ("type" -> "short")
+      + ("type" -> "float")
       + ("origName" -> "Rad")
     )
   )
 
   def adapter: Adapter = new NetcdfAdapter(model)
 
-  def metadata: Metadata = Metadata("goes_image")
 }

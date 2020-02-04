@@ -140,6 +140,19 @@ object GOESUtils {
       (yIndex, xIndex)
   }
 
+  def xyToGeo(xy: (Double, Double)): (Double, Double) = xy match {
+    case (x, y) => {
+      //val radLocation = indexToRadians(yIndex, xIndex)
+      val yx = (y, x)
+      val satDist = satelliteDistance(yx)
+      val (sx, sy, sz) = computeViewVectorsFromFixedGrid((yx), satDist)
+      val geoLat = atan(pow(rEquator/rPolar, 2) * sz / sqrt(pow(H - sx, 2) + pow(sy, 2)))
+      val geoLon = goesImageryProjection - atan(sy / (H - sx))
+      //(toDegrees(geoLat), toDegrees(geoLon))
+      (toDegrees(geoLon), toDegrees(geoLat))
+    }
+  }
+
   case class GOESGeoCalculator(spaceCraft: String) {
     /**
      * Transform a lat/lon position to a y/x position.

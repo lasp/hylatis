@@ -1,48 +1,42 @@
 package latis.ops
 
-import latis.data._
-import latis.metadata._
-import latis.model._
 import java.net.URI
-//import latis.input.MatrixTextAdapter
-import latis.util._
-import scala.io.Source
+
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import latis.data._
 import latis.input.GoesImageReader
-import latis.output.Writer
+import latis.model._
+import latis.util._
 
 /**
  * Operation on a granule list dataset to get data for each URI.
  */
-case class GoesImageReaderOperation() extends UnaryOperation {
+case class GoesImageReaderOperation() extends MapRangeOperation {
+  //TODO: Use ReaderOperation, but it needs reader to be serialized for spark
 
-  /**
-   * Construct a function to convert samples of URIs to samples of image data.
-   */
-  def makeMapFunction(model: DataType): Sample => Sample = {
-    //Define function to map URIs to data samples
-    (sample: Sample) => sample match {
-      //  assume uri is first in range for now
-      //TODO: enforce by projecting only "uri"?
-      case Sample(domain, RangeData(Text(uri))) => ???
-        //val image = GoesImageReader(new URI(uri)).getDataset // (iy, ix) -> radiance
-        //Sample(domain, RangeData(image.data))
+  def mapFunction(model:  DataType): TupleData => TupleData = {
+    //TODO: avoid reader in the closure, needs to be serialized for spark
+    (td: TupleData) => td.elements.head match {
+      case Text(u) =>
+        val uri = Try(new URI(u)) match {
+          case Success(uri) => uri
+          case Failure(e) =>
+            val msg = s"Invalid URI: $u"
+            throw LatisException(msg, e)
+        }
+        TupleData(GoesImageReader.read(uri).unsafeForce().data)
+      //TODO: deal will errors from unsafeForce
+      case _ =>
+        val msg = "URI variable must be of type text"
+        throw LatisException(msg)
     }
   }
-  
-  override def applyToData(data: SampledFunction, model: DataType): SampledFunction =
-    ??? //data.map(makeMapFunction(model))
-  
-  // wavelength -> (row, column) -> radiance
-  override def applyToModel(model: DataType): DataType =
-    Function(
-      Scalar(Metadata("wavelength") + ("type" -> "int")),
-      Function(
-        Tuple(
-          Scalar(Metadata("row") + ("type" -> "int")), 
-          Scalar(Metadata("column") + ("type" -> "int"))
-        ),
-        Scalar(Metadata("radiance") + ("type" -> "double"))
-      )
-    )
-    
+
+  def applyToModel(model: DataType): DataType = model match {
+    case Function(d, _) => Function(d, GoesImageReader.model)
+  }
+
 }

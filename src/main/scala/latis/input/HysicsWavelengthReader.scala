@@ -10,13 +10,14 @@ import latis.util.LatisConfig
 
 object HysicsWavelengthReader extends DatasetReader {
 
+  // iw -> wavelength
+  def model: DataType = Function(
+    Scalar(Metadata("iw") + ("type" -> "int")),
+    Scalar(Metadata("wavelength") + ("type" -> "double"))
+  )
+
   def read(uri: URI): Dataset = {
     def metadata: Metadata = Metadata("hysics_wavelengths")
-
-    // iw -> wavelength
-    val model = Function(
-      Scalar(Metadata("iw") + ("type" -> "int")),
-      Scalar(Metadata("wavelength") + ("type" -> "double")))
 
     val data = MatrixTextAdapter(model).getData(uri) match {
       case ArrayFunction2D(data2d) => ArrayFunction1D(data2d(0))

@@ -21,6 +21,7 @@ case class HysicsImageReaderOperation() extends MapRangeOperation {
 
   def mapFunction(model: DataType): TupleData => TupleData = {
     // Get the position of the uri variable
+    //TODO: later assumes that there are no other range variables
     val pos: Int = model.getPath("uri") match {
       case Some(RangePosition(i) :: Nil) => i
       case _ =>

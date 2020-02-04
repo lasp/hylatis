@@ -110,7 +110,7 @@ class TestHysics extends JUnitSuite {
     )
     val xset = BinSet1D(-108.187, 0.011, 3)
     val yset = BinSet1D(34.70, 0.015, 3)
-    BinSet2D(xset, yset)
+    new BinSet2D(xset, yset, model)
     //TODO: allow setting model of BinSet2D
   }
 
@@ -120,19 +120,11 @@ class TestHysics extends JUnitSuite {
   }
 
   // (w -> f) => (r, g, b)
-  def extractRGB(): TupleData => Either[LatisException, TupleData] =
+  def extractRGB(wr: Double, wg: Double, wb: Double): TupleData => Either[LatisException, TupleData] =
     (td: TupleData) => {
       val spectrum: MemoizedFunction = td.elements.head match {
         case mf: MemoizedFunction => mf
       }
-      //spectrum.samples.map {
-      //  case Sample(Number(w), Number(f)) =>
-      //}
-      //TODO: take wavelengths as args
-      //TODO: use interpolation, though not good idea for spectra
-      val wr: Double = 2301.7 //630.87
-      val wg: Double = 2298.6 //531.86
-      val wb: Double = 2295.5 //463.79
       for {
         r <- spectrum(TupleData(DomainData(wr)))
         g <- spectrum(TupleData(DomainData(wg)))
@@ -141,7 +133,7 @@ class TestHysics extends JUnitSuite {
       //TODO: add fill values
     }
 
-  def rgbDF(): DatasetFunction = {
+  def rgbDF(wr: Double, wg: Double, wb: Double): DatasetFunction = {
     val model = Function(
       Function(
         Scalar(Metadata("wavelength") + ("type" -> "double")),
@@ -154,7 +146,7 @@ class TestHysics extends JUnitSuite {
       )
     )
     val md = Metadata("rgbDF")
-    val f = extractRGB()
+    val f = extractRGB(wr, wg, wb)
     DatasetFunction(md, model, f)
   }
   /*
@@ -213,8 +205,7 @@ class TestHysics extends JUnitSuite {
       //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
     //  .withOperation(Substitution(geoCSX)) // (lon, lat) -> (wavelength) -> radiance
     //  .withOperation(GroupByBin(geoSet, HeadAggregation()))
-      .withOperation(Composition(rgbDF()))
-
+      .withOperation(Composition(rgbDF(2301.7, 2298.6, 2295.5)))
       //.unsafeForce()
 
     //val out = new FileOutputStream("/data/tmp/hysics.asc")

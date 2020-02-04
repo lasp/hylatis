@@ -3,13 +3,28 @@ package latis.input
 import java.net.URI
 
 import latis.data._
-import fs2._
-import cats.effect.IO
+import latis.dataset._
+import latis.metadata.Metadata
+import latis.model._
 
-import latis.ops.Operation
+object GoesGranuleListReader extends DatasetReader {
 
-class GoesGranuleListAdapter extends Adapter {
-  def getData(uri: URI, ops: Seq[Operation]): SampledFunction = {
+  def model: DataType = Function(
+    Scalar(Metadata("wavelength") + ("type" -> "double")),
+    Scalar(Metadata("uri") + ("type" -> "string"))
+  )
+
+  def read(uri: URI): Dataset = {
+    val metadata =  Metadata(
+      "id" -> "goes_image_files"
+    )
+
+    val data = getData(uri)
+
+    new MemoizedDataset(metadata, model, data)
+  }
+
+  def getData(uri: URI): MemoizedFunction = {
     val base = uri.toString //defined in goes_image_files.fdml
 
     // Wavelengths from https://www.ncdc.noaa.gov/data-access/satellite-data/goes-r-series-satellites/glossary converted to nm

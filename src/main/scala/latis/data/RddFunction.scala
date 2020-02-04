@@ -1,5 +1,8 @@
 package latis.data
 
+import scala.reflect
+import scala.reflect.ClassTag
+
 import latis.util.SparkUtils._
 import org.apache.spark.rdd.RDD
 import fs2._
@@ -11,9 +14,12 @@ import org.apache.spark.rdd.PairRDDFunctions
 import latis.ops._
 import org.apache.spark.HashPartitioner
 import org.apache.spark.Partitioner
+import org.checkerframework.checker.units.qual.s
 
 import latis.model.DataType
+import latis.model.Function
 import latis.ops.MapRangeOperation
+import latis.util.LatisConfig
 import latis.util.LatisException
 
 /**
@@ -75,22 +81,41 @@ TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
     could it avoid shuffle?
  */
   def gb(groupOp: GroupOperation, model: DataType): RDD[Sample] = {
-    val f: Sample => DomainData =
-      groupOp.groupByFunction(model)(_).get //TODO: deal with None
-    val p = Partitioner.defaultPartitioner(rdd)
-    //TODO: fix ordering
-    implicit val ord: Ordering[DomainData] = groupOp.ordering(model)
-    val z = rdd.groupBy(f, p) //ShuffledRDD with HashPartitioner but no keyOrdering
-    val x = z.mapValues(groupOp.aggregation.aggregateFunction(model)(_))
-    x
-  }
+    ////define fill RDD if GBB
+    //val fillRDD: Option[RDD[_]] = {
+    //  val samples = groupOp match {
+    //    case GroupByBin(dset, _) =>
+    //      dset.elements.map((_, RangeData(NullData)))
+    //  }
+    //  Some(sparkContext.parallelize(samples))
+    //  //TODO: partition based on 1st dim
+    //}
 
-  /*
-  TODO: get dd from each group for NNAgg
-    then can't use mapValues
-    NNAgg is the only one that needs it
-    separate impl for GBBwithNNAgg?
-   */
+    // Defines a key for homeless samples using NullData
+    val badKey: DomainData = {
+      val n = groupOp.domainType(model).getScalars.length
+      List.fill(n)(NullData)
+    }
+
+    val f: Sample => DomainData = groupOp.groupByFunction(model)(_).getOrElse(badKey)
+
+    //TODO: use our partitioner
+    val nPartitions = LatisConfig.getOrElse("spark.default.parallelism", 4)
+    val p = new HashPartitioner(nPartitions) //Partitioner.defaultPartitioner(rdd)
+
+    implicit val ord: Ordering[DomainData] = groupOp.ordering(model) //needed to be able to call SortByKey
+    rdd.groupBy(f, p)
+      .mapValues(groupOp.aggregation.aggregateFunction(model)(_))
+      //.partitionBy(Partitioner.defaultPartitioner(z))
+      .sortByKey() //apparently won't sort by itself, but impl ord does enable implicit OrderedRDDFunctions
+      // Remove homeless samples
+      //TODO: seems like there should be a more efficient way
+      // take all but last, but only if last is null
+      .filter {
+        case Sample(d, _) if ord.equiv(d, badKey) => false
+        case _ => true
+      }
+  }
 
 //
 //  /**

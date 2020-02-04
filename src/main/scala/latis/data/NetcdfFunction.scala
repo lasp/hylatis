@@ -38,13 +38,7 @@ case class NetcdfFunction(
   lazy val ncStream: Stream[IO, NetcdfFile] = 
     Stream.bracket(IO(ncDataset))(nc => IO(nc.close()))
   
-  /**
-   * Get the name of the NetCDF variable given the identifier from the model.
-   */
-  def getOrigName(id: String): String = model.getVariable(id) match {
-    case Some(v) => v.metadata.getProperty("origName").getOrElse(id)
-    case None => ??? //TODO: error, variable not found
-  }
+
   
   /**
    * Transform domain variable data to a DomainSet.
@@ -63,7 +57,7 @@ case class NetcdfFunction(
   private lazy val variableMap: Map[String, NcVariable] = {
     val ids = model.getScalars.map(_.id)
     val pairs = ids map { id =>
-      (id, ncDataset.findVariable(getOrigName(id))) //TODO: error if any null, fail fast?
+      ??? // (id, ncDataset.findVariable(getOrigName(id))) //TODO: error if any null, fail fast?
     }
     pairs.toMap
   }
@@ -103,7 +97,7 @@ case class NetcdfFunction(
       )
     }
     
-    val domainSet = ProductSet(domainArrays.map(ncArrayToDomainSet): _*)
+    val domainSet = ??? //ProductSet(domainArrays.map(ncArrayToDomainSet): _*)
     
     val totalLength = rangeArrays.head.getSize.toInt
     

@@ -9,6 +9,9 @@ import javax.imageio.ImageIO
 import java.awt.Color
 import java.io.OutputStream
 import java.io.FileOutputStream
+
+import org.checkerframework.checker.units.qual.g
+
 import latis.dataset.Dataset
 
 /**
@@ -154,32 +157,34 @@ object ImageWriter {
    * with natural ordering.
    */
   private def makeImageFromRGB(dataset: Dataset): BufferedImage = {
-    val xs = mutable.Set[Any]()
-    val ys = mutable.Set[Any]()
-    val rb = mutable.ArrayBuffer[Double]()
-    val gb = mutable.ArrayBuffer[Double]()
-    val bb = mutable.ArrayBuffer[Double]()
+    // Use Map so we can fill gaps in almost Cartesian dataset (no missing rows or columns)
+    val xs = mutable.Set[Double]()
+    val ys = mutable.Set[Double]()
+    val rb = mutable.Map[(Double, Double), Double]()
+    val gb = mutable.Map[(Double, Double), Double]()
+    val bb = mutable.Map[(Double, Double), Double]()
     
     // Make sense of a Seq of Samples.
     //TODO: take advantage of ArrayFunction2D and such
-    unsafeStreamToSeq(dataset.samples) foreach {
-      // Assumes Cartesian domain to determine the size of the image
-      case Sample(DomainData(x, y), RangeData(Number(r), Number(g), Number(b))) =>
+    val samples: Seq[Sample] = unsafeStreamToSeq(dataset.samples)
+
+    samples foreach {
+      case Sample(DomainData(Number(x), Number(y)), RangeData(Number(r), Number(g), Number(b))) =>
         xs += x
         ys += y
-        rb += r
-        gb += g
-        bb += b
+        rb += (x, y) -> r
+        gb += (x, y) -> g
+        bb += (x, y) -> b
     }
 
     // Filter out NaN before finding min/max
     //val drop = 0.1
-    val rmax = rb.filter(! _.isNaN()).max //* (1 - drop - 0.5)
-    val gmax = gb.filter(! _.isNaN()).max //* (1 - drop - 0.5)
-    val bmax = bb.filter(! _.isNaN()).max //* (1 - drop - 0.5)
-    val rmin = rb.filter(! _.isNaN()).min //* (1 + drop)
-    val gmin = gb.filter(! _.isNaN()).min //* (1 + drop)
-    val bmin = bb.filter(! _.isNaN()).min //* (1 + drop)
+    val rmax = rb.values.filter(! _.isNaN()).max //* (1 - drop - 0.5)
+    val gmax = gb.values.filter(! _.isNaN()).max //* (1 - drop - 0.5)
+    val bmax = bb.values.filter(! _.isNaN()).max //* (1 - drop - 0.5)
+    val rmin = rb.values.filter(! _.isNaN()).min //* (1 + drop)
+    val gmin = gb.values.filter(! _.isNaN()).min //* (1 + drop)
+    val bmin = bb.values.filter(! _.isNaN()).min //* (1 + drop)
 
     val width = xs.size
     val height = ys.size
@@ -193,13 +198,15 @@ object ImageWriter {
     
     // Assume natural x-y ordering
     // Put into row-column order.
-    val data = for {
-      row <- (0 until height)  //height - y -1
-      col <- (0 until width)   //x
+    val data: List[Int] = for {
+      row <- ys.toList.sorted //(0 until height)  //height - y -1
+      col <- xs.toList.sorted //(0 until width)   //x
     } yield {
-      val i = col * height + height - row -1
+      //val i = col * height + height - row -1
       val r: Float = {
-        ((rb(i) - rmin) / (rmax - rmin)).toFloat match {
+        //TODO: sanity check orientation
+        val r = if (rb.contains(col, row)) rb(col, row) else Float.NaN
+        ((r - rmin) / (rmax - rmin)).toFloat match {
           case v if v.isNaN => 0
           case v if v < 0   => 0
           case v if v > 1   => 1
@@ -207,7 +214,8 @@ object ImageWriter {
         }
       }
       val g: Float = {
-        ((gb(i) - gmin) / (gmax - gmin)).toFloat match {
+        val g = if (gb.contains(col, row)) gb(col, row) else Float.NaN
+        ((g - gmin) / (gmax - gmin)).toFloat match {
           case v if v.isNaN => 0
           case v if v < 0   => 0
           case v if v > 1   => 1
@@ -215,7 +223,8 @@ object ImageWriter {
         }
       }
       val b: Float = {
-        ((bb(i) - bmin) / (bmax - bmin)).toFloat match {
+        val b = if (bb.contains(col, row)) bb(col, row) else Float.NaN
+        ((b - bmin) / (bmax - bmin)).toFloat match {
           case v if v.isNaN => 0
           case v if v < 0   => 0
           case v if v > 1   => 1
@@ -224,7 +233,7 @@ object ImageWriter {
       }
       new Color(r, g, b).getRGB
     }
-    
+
     val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
     image.setRGB(0, 0, width, height, data.toArray, 0, width)
     image

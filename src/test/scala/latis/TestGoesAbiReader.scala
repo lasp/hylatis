@@ -216,11 +216,10 @@ class TestGoesAbiReader extends JUnitSuite {
       //.fromSpark() //since GBB leaves gaps in spark
       //-114.1, -25.5 to -43.5, 34.8
       //.groupByBin(geoGrid((-114, -43), (-25, 34), 100000), HeadAggregation())
-      .groupByBin(geoGrid((-105, -25), (-45, 25), 64), HeadAggregation())
+      .groupByBin(geoGrid((-105, -25), (-45, 25), 100000), HeadAggregation())
       //.writeText()
       .writeImage("/data/goes/goesRGB.png")
       //println(ds.unsafeForce().data.sampleSeq.length)
-//TODO: fill grid
   }
 
 //  //@Test

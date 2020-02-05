@@ -16,7 +16,7 @@ object GoesGranuleListReader extends DatasetReader {
 
   def read(uri: URI): Dataset = {
     val metadata =  Metadata(
-      "id" -> "goes_image_files"
+      "id" -> "goes" //_image_files"
     )
 
     val data = getData(uri)

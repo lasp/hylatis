@@ -6,6 +6,7 @@ import org.junit.Assert._
 import org.scalatest.junit.JUnitSuite
 import scala.io.Source
 
+import latis.dataset._
 import latis.input._
 import latis.output._
 import latis.util.AWSUtils
@@ -195,7 +196,7 @@ class TestGoesAbiReader extends JUnitSuite {
   def goes_cube(): Unit = {
     import latis.dsl._
     val uri = new URI("file:///data/goes/2018_230_17")
-    val ds = GoesGranuleListReader.read(uri) //wavelength -> uri
+    GoesGranuleListReader.read(uri) //wavelength -> uri
       .stride(4)  //wavelengths: 1370, 6900, 10300
       .toSpark() //.restructureWith(RddFunction)  //use Spark
       //.withOperation(ReaderOperation(GoesImageReader)) //wavelength -> (y, x) -> radiance
@@ -204,6 +205,9 @@ class TestGoesAbiReader extends JUnitSuite {
       .uncurry() //(wavelength, y, x) -> radiance
       .groupByVariable("x", "y", "wavelength") //(x, y, wavelength) -> radiance
       // canonical cube
+      .cacheRDD()
+
+    val ds = Dataset.fromName("goes")
       .curry(2) //(x, y) -> wavelength -> radiance
       .compose(rgbExtractor(1370.0, 6900.0, 10300.0))
       .substitute(geoCSX) // (lon, lat) -> wavelength -> radiance
@@ -216,7 +220,7 @@ class TestGoesAbiReader extends JUnitSuite {
       //.fromSpark() //since GBB leaves gaps in spark
       //-114.1, -25.5 to -43.5, 34.8
       //.groupByBin(geoGrid((-114, -43), (-25, 34), 100000), HeadAggregation())
-      .groupByBin(geoGrid((-105, -25), (-45, 25), 100000), HeadAggregation())
+      .groupByBin(geoGrid((-105, -25), (-45, 25), 1000000), HeadAggregation())
       //.writeText()
       .writeImage("/data/goes/goesRGB.png")
       //println(ds.unsafeForce().data.sampleSeq.length)

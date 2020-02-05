@@ -3,12 +3,14 @@ package latis
 import java.io.OutputStream
 
 import almond.display.Image
+import org.apache.spark.storage.StorageLevel
 import org.checkerframework.checker.units.qual.g
 
 import latis.data.BinSet2D
 import latis.data.RddFunction
 import latis.data.SeqFunction
 import latis.dataset.Dataset
+import latis.dataset.MemoizedDataset
 import latis.ops.GoesImageReaderOperation
 import latis.ops.Resample
 import latis.ops.RGBImagePivot
@@ -47,5 +49,23 @@ package object dsl {
 
     def toSpark(): Dataset = lhs.restructureWith(RddFunction)
     def fromSpark(): Dataset = lhs.restructureWith(SeqFunction)
+
+    def cacheRDD(): Dataset = {
+      val ds = lhs.unsafeForce() match {
+        case mds: MemoizedDataset => mds.data match {
+          case RddFunction(rdd) =>
+            val newRDD = rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
+            newRDD.count
+            new MemoizedDataset(
+              mds.metadata,
+              mds.model,
+              RddFunction(newRDD)
+            )
+        }
+      }
+      ds.cache()
+      ds
+    }
+
   }
 }

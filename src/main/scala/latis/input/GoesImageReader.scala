@@ -2,6 +2,7 @@ package latis.input
 
 import latis.metadata._
 import latis.model._
+import latis.util.LatisConfig
 
 
 object GoesImageReader extends AdaptedDatasetReader {
@@ -21,6 +22,16 @@ object GoesImageReader extends AdaptedDatasetReader {
     )
   )
 
-  def adapter: Adapter = new NetcdfAdapter(model)
+  /**
+   * Defines a configuration with an optional section property.
+   */
+  private val config = {
+    LatisConfig.get("hylatis.goes.default-section") match {
+      case Some(s) => NetcdfAdapter.Config("section" -> s)
+      case None    => NetcdfAdapter.Config()
+    }
+  }
+
+  def adapter: Adapter = new NetcdfAdapter(model, config)
 
 }

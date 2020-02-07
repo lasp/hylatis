@@ -64,12 +64,13 @@ class TestGoesAbiReader extends JUnitSuite {
 
   @Test
   def read_netcdf_file = {
-    val stride = Array(2712, 2712)
+    val stride = Array(2, 2)
     val uri = new URI("file:///data/goes/2018_230_17/OR_ABI-L1b-RadF-M3C16_G16_s20182301700501_e20182301711279_c20182301711333.nc")
     val reader = GoesImageReader
     val ds = reader.read(uri)
-    //  .withOperation(Stride(stride))
-    TextWriter(System.out).write(ds)
+      .stride(stride)
+    println(ds.unsafeForce().data.sampleSeq.length)
+    //TextWriter(System.out).write(ds)
   }
 
   @Test

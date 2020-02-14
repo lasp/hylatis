@@ -6,13 +6,14 @@ import org.junit._
 import org.scalatest.junit.JUnitSuite
 
 import latis.data._
-import latis.dataset.DatasetFunction
+import latis.dataset._
 import latis.input._
 import latis.metadata._
 import latis.model._
 import latis.model.Tuple
 import latis.output._
 import latis.util.HysicsUtils
+import latis.util.LatisConfig
 import latis.util.LatisException
 //import latis.ops.HysicsImageOp
 import java.net.URI
@@ -119,36 +120,8 @@ class TestHysics extends JUnitSuite {
     geoSet.elements.foreach(println)
   }
 
-  // (w -> f) => (r, g, b)
-  def extractRGB(wr: Double, wg: Double, wb: Double): TupleData => Either[LatisException, TupleData] =
-    (td: TupleData) => {
-      val spectrum: MemoizedFunction = td.elements.head match {
-        case mf: MemoizedFunction => mf
-      }
-      for {
-        r <- spectrum(TupleData(DomainData(wr)))
-        g <- spectrum(TupleData(DomainData(wg)))
-        b <- spectrum(TupleData(DomainData(wb)))
-      } yield TupleData(r.elements ++ g.elements ++ b.elements)
-      //TODO: add fill values
-    }
 
-  def rgbDF(wr: Double, wg: Double, wb: Double): DatasetFunction = {
-    val model = Function(
-      Function(
-        Scalar(Metadata("wavelength") + ("type" -> "double")),
-        Scalar(Metadata("radiance") + ("type" -> "double"))
-      ),
-      Tuple(
-        Scalar(Metadata("r") + ("type" -> "double")),
-        Scalar(Metadata("g") + ("type" -> "double")),
-        Scalar(Metadata("b") + ("type" -> "double"))
-      )
-    )
-    val md = Metadata("rgbDF")
-    val f = extractRGB(wr, wg, wb)
-    DatasetFunction(md, model, f)
-  }
+
   /*
   Composition, apply to range of orig Dataset
     impl as mapRange
@@ -164,6 +137,7 @@ class TestHysics extends JUnitSuite {
 
   @Test
   def read_cube(): Unit = {
+    import latis.dsl._
     val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud")
     val wluri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/wavelength.txt")
     val wlds = HysicsWavelengthReader.read(wluri)
@@ -189,28 +163,25 @@ class TestHysics extends JUnitSuite {
 
     val ds = HysicsGranuleListReader
       .read(uri) //ix -> uri
-      .withOperation(Stride(100)) //4200
-      //.restructureWith(RddFunction)  //use Spark
+      .stride(LatisConfig.getOrElse("hylatis.hysics.stride", 1)) //4200 slit images
+      //.toSpark()
       .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
-        /*
-        TODO: generalize ReaderOperation
-          substitution: replace uri with data from reader
-         */
-      .withOperation(Uncurry()) // (ix, iy, iw) -> radiance
-      .withOperation(Selection("iy < 30")) //note: not supported in nested function yet
-      .withOperation(Selection("iw < 3"))
+      .uncurry() // (ix, iy, iw) -> radiance
+      .select("iy < 40") //note: not supported in nested function yet
+      //.select("iw < 3")
       .withOperation(Substitution(wlds.asFunction()).compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
     // This is the canonical form of the cube, cache here
-      .withOperation(Curry(2)) // (x, y) -> (wavelength) -> radiance
-      //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
-    //  .withOperation(Substitution(geoCSX)) // (lon, lat) -> (wavelength) -> radiance
-    //  .withOperation(GroupByBin(geoSet, HeadAggregation()))
-      .withOperation(Composition(rgbDF(2301.7, 2298.6, 2295.5)))
-      //.unsafeForce()
+      //.cacheRDD()
 
-    //val out = new FileOutputStream("/data/tmp/hysics.asc")
-    //TextWriter().write(ds)
-    ImageWriter("/data/hysics/hysicsRGB.png").write(ds)
+      .curry(2) // (x, y) -> (wavelength) -> radiance
+      //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
+      .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
+      //.compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
+      .compose(rgbExtractor(630.87, 531.86, 463.79))
+      .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 10000), HeadAggregation())
+      .writeImage("/data/hysics/hysicsRGB.png")
+      //.writeText()
+
   }
 
   //@Test

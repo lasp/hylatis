@@ -35,6 +35,7 @@ import ucar.ma2.Section
 import latis.dataset.DatasetFunction
 import latis.util.GOESUtils
 import latis.util.HysicsUtils
+import latis.util.LatisConfig
 import latis.util.LatisException
 
 class TestGoesAbiReader extends JUnitSuite {
@@ -115,51 +116,6 @@ class TestGoesAbiReader extends JUnitSuite {
     DatasetFunction(md, model, f)
   }
 
-  // (w -> f) => (r, g, b)
-  def extractRGB(wr: Double, wg: Double, wb: Double): TupleData => Either[LatisException, TupleData] =
-    (td: TupleData) => {
-      val spectrum: MemoizedFunction = td.elements.head match {
-        //TODO: NN interp
-        //TODO: use fill value if empty
-        case mf: MemoizedFunction => mf
-      }
-      // Use fill value is incoming spectrum is empty
-      if (spectrum.sampleSeq.isEmpty) Right(TupleData(Double.NaN, Double.NaN, Double.NaN))
-      else {
-        // Put data into IndexedFunction1D with NN interp
-        val ds: Seq[Datum] = spectrum.sampleSeq.map {
-          case Sample(DomainData(d: Datum), _) => d
-        }
-        val rs: Seq[TupleData] = spectrum.sampleSeq.map {
-          case Sample(_, r) => TupleData(r)
-        }
-        val f = IndexedFunction1D(ds, rs)
-
-        for {
-          r <- f(TupleData(DomainData(wr)))
-          g <- f(TupleData(DomainData(wg)))
-          b <- f(TupleData(DomainData(wb)))
-        } yield TupleData(r.elements ++ g.elements ++ b.elements)
-      }
-    }
-
-  def rgbExtractor(wr: Double, wg: Double, wb: Double): DatasetFunction = {
-    val model = Function(
-      Function(
-        Scalar(Metadata("wavelength") + ("type" -> "double")),
-        Scalar(Metadata("radiance") + ("type" -> "double"))
-      ),
-      Tuple(
-        Scalar(Metadata("r") + ("type" -> "double")),
-        Scalar(Metadata("g") + ("type" -> "double")),
-        Scalar(Metadata("b") + ("type" -> "double"))
-      )
-    )
-    val md = Metadata("rgbExtractor")
-    val f = extractRGB(wr, wg, wb)
-    DatasetFunction(md, model, f)
-  }
-
   @Test
   def rgb_extration(): Unit = {
     val ds = List(Data.DoubleValue(1), Data.DoubleValue(2), Data.DoubleValue(3))
@@ -168,27 +124,9 @@ class TestGoesAbiReader extends JUnitSuite {
     println(spectrum(TupleData(Data.DoubleValue(2.1))))
   }
 
-  def geoGrid(min: (Double, Double), max: (Double, Double), count: Int): DomainSet = {
-    val model = Tuple(
-      Scalar(Metadata("lon") + ("type" -> "double")),
-      Scalar(Metadata("lat") + ("type" -> "double"))
-    )
-    val n = Math.round(Math.sqrt(count)).toInt //TODO: preserve aspect ratio
-    val x0 = min._1
-    val y0 = min._2
-    val dx = (max._1 - min._1) / n
-    val dy = (max._2 - min._2) / n
-    //-130, 0, -30, 50   //-114.1, -25.5 to -43.5, 34.8
-    //val xset = BinSet1D(-110, 0.65, 100)
-    //val yset = BinSet1D(-25, 0.55, 100)
-    val xset = BinSet1D(x0, dx, n)
-    val yset = BinSet1D(y0, dy, n)
-    new BinSet2D(xset, yset, model)
-    //TODO: allow setting model of BinSet2D instead of (_1,_2)
-  }
-
   @Test
   def geo_grid() = {
+    import latis.dsl._
     val g = geoGrid((-114, -43), (-25, 34), 16)
     g.elements.foreach(println)
   }
@@ -198,7 +136,7 @@ class TestGoesAbiReader extends JUnitSuite {
     import latis.dsl._
     val uri = new URI("file:///data/goes/2018_230_17")
     GoesGranuleListReader.read(uri) //wavelength -> uri
-      .stride(4)  //wavelengths: 1370, 6900, 10300
+      .stride(LatisConfig.getOrElse("hylatis.goes.stride", 1))
       .toSpark() //.restructureWith(RddFunction)  //use Spark
       //.withOperation(ReaderOperation(GoesImageReader)) //wavelength -> (y, x) -> radiance
         //spark serialization error in ReaderOperation: GoesImageReader
@@ -210,7 +148,7 @@ class TestGoesAbiReader extends JUnitSuite {
 
     val ds = Dataset.fromName("goes")
       .curry(2) //(x, y) -> wavelength -> radiance
-      .compose(rgbExtractor(1370.0, 6900.0, 10300.0))
+      .compose(rgbExtractor(1370.0, 6900.0, 10300.0)) //match stride of 4
       .substitute(geoCSX) // (lon, lat) -> wavelength -> radiance
         //yikes, NaN domain values for off disk,
         //TODO: GBB.compose(sub), avoid non-cartesian grid (can't plot)
@@ -221,10 +159,11 @@ class TestGoesAbiReader extends JUnitSuite {
       //.fromSpark() //since GBB leaves gaps in spark
       //-114.1, -25.5 to -43.5, 34.8
       //.groupByBin(geoGrid((-114, -43), (-25, 34), 100000), HeadAggregation())
-      .groupByBin(geoGrid((-105, -25), (-45, 25), 1000000), HeadAggregation())
-      //.writeText()
+      .groupByBin(geoGrid((-105, -25), (-45, 25), 100), HeadAggregation())
       .writeImage("/data/goes/goesRGB.png")
       //println(ds.unsafeForce().data.sampleSeq.length)
+
+      //.writeText()
   }
 
 //  //@Test

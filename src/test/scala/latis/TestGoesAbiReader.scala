@@ -98,9 +98,9 @@ class TestGoesAbiReader extends JUnitSuite {
     val csx: ((Double, Double)) => (Double, Double) =
       GOESUtils.xyToGeo
 
-    val f: TupleData => Either[LatisException, TupleData] = {
-      (td: TupleData) => td.elements match {
-        case List(Number(x), Number(y)) =>
+    val f: Data => Either[LatisException, Data] = {
+      (data: Data) => data match {
+        case TupleData(Number(x), Number(y)) =>
           csx((x, y)) match {
             case (lon, lat) =>
               //if (lon.isNaN || lat.isNaN) {
@@ -110,6 +110,7 @@ class TestGoesAbiReader extends JUnitSuite {
                 Right(TupleData(dd))
               //}
           }
+        case _ => Left(LatisException(s"Function expected x-y pair but got $data"))
       }
     }
 
@@ -118,10 +119,11 @@ class TestGoesAbiReader extends JUnitSuite {
 
   @Test
   def rgb_extration(): Unit = {
-    val ds = List(Data.DoubleValue(1), Data.DoubleValue(2), Data.DoubleValue(3))
-    val rs = List(Data.DoubleValue(1), Data.DoubleValue(2), Data.DoubleValue(3)).map(TupleData(_))
-    val spectrum = IndexedFunction1D(ds, rs)
-    println(spectrum(TupleData(Data.DoubleValue(2.1))))
+    val ds = List(1, 2, 3)
+    val rs = List(List(1, 2, 3))
+    CartesianFunction1D.fromValues(ds, rs).map { cf =>
+      println(cf(DomainData(2.1)))
+    }
   }
 
   @Test
@@ -137,14 +139,15 @@ class TestGoesAbiReader extends JUnitSuite {
     val uri = new URI("file:///data/goes/2018_230_17")
     GoesGranuleListReader.read(uri) //wavelength -> uri
       .stride(LatisConfig.getOrElse("hylatis.goes.stride", 1))
-      .toSpark() //.restructureWith(RddFunction)  //use Spark
+//TODO: getting diff aspect ratio in spark!
+      //.toSpark() //.restructureWith(RddFunction)  //use Spark
       //.withOperation(ReaderOperation(GoesImageReader)) //wavelength -> (y, x) -> radiance
         //spark serialization error in ReaderOperation: GoesImageReader
       .readGoesImages() //wavelength -> (y, x) -> radiance
       .uncurry() //(wavelength, y, x) -> radiance
       .groupByVariable("x", "y", "wavelength") //(x, y, wavelength) -> radiance
       // canonical cube
-      .cacheRDD()
+      .cache()
 
     val ds = Dataset.fromName("goes")
       .curry(2) //(x, y) -> wavelength -> radiance
@@ -159,11 +162,10 @@ class TestGoesAbiReader extends JUnitSuite {
       //.fromSpark() //since GBB leaves gaps in spark
       //-114.1, -25.5 to -43.5, 34.8
       //.groupByBin(geoGrid((-114, -43), (-25, 34), 100000), HeadAggregation())
-      .groupByBin(geoGrid((-105, -25), (-45, 25), 100), HeadAggregation())
+      .groupByBin(geoGrid((-105, -25), (-45, 25), 10000), HeadAggregation())
+      //.writeText()
       .writeImage("/data/goes/goesRGB.png")
       //println(ds.unsafeForce().data.sampleSeq.length)
-
-      //.writeText()
   }
 
 //  //@Test

@@ -1,11 +1,11 @@
 package latis
 
-import org.checkerframework.checker.units.qual
-import org.checkerframework.checker.units.qual.g
 import org.junit._
 import org.scalatest.junit.JUnitSuite
 
 import latis.data._
+import latis.dataset.DatasetFunction
+import latis.dsl._
 import latis.dataset._
 import latis.input._
 import latis.metadata._
@@ -25,7 +25,7 @@ import latis.ops.Uncurry
 
 class TestHysics extends JUnitSuite {
 
-  @Test
+  //@Test
   def read_granules(): Unit = {
     val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud")
     val ds = HysicsGranuleListReader
@@ -34,7 +34,7 @@ class TestHysics extends JUnitSuite {
     TextWriter().write(ds)
   }
 
-  @Test
+  //@Test
   def read_image(): Unit = {
     val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/img4200.txt")
     val ds = HysicsImageReader.read(uri)
@@ -43,7 +43,7 @@ class TestHysics extends JUnitSuite {
     TextWriter().write(ds)
   }
 
-  @Test
+  //@Test
   def read_wavelengths(): Unit = {
     val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/wavelength.txt")
     val ds = HysicsWavelengthReader.read(uri)
@@ -63,14 +63,14 @@ class TestHysics extends JUnitSuite {
       )
     )
 
-    val f: TupleData => Either[LatisException, TupleData] = {
-      (td: TupleData) => td.elements match {
-        case List(Index(ix), Index(iy)) =>
-          val dd = DomainData(
+    val f: Data => Either[LatisException, Data] = {
+      (data: Data) => data match {
+        case TupleData(Index(ix), Index(iy)) =>
+          val td = TupleData(
             HysicsUtils.x(ix),
             HysicsUtils.y(iy)
           )
-          Right(TupleData(dd))
+          Right(td)
       }
     }
 
@@ -90,13 +90,12 @@ class TestHysics extends JUnitSuite {
       )
     )
 
-    val f: TupleData => Either[LatisException, TupleData] = {
-      (td: TupleData) => td.elements match {
-        case List(Number(x), Number(y)) =>
+    val f: Data => Either[LatisException, Data] = {
+      (data: Data) => data match {
+        case TupleData(Number(x), Number(y)) =>
           HysicsUtils.hysicsToGeo((x, y)) match {
             case (lon, lat) =>
-              val dd = DomainData(lon, lat)
-              Right(TupleData(dd))
+              Right(TupleData(lon, lat))
           }
       }
     }
@@ -115,7 +114,7 @@ class TestHysics extends JUnitSuite {
     //TODO: allow setting model of BinSet2D
   }
 
-  @Test
+  //@Test
   def geo_domain_set(): Unit = {
     geoSet.elements.foreach(println)
   }
@@ -167,21 +166,22 @@ class TestHysics extends JUnitSuite {
       //.toSpark()
       .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
       .uncurry() // (ix, iy, iw) -> radiance
-      .select("iy < 40") //note: not supported in nested function yet
-      //.select("iw < 3")
+      .select("iy < 4") //note: not supported in nested function yet
+      .select("iw < 3")
       .withOperation(Substitution(wlds.asFunction()).compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
     // This is the canonical form of the cube, cache here
-      //.cacheRDD()
+      //.cache()
 
       .curry(2) // (x, y) -> (wavelength) -> radiance
       //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
-      .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
-      //.compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
-      .compose(rgbExtractor(630.87, 531.86, 463.79))
-      .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 10000), HeadAggregation())
-      .writeImage("/data/hysics/hysicsRGB.png")
-      //.writeText()
-
+   //   .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
+  //    .compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
+      //.compose(rgbExtractor(630.87, 531.86, 463.79))
+   //   .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 100), HeadAggregation())
+      //.writeImage("/data/hysics/hysicsRGB.png")
+      .writeText()
+      //.unsafeForce()
+    //println(ds)
   }
 
   //@Test

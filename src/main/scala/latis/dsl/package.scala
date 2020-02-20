@@ -4,19 +4,8 @@ import java.io.OutputStream
 
 import almond.display.Image
 import org.apache.spark.storage.StorageLevel
-import org.checkerframework.checker.units.qual.g
 
-import latis.data.BinSet1D
-import latis.data.BinSet2D
-import latis.data.Datum
-import latis.data.DomainData
-import latis.data.DomainSet
-import latis.data.IndexedFunction1D
-import latis.data.MemoizedFunction
-import latis.data.RddFunction
-import latis.data.Sample
-import latis.data.SeqFunction
-import latis.data.TupleData
+import latis.data._
 import latis.dataset.Dataset
 import latis.dataset.DatasetFunction
 import latis.dataset.MemoizedDataset
@@ -25,10 +14,7 @@ import latis.model.Function
 import latis.model.Scalar
 import latis.model.Tuple
 import latis.ops.GoesImageReaderOperation
-import latis.ops.Resample
-import latis.ops.RGBImagePivot
 import latis.output.ImageWriter
-import latis.output.TextWriter
 import latis.util.LatisException
 
 package object dsl {
@@ -64,7 +50,7 @@ package object dsl {
     def toSpark(): Dataset = lhs.restructureWith(RddFunction)
     def fromSpark(): Dataset = lhs.restructureWith(SeqFunction)
 
-    def cacheRDD(): Dataset = {
+    def cache(): Dataset = {
       val ds = lhs.unsafeForce() match {
         case mds: MemoizedDataset => mds.data match {
           case RddFunction(rdd) =>
@@ -75,6 +61,7 @@ package object dsl {
               mds.model,
               RddFunction(newRDD)
             )
+          case _ => mds //No RDD to cache
         }
       }
       ds.cache()
@@ -121,30 +108,29 @@ package object dsl {
   }
 
   // (w -> f) => (r, g, b)
-  def extractRGB(wr: Double, wg: Double, wb: Double): TupleData => Either[LatisException, TupleData] =
-    (td: TupleData) => {
-      val spectrum: MemoizedFunction = td.elements.head match {
-        //TODO: NN interp
-        //TODO: use fill value if empty
-        case mf: MemoizedFunction => mf
-      }
-      // Use fill value is incoming spectrum is empty
-      if (spectrum.sampleSeq.isEmpty) Right(TupleData(Double.NaN, Double.NaN, Double.NaN))
-      else {
-        // Put data into IndexedFunction1D with NN interp
-        val ds: Seq[Datum] = spectrum.sampleSeq.map {
-          case Sample(DomainData(d: Datum), _) => d
-        }
-        val rs: Seq[TupleData] = spectrum.sampleSeq.map {
-          case Sample(_, r) => TupleData(r)
-        }
-        val f = IndexedFunction1D(ds, rs)
+  def extractRGB(wr: Double, wg: Double, wb: Double): Data => Either[LatisException, Data] =
+    (data: Data) => data match {
+      case spectrum: MemoizedFunction => spectrum
+        // Use fill value is incoming spectrum is empty
+        if (spectrum.sampleSeq.isEmpty) Right(TupleData(Double.NaN, Double.NaN, Double.NaN))
+        else {
+          // Put data into CartesianFunction1D TODO: with NN interp
+          //TODO: build CartF from samples via FF
+          val ds: IndexedSeq[Datum] = spectrum.sampleSeq.toVector.map {
+            case Sample(DomainData(d: Datum), _) => d
+          }.reverse
+          val rs: IndexedSeq[Data] = spectrum.sampleSeq.toVector.map {
+            case Sample(_, r) => Data.fromSeq(r)
+          }.reverse
 
-        for {
-          r <- f(TupleData(DomainData(wr)))
-          g <- f(TupleData(DomainData(wg)))
-          b <- f(TupleData(DomainData(wb)))
-        } yield TupleData(r.elements ++ g.elements ++ b.elements)
-      }
+          CartesianFunction1D.fromData(ds, rs).flatMap { f =>
+            for {
+              r <- f(DomainData(wr))
+              g <- f(DomainData(wg))
+              b <- f(DomainData(wb))
+            } yield TupleData(r ++ g ++ b)
+          }
+        }
+      case _ => ??? //TODO: invalid arg, required spectrum
     }
 }

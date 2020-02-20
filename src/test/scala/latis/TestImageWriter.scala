@@ -26,7 +26,7 @@ import latis.util.StreamUtils._
 
 class TestImageWriter extends JUnitSuite {
 
-  val image2D_2x2 = {
+  def image2D_2x2 = {
     // row-col ordering
     //   R G
     //   B W

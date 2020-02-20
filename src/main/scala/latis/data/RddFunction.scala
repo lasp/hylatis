@@ -63,7 +63,9 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
     case MapOperation(f) => RddFunction(rdd.map(f(model)))
     case flatMapOp: FlatMapOperation => RddFunction(rdd.flatMap(flatMapOp.flatMapFunction(model)(_).sampleSeq))
     case mapRange: MapRangeOperation => RddFunction(
-      rdd.mapValues(rd => mapRange.mapFunction(model)(TupleData(rd)).elements)
+      rdd.mapValues { rd =>
+        RangeData(mapRange.mapFunction(model)(Data.fromSeq(rd)))
+      }
     )
     case groupOp: GroupOperation => RddFunction(
       gb(groupOp, model)
@@ -94,7 +96,7 @@ TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
     // Defines a key for homeless samples using NullData
     val badKey: DomainData = {
       val n = groupOp.domainType(model).getScalars.length
-      List.fill(n)(NullData)
+      List.fill(n)(NullDatum)
     }
 
     val f: Sample => DomainData = groupOp.groupByFunction(model)(_).getOrElse(badKey)
@@ -105,7 +107,9 @@ TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
 
     implicit val ord: Ordering[DomainData] = groupOp.ordering(model) //needed to be able to call SortByKey
     rdd.groupBy(f, p)
-      .mapValues(groupOp.aggregation.aggregateFunction(model)(_))
+      .mapValues{ rd =>
+        RangeData(groupOp.aggregation.aggregateFunction(model)(rd))
+      }
       //.partitionBy(Partitioner.defaultPartitioner(z))
       .sortByKey() //apparently won't sort by itself, but impl ord does enable implicit OrderedRDDFunctions
       // Remove homeless samples

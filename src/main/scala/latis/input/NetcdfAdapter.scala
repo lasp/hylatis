@@ -58,7 +58,10 @@ case class NetcdfAdapter(
               val ncArr = nc.readVariable(scalar.id, sec)
               val ds: IndexedSeq[DomainData] =
                 (0 until ncArr.getSize.toInt).map { i =>
-                  DomainData(Data(ncArr.getObject(i)))
+                  Data.fromValue(ncArr.getObject(i)) match {
+                    case Right(d: Datum) => DomainData(d)
+                    case Left(le) => ??? //TODO: error or drop?
+                  }
                 }
               DomainSet(ds)
           }
@@ -70,11 +73,17 @@ case class NetcdfAdapter(
       // consistent with the domain set
       val rangeData: IndexedSeq[RangeData] = model match {
         case Function(_, range) =>
+          // Read the NcArray for each range variable
           val arrs: List[NcArray] = range.getScalars.map {
             scalar => nc.readVariable(scalar.id, section)
           }
           (0 until arrs.head.getSize.toInt).map { i =>
-            RangeData(arrs.map(a => Data(a.getObject(i))))
+            RangeData(arrs.map { a =>
+              Data.fromValue(a.getObject(i)) match {
+                case Right(d) => d
+                case Left(le) => ??? //TODO: error or fill?
+              }
+            })
           }
       }
 

@@ -17,9 +17,9 @@ import latis.util._
 case class GoesImageReaderOperation() extends MapRangeOperation {
   //TODO: Use ReaderOperation, but it needs reader to be serialized for spark
 
-  def mapFunction(model:  DataType): TupleData => TupleData = {
+  def mapFunction(model:  DataType): Data => Data = {
     //TODO: avoid reader in the closure, needs to be serialized for spark
-    (td: TupleData) => td.elements.head match {
+    (data: Data) => data match {
       case Text(u) =>
         val uri = Try(new URI(u)) match {
           case Success(uri) => uri
@@ -27,7 +27,7 @@ case class GoesImageReaderOperation() extends MapRangeOperation {
             val msg = s"Invalid URI: $u"
             throw LatisException(msg, e)
         }
-        TupleData(GoesImageReader.read(uri).unsafeForce().data)
+        GoesImageReader.read(uri).unsafeForce().data
       //TODO: deal will errors from unsafeForce
       case _ =>
         val msg = "URI variable must be of type text"

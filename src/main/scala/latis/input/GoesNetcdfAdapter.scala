@@ -18,11 +18,7 @@ case class GoesNetcdfAdapter() extends Adapter {
   val Shape: Int = 5424 //TODO: get from NetCDF file dimensions
   val scaleFactor: Int = LatisConfig.getOrElse("hylatis.goes.scale-factor", 1)
   val scaledShape = Shape / scaleFactor
-  
-  /**
-   * The actual return type is IndexedFunction2D,
-   * which extends Function which itself extends Data.
-   */
+
   def getData(netCDFUri: URI, ops: Seq[Operation]): SampledFunction = {
     val netCDFFile: NetcdfFile = open(netCDFUri)
     val radianceVariable = netCDFFile.findVariable("Rad") 

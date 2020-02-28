@@ -25,6 +25,7 @@ lazy val hylatis = (project in file("."))
       "org.geotools"        % "gt-epsg-hsql"     % geotoolsVersion,
       "org.geotools"        % "gt-api"           % geotoolsVersion,
       "org.geotools"        % "gt-referencing"   % geotoolsVersion,
+      "org.locationtech.geotrellis" %% "geotrellis-raster" % "3.2.0",
       "org.apache.commons"  % "commons-math3"    % "3.6.1",
       "io.findify"         %% "s3mock"           % "0.2.4",
       "edu.ucar"            % "cdm"              % "5.0.0",

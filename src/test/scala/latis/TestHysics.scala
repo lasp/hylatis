@@ -174,10 +174,12 @@ class TestHysics extends JUnitSuite {
 
       .curry(2) // (x, y) -> (wavelength) -> radiance
       //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
-   //   .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
-  //    .compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
+      .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
+      .compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
       //.compose(rgbExtractor(630.87, 531.86, 463.79))
-   //   .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 100), HeadAggregation())
+      .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 100), HeadAggregation())
+
+
       //.writeImage("/data/hysics/hysicsRGB.png")
       .writeText()
       //.unsafeForce()

@@ -118,10 +118,10 @@ package object dsl {
           //TODO: build CartF from samples via FF
           val ds: IndexedSeq[Datum] = spectrum.sampleSeq.toVector.map {
             case Sample(DomainData(d: Datum), _) => d
-          }.reverse
+          } //.reverse
           val rs: IndexedSeq[Data] = spectrum.sampleSeq.toVector.map {
             case Sample(_, r) => Data.fromSeq(r)
-          }.reverse
+          } //.reverse
 
           CartesianFunction1D.fromData(ds, rs).flatMap { f =>
             for {

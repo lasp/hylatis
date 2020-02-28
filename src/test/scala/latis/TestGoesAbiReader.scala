@@ -163,8 +163,11 @@ class TestGoesAbiReader extends JUnitSuite {
       //-114.1, -25.5 to -43.5, 34.8
       //.groupByBin(geoGrid((-114, -43), (-25, 34), 100000), HeadAggregation())
       .groupByBin(geoGrid((-105, -25), (-45, 25), 10000), HeadAggregation())
-      //.writeText()
-      .writeImage("/data/goes/goesRGB.png")
+
+      .eval(TupleData(-105.0, -23.0))
+
+      .writeText()
+      //.writeImage("/data/goes/goesRGB.png")
       //println(ds.unsafeForce().data.sampleSeq.length)
   }
 

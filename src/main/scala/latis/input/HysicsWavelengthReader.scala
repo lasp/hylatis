@@ -12,7 +12,7 @@ object HysicsWavelengthReader extends DatasetReader {
 
   // iw -> wavelength
   def model: DataType = Function(
-    Scalar(Metadata("iw") + ("type" -> "int")),
+    Scalar(Metadata("iw") + ("type" -> "int") + ("order" -> "desc")),
     Scalar(Metadata("wavelength") + ("type" -> "double"))
   )
 

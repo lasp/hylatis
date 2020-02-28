@@ -31,6 +31,9 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
   //Note, PairRDDFunctions has an implicit Ordering[K] arg with default value of null
   //See OrderedRDDFunctions sortByKey
 
+  //TODO: just to make SF happy for now, make this work with Sample ordering
+  def ordering: Option[PartialOrdering[DomainData]] = None
+
   //override def apply(value: DomainData): Either[LatisException, RangeData] = {
   //  //TODO: support interpolation
   //  rdd.lookup(value).headOption match {

@@ -33,7 +33,7 @@ case class GeoGridImageResampling(
       lat <- Range(ny-1, 0, -1).map(lat1 + dy * _) // reverse lat for image order
       lon <- (0 until nx).map(lon1 + dx * _)
     } yield DomainData(lat, lon)
-    DomainSet(dds)
+    ??? //DomainSet(dds)
   }
 
   /**

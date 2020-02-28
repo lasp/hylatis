@@ -34,7 +34,7 @@ class BoundingBoxEvaluation(x1: Double, y1: Double, x2: Double, y2: Double, nx: 
       x <- (0 until nx).map(x1 + dx * _)
       y <- (0 until ny).map(y1 + dy * _)
     } yield DomainData(x, y)
-    DomainSet(dds)
+    ??? //DomainSet(dds)
   }
   
   def applyToData(data: SampledFunction, model: DataType): SampledFunction = ??? //data.resample(grid)

@@ -63,7 +63,7 @@ case class NetcdfAdapter(
                     case Left(le) => ??? //TODO: error or drop?
                   }
                 }
-              DomainSet(ds)
+              SeqSet1D(scalar, ds)
           }
           if (dsets.length == 1) dsets.head
           else ProductSet(dsets)

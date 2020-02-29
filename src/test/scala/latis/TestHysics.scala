@@ -162,7 +162,8 @@ class TestHysics extends JUnitSuite {
 
     val ds = HysicsGranuleListReader
       .read(uri) //ix -> uri
-      .stride(LatisConfig.getOrElse("hylatis.hysics.stride", 1)) //4200 slit images
+      //.stride(LatisConfig.getOrElse("hylatis.hysics.stride", 1)) //4200 slit images
+      .stride(1000) //4200 slit images
       //.toSpark()
       .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
       .uncurry() // (ix, iy, iw) -> radiance
@@ -174,13 +175,15 @@ class TestHysics extends JUnitSuite {
 
       .curry(2) // (x, y) -> (wavelength) -> radiance
       //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
-      .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
+ //     .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
+  /*
+  TODO: refactor rgbExtractor, avoid DatasetFunction, eval spectrum ds directly, make sure we get reverse wl ordering
+   */
       .compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
       //.compose(rgbExtractor(630.87, 531.86, 463.79))
-      .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 100), HeadAggregation())
+ //     .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 1000), HeadAggregation())
 
-
-      //.writeImage("/data/hysics/hysicsRGB.png")
+ //     .writeImage("/data/hysics/hysicsRGB.png")
       .writeText()
       //.unsafeForce()
     //println(ds)

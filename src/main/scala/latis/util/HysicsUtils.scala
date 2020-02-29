@@ -66,7 +66,7 @@ object HysicsUtils {
     val sina = sin(a)
     
     (xy: (Double, Double)) => xy match {
-      case (x, y) => (x * cosa + y * sina, - x * sina + y * cosa)
+      case (x, y) => (x * cosa - y * sina, x * sina + y * cosa)
     }
   }
 

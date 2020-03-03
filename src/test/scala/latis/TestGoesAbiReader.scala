@@ -32,7 +32,6 @@ import latis.util.StreamUtils._
 import latis.util.StreamUtils
 import ucar.ma2.Section
 
-import latis.dataset.DatasetFunction
 import latis.util.GOESUtils
 import latis.util.HysicsUtils
 import latis.util.LatisConfig
@@ -82,7 +81,7 @@ class TestGoesAbiReader extends JUnitSuite {
     TextWriter(System.out).write(ds)
   }
 
-  val geoCSX: DatasetFunction = {
+  val geoCSX: ComputationalDataset = {
     val md = Metadata("goes_geo_csx")
     val model = Function(
       Tuple(
@@ -114,7 +113,7 @@ class TestGoesAbiReader extends JUnitSuite {
       }
     }
 
-    DatasetFunction(md, model, f)
+    ComputationalDataset(md, model, f)
   }
 
   @Test
@@ -147,7 +146,7 @@ class TestGoesAbiReader extends JUnitSuite {
       .uncurry() //(wavelength, y, x) -> radiance
       .groupByVariable("x", "y", "wavelength") //(x, y, wavelength) -> radiance
       // canonical cube
-      .cache()
+      .cache2()
 
     val ds = Dataset.fromName("goes")
       .curry(2) //(x, y) -> wavelength -> radiance

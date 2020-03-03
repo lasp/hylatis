@@ -6,8 +6,8 @@ import almond.display.Image
 import org.apache.spark.storage.StorageLevel
 
 import latis.data._
+import latis.dataset.ComputationalDataset
 import latis.dataset.Dataset
-import latis.dataset.DatasetFunction
 import latis.dataset.MemoizedDataset
 import latis.metadata.Metadata
 import latis.model.Function
@@ -50,7 +50,7 @@ package object dsl {
     def toSpark(): Dataset = lhs.restructureWith(RddFunction)
     def fromSpark(): Dataset = lhs.restructureWith(SeqFunction)
 
-    def cache(): Dataset = {
+    def cache2(): Dataset = {
       val ds = lhs.unsafeForce() match {
         case mds: MemoizedDataset => mds.data match {
           case RddFunction(rdd) =>
@@ -90,7 +90,7 @@ package object dsl {
   }
 
 
-  def rgbExtractor(wr: Double, wg: Double, wb: Double): DatasetFunction = {
+  def rgbExtractor(wr: Double, wg: Double, wb: Double): ComputationalDataset = {
     val model = Function(
       Function(
         Scalar(Metadata("wavelength") + ("type" -> "double")),
@@ -104,33 +104,41 @@ package object dsl {
     )
     val md = Metadata("rgbExtractor")
     val f = extractRGB(wr, wg, wb)
-    DatasetFunction(md, model, f)
+    ComputationalDataset(md, model, f)
   }
 
   // (w -> f) => (r, g, b)
   def extractRGB(wr: Double, wg: Double, wb: Double): Data => Either[LatisException, Data] =
     (data: Data) => data match {
       case spectrum: MemoizedFunction => spectrum
-        // Use fill value is incoming spectrum is empty
-        if (spectrum.sampleSeq.isEmpty) Right(TupleData(Double.NaN, Double.NaN, Double.NaN))
-        else {
-          // Put data into CartesianFunction1D TODO: with NN interp
-          //TODO: build CartF from samples via FF
-          val ds: IndexedSeq[Datum] = spectrum.sampleSeq.toVector.map {
-            case Sample(DomainData(d: Datum), _) => d
-          } //.reverse
-          val rs: IndexedSeq[Data] = spectrum.sampleSeq.toVector.map {
-            case Sample(_, r) => Data.fromSeq(r)
-          } //.reverse
+        // uses default SeqFunction without searching (which requires ordering)
+        for {
+          r <- spectrum(DomainData(wr))
+          g <- spectrum(DomainData(wg))
+          b <- spectrum(DomainData(wb))
+        } yield TupleData(r ++ g ++ b)
 
-          CartesianFunction1D.fromData(ds, rs).flatMap { f =>
-            for {
-              r <- f(DomainData(wr))
-              g <- f(DomainData(wg))
-              b <- f(DomainData(wb))
-            } yield TupleData(r ++ g ++ b)
-          }
-        }
+        //// Use fill value is incoming spectrum is empty
+        //if (spectrum.sampleSeq.isEmpty) Right(TupleData(Double.NaN, Double.NaN, Double.NaN))
+        //else {
+        //  // Put data into CartesianFunction1D TODO: with NN interp
+        //  //TODO: build CartF from samples via FF
+        //  val ds: IndexedSeq[Datum] = spectrum.sampleSeq.toVector.map {
+        //    case Sample(DomainData(d: Datum), _) => d
+        //  }//.reverse
+        //  val rs: IndexedSeq[Data] = spectrum.sampleSeq.toVector.map {
+        //    case Sample(_, r) => Data.fromSeq(r)
+        //  }
+        //
+        //  val ord = spectrum.ordering.map(_.reverse) //TODO: not working to reverse ordering
+        //  CartesianFunction1D.fromData(ds, rs, ord).flatMap { f =>
+        //    for {
+        //      r <- f(DomainData(wr))
+        //      g <- f(DomainData(wg))
+        //      b <- f(DomainData(wb))
+        //    } yield TupleData(r ++ g ++ b)
+        //  }
+        //}
       case _ => ??? //TODO: invalid arg, required spectrum
     }
 }

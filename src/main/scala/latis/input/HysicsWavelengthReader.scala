@@ -9,11 +9,25 @@ import latis.model._
 import latis.util.LatisConfig
 
 object HysicsWavelengthReader extends DatasetReader {
+  /*
+  TODO: wavelength ordering
+     wavelengths are in reverse order in dataset
+     but wavelength itself is naturally ordered
+     should the order property be in scalar or function metadata?
+     note that it is actually the index variable in the domain in this case
+     could this work if the index var had desc order?
+   */
 
   // iw -> wavelength
   def model: DataType = Function(
-    Scalar(Metadata("iw") + ("type" -> "int") + ("order" -> "desc")),
-    Scalar(Metadata("wavelength") + ("type" -> "double"))
+    Scalar(Metadata(
+      "id" -> "iw",
+      "type" -> "int"
+    )),
+    Scalar(Metadata(
+      "id" -> "wavelength",
+      "type" -> "double"
+    ))
   )
 
   def read(uri: URI): Dataset = {

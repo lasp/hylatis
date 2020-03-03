@@ -1,26 +1,16 @@
 package latis.data
 
-import scala.reflect
-import scala.reflect.ClassTag
-
-import latis.util.SparkUtils._
-import org.apache.spark.rdd.RDD
-import fs2._
 import cats.effect.IO
-
-import latis.util.HylatisPartitioner
-import org.apache.spark.rdd.PairRDDFunctions
-
-import latis.ops._
+import fs2._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.HashPartitioner
-import org.apache.spark.Partitioner
-import org.checkerframework.checker.units.qual.s
 
 import latis.model.DataType
-import latis.model.Function
+import latis.ops._
 import latis.ops.MapRangeOperation
+import latis.util.HylatisPartitioner
 import latis.util.LatisConfig
-import latis.util.LatisException
+import latis.util.SparkUtils._
 
 /**
  * Implement SampledFunction by encapsulating a Spark RDD[Sample].
@@ -147,10 +137,21 @@ TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
 object RddFunction extends FunctionFactory {
 
   def fromSamples(samples: Seq[Sample]): MemoizedFunction = {
+    import scala.math._
     // Put data into a Spark RDD[Sample] with a Partitioner
     // with the number of partitions set to the number of Samples.
-    //TODO: try our Partitioner
-    val part = new HashPartitioner(samples.length)
+    // Get min, max of first domain variable
+    val (dmin, dmax) = {
+      def go(ss: List[Sample], dmin: Double, dmax: Double): (Double, Double) = ss match {
+        case Nil => (dmin, dmax)
+        case s :: ss => s match {
+          case Sample(DomainData(Number(d), _*), _) =>
+            go(ss, min(dmin, d), max(dmax, d))
+        }
+      }
+      go(samples.toList, Double.MaxValue, Double.MinValue)
+    }
+    val part = HylatisPartitioner(samples.length, dmin, dmax)
     val rdd = sparkContext.parallelize(samples)
                           .partitionBy(part)
     RddFunction(rdd)

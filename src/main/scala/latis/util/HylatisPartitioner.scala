@@ -2,29 +2,22 @@ package latis.util
 
 import org.apache.spark.Partitioner
 
-// Only need to partition after the groupBy:
-//
-// (x, y) -> w -> f
+import latis.data._
 
-class HylatisPartitioner(partitions: Int) extends Partitioner {
+case class HylatisPartitioner(count: Int, min: Double, max: Double) extends Partitioner {
+  //TODO: any Datum, Ordering
 
-  val nx: Int = 2 //480
-  // imageCount samples the images rather than taking the first N
-  val ny: Int = 2 //4200
+  override def numPartitions: Int = count
 
-  override def numPartitions: Int = partitions
+  private val interval: Double = (max - min) / count
 
   override def getPartition(key: Any): Int = key match {
-    case d: Seq[_] if d.length == 2 =>
-      val x: Integer = d(0).asInstanceOf[Integer]
-      val y: Integer = d(1).asInstanceOf[Integer]
-
-      val nPerPartition = (nx * ny).toDouble / numPartitions
-      val i = y + ny * x  //TODO: need indexOf?
-
-      ((i).toDouble / nPerPartition).toInt
-    case _ => throw new RuntimeException(
-      "Unsupported domain type."
+    case DomainData(Number(d), _*) =>
+      if (d == max) count - 1 //max value inclusive
+      else ((d - min) / interval).toInt
+      //TODO: consider out of range, bin for bad data
+    case _ => throw LatisException(
+      "Key must be of type DomainData."
     )
   }
 }

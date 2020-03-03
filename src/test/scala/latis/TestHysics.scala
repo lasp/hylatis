@@ -4,7 +4,6 @@ import org.junit._
 import org.scalatest.junit.JUnitSuite
 
 import latis.data._
-import latis.dataset.DatasetFunction
 import latis.dsl._
 import latis.dataset._
 import latis.input._
@@ -50,7 +49,7 @@ class TestHysics extends JUnitSuite {
     TextWriter().write(ds)
   }
 
-  val xyCSX: DatasetFunction = {
+  val xyCSX: ComputationalDataset = {
     val md = Metadata("hysics_xy_csx")
     val model = Function(
       Tuple(
@@ -74,10 +73,10 @@ class TestHysics extends JUnitSuite {
       }
     }
 
-    DatasetFunction(md, model, f)
+    ComputationalDataset(md, model, f)
   }
 
-  val geoCSX: DatasetFunction = {
+  val geoCSX: ComputationalDataset = {
     val md = Metadata("hysics_geo_csx")
     val model = Function(
       Tuple(
@@ -100,7 +99,7 @@ class TestHysics extends JUnitSuite {
       }
     }
 
-    DatasetFunction(md, model, f)
+    ComputationalDataset(md, model, f)
   }
 
   def geoSet: DomainSet = {
@@ -119,21 +118,6 @@ class TestHysics extends JUnitSuite {
     geoSet.elements.foreach(println)
   }
 
-
-
-  /*
-  Composition, apply to range of orig Dataset
-    impl as mapRange
-    DatasetFunction?
-      model: (wavelength -> radiance) => (R, G, B)
-      special "spectrum" type of Function?
-      f: Data => Data  e.g. SampledFunction => TupleData
-      what about using scala Function: Function2 with arity 2...
-    ds.composeWith?
-    CompositionOp construct with DatasetFunction, akin to Substitution: substituteWith
-   */
-
-
   @Test
   def read_cube(): Unit = {
     import latis.dsl._
@@ -141,54 +125,37 @@ class TestHysics extends JUnitSuite {
     val wluri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/wavelength.txt")
     val wlds = HysicsWavelengthReader.read(wluri)
 
-    /*
-    TODO: samples not ordered in spark!
-       give ordering to RDD.groupBy
-       need to start with cube in x, y, w ordered
-       use partitioner that uses 1st var in domain to get partition
-       need to understand Hysics data ordering
-       wavelengths descend, x and y are ok
-         order="descending" in metadata?
-
-    TODO: resample onto lon, lat grid
-      GBB with NN leaves empty bins
-        also not a good way to get target (bin center) to it
-        using first/head instead
-      NN should be able to look beyond one cell
-      need to go back to interp/extrap
-
-    TODO: NDVI veg index?
-     */
+    // Set of y indices spanning the slit dimension
+    val iys: Seq[String] = Range(0, 480, 5).map(_.toString)
 
     val ds = HysicsGranuleListReader
       .read(uri) //ix -> uri
       //.stride(LatisConfig.getOrElse("hylatis.hysics.stride", 1)) //4200 slit images
-      .stride(1000) //4200 slit images
-      //.toSpark()
+      .stride(100) //4200 total slit images
+      //.select("ix < 40")
+    //  .toSpark()
       .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
       .uncurry() // (ix, iy, iw) -> radiance
-      .select("iy < 4") //note: not supported in nested function yet
-      .select("iw < 3")
-      .withOperation(Substitution(wlds.asFunction()).compose(Substitution(xyCSX))) // (x, y, wavelength) -> radiance
-    // This is the canonical form of the cube, cache here
-      //.cache()
+      .contains("iy", iys: _*) //TODO: stride
+      //.select("iy < 2") //note: not supported in nested function yet
+      //.select("iw < 3")
+      .contains("iw", "540", "572", "594") // 630.87, 531.86, 463.79
+      //RDD partitioner preserved after filter //TODO: range selections generally impact our partitioning
+      .substitute(wlds)
+      .substitute(xyCSX)
+      // This is the canonical form of the cube, cache here
+      .cache2() //TODO: resolve conflict with Dataset.cache
 
       .curry(2) // (x, y) -> (wavelength) -> radiance
-      //.withOperation(GroupByVariable("x", "y")) // (x, y) -> (wavelength) -> radiance; logically equivalent to curry(2)
- //     .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
-  /*
-  TODO: refactor rgbExtractor, avoid DatasetFunction, eval spectrum ds directly, make sure we get reverse wl ordering
-   */
-      .compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
-      //.compose(rgbExtractor(630.87, 531.86, 463.79))
- //     .groupByBin(geoGrid((-108.242, 34.7), (-108.164, 34.758), 1000), HeadAggregation())
-
- //     .writeImage("/data/hysics/hysicsRGB.png")
-      .writeText()
-      //.unsafeForce()
-    //println(ds)
+      .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
+      //.compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
+      .compose(rgbExtractor(630.87, 531.86, 463.79)) //iw = 540, 572, 594
+      .groupByBin(geoGrid((-108.27, 34.68), (-108.195, 34.76), 10000), HeadAggregation()) //based on HYLATIS-35
+      .writeImage("/data/hysics/hysicsRGB.png") //TODO: image flipped in y-dim, grid order is fine
+      //ds.writeText()
   }
 
+  //======= legacy =============================================================
   //@Test
   //def make_image = {
   //  // wavelength -> (iy, ix) -> radiance

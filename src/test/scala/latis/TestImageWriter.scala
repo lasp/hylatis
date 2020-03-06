@@ -1,56 +1,49 @@
 package latis
 
-import io.findify.s3mock._
 import org.junit._
-import org.junit.Assert._
 import org.scalatest.junit.JUnitSuite
-import scala.io.Source
-import latis.input._
+
 import latis.output._
-import latis.util.AWSUtils
-import latis.util.SparkUtils
-import latis.metadata._
 import latis.model._
 import latis.data._
 import latis.dataset._
-import java.net.URL
-import java.net.URI
-import java.io.File
-import java.awt.Color
-import latis.ops.Operation
-import latis.ops.Uncurry
-import cats.effect.IO
-import latis.util.GOESUtils.GOESGeoCalculator
-import fs2._
-import latis.util.StreamUtils._
+import latis.metadata.Metadata
 
 class TestImageWriter extends JUnitSuite {
 
   def image2D_2x2 = {
-    // row-col ordering
-    //   R G
-    //   B W
+    // Image should look like:
+    //   R G B
+    //   K W Grey
     val samples = Seq(
-      Sample(DomainData(0,0), RangeData(1,0,0)),
-      Sample(DomainData(0,1), RangeData(0,1,0)),
-      Sample(DomainData(1,0), RangeData(0,0,1)),
-      Sample(DomainData(1,0), RangeData(1,1,1)),
+      Sample(DomainData(0, 0), RangeData(0, 0, 0)),       // black
+      Sample(DomainData(0, 0.5), RangeData(1, 0, 0)),     // red
+      Sample(DomainData(0.5, 0), RangeData(1, 1, 1)),     // white
+      Sample(DomainData(0.5, 0.5), RangeData(0, 1, 0)),   // green
+      Sample(DomainData(1, 0), RangeData(0.5, 0.5, 0.5)), // grey
+      Sample(DomainData(1, 0.5), RangeData(0, 0, 1))      // blue
     )
-    
+
     val md = Metadata("image2D_2x2")
     val model = Function(
-      Tuple(Scalar("row"), Scalar("col")),
-      Tuple(Scalar("r"), Scalar("g"), Scalar("b"))
+      Tuple(
+        Scalar(Metadata("x") + ("type" -> "double")),
+        Scalar(Metadata("y") + ("type" -> "double"))
+      ),
+      Tuple(
+        Scalar(Metadata("r") + ("type" -> "double")),
+        Scalar(Metadata("g") + ("type" -> "double")),
+        Scalar(Metadata("b") + ("type" -> "double"))
+      )
     )
     val data = SampledFunction(samples)
-    
+
     new MemoizedDataset(md, model, data)
   }
-  
-  //@Test
-  def image = {
+
+//  @Test
+  def image =
     //TextWriter(System.out).write(image2D_2x2)
     ImageWriter("rgb.png").write(image2D_2x2)
-  }
-  
+
 }

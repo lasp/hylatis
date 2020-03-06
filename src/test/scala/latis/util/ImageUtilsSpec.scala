@@ -11,6 +11,7 @@ import latis.util.ImageUtils._
 
 class ImageUtilsSpec extends FlatSpec {
 
+  // Randomly generated Gaussian data to verify the code against similar numpy routines.
   private val data = Array[Double](
     0.376, 0.864, 0.512, 0.434, 0.411, 0.225, 0.806, 0.941, 1.058, 0.453, 0.628, 0.58, 1.047, 0.532,
     0.625, 0.825, 0.368, 0.43, 0.57, 0.39

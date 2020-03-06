@@ -4,7 +4,6 @@ import java.net.URI
 import java.nio.file._
 
 import cats.effect.IO
-import cats.implicits._
 import fs2.Stream
 import ucar.ma2.{Array => NcArray}
 import ucar.ma2.Section
@@ -23,7 +22,7 @@ import latis.util._
  * ucar.ma2.Section that us used when reading the data.
  */
 case class NetcdfAdapter(
-  model: DataType, 
+  model: DataType,
   config: NetcdfAdapter.Config = NetcdfAdapter.Config()
 ) extends Adapter {
 
@@ -54,13 +53,13 @@ case class NetcdfAdapter(
         case Function(domain, _) =>
           val dsets: List[DomainSet] = domain.getScalars.zipWithIndex.map {
             case (scalar, index) =>
-              val sec = new Section(section.getRange(index))
+              val sec   = new Section(section.getRange(index))
               val ncArr = nc.readVariable(scalar.id, sec)
               val ds: IndexedSeq[DomainData] =
                 (0 until ncArr.getSize.toInt).map { i =>
                   Data.fromValue(ncArr.getObject(i)) match {
                     case Right(d: Datum) => DomainData(d)
-                    case Left(le) => ??? //TODO: error or drop?
+                    case Left(le)        => ??? //TODO: error or drop?
                   }
                 }
               SeqSet1D(scalar, ds)
@@ -74,8 +73,8 @@ case class NetcdfAdapter(
       val rangeData: IndexedSeq[RangeData] = model match {
         case Function(_, range) =>
           // Read the NcArray for each range variable
-          val arrs: List[NcArray] = range.getScalars.map {
-            scalar => nc.readVariable(scalar.id, section)
+          val arrs: List[NcArray] = range.getScalars.map { scalar =>
+            nc.readVariable(scalar.id, section)
           }
           (0 until arrs.head.getSize.toInt).map { i =>
             RangeData(arrs.map { a =>
@@ -102,14 +101,8 @@ object NetcdfAdapter {
    * section.
    */
   case class Config(properties: (String, String)*) extends ConfigLike {
-    val section: Option[Section] = get("section").map { spec =>
-      Either.catchNonFatal(new Section(spec)) match {
-        case Right(value) => value
-        case Left(e) =>
-          val msg = s"Invalid Section: $spec"
-          throw LatisException(msg, e)
-      }
-    }
+    //Note: ucar.ma2.Section is not serializable, use string representation instead
+    val section: Option[String] = get("section")
   }
 
   /**
@@ -131,16 +124,16 @@ object NetcdfAdapter {
         val (bucket, key) = AWSUtils.parseS3URI(uri)
         val dir = LatisConfig.get("file.cache.dir") match {
           case Some(dir) => dir
-          case None => Files.createTempDirectory("latis").toString
+          case None      => Files.createTempDirectory("latis").toString
         }
         val file = Paths.get(dir, bucket, key).toFile
         // If the file does not exist, make a local copy
         //TODO: deal with concurrency
-        if (! file.exists) AWSUtils.copyS3ObjectToFile(uri, file)
+        if (!file.exists) AWSUtils.copyS3ObjectToFile(uri, file)
         file.toString
       case "file" =>
         uri.getPath
-      case _    =>
+      case _ =>
         uri.getScheme + "://" + uri.getHost + "/" + uri.getPath
     }
 
@@ -186,7 +179,7 @@ case class NetcdfWrapper(ncDataset: NetcdfDataset, model: DataType, config: Netc
   private lazy val variableMap: Map[String, NcVariable] = {
     //TODO: fail faster by not making this lazy?
     val ids = model.getScalars.map(_.id)
-    val pairs = ids map { id =>
+    val pairs = ids.map { id =>
       val vname = getNcVarName(id)
       ncDataset.findVariable(vname) match {
         case v: NcVariable => (id, v)
@@ -202,10 +195,12 @@ case class NetcdfWrapper(ncDataset: NetcdfDataset, model: DataType, config: Netc
    * Gets the section as defined in the config or else
    * makes a section for the entire dataset.
    */
-  def defaultSection: Section = config.section.getOrElse {
-    // Complete Section, ":" for each dimension
-    val spec = List.fill(model.arity)(":").mkString(",")
-    new Section(spec)
+  def defaultSection: Section = config.section match {
+    case Some(spec) => new Section(spec) //TODO: error handling
+    case None       =>
+      // Complete Section, ":" for each dimension
+      val spec = List.fill(model.arity)(":").mkString(",")
+      new Section(spec)
   }
 
   /**

@@ -4,8 +4,7 @@ import latis.metadata._
 import latis.model._
 import latis.util.LatisConfig
 
-
-object GoesImageReader extends AdaptedDatasetReader {
+class GoesImageReader(section: Option[String]) extends AdaptedDatasetReader with Serializable {
 
   def metadata: Metadata = Metadata("goes_image") //TODO: make unique, from URI?
 
@@ -26,12 +25,21 @@ object GoesImageReader extends AdaptedDatasetReader {
    * Defines a configuration with an optional section property.
    */
   private val config = {
-    LatisConfig.get("hylatis.goes.default-section") match {
+    section match {
       case Some(s) => NetcdfAdapter.Config("section" -> s)
-      case None    => NetcdfAdapter.Config()
+      case None => LatisConfig.get("hylatis.goes.default-section") match {
+        case Some(s) => NetcdfAdapter.Config("section" -> s)
+        case None    => NetcdfAdapter.Config()
+      }
     }
+
   }
 
   def adapter: Adapter = new NetcdfAdapter(model, config)
 
+}
+
+object GoesImageReader {
+  def apply():GoesImageReader = new GoesImageReader(None)
+  def apply(section: String):GoesImageReader = new GoesImageReader(Some(section))
 }

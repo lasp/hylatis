@@ -27,7 +27,7 @@ case class GoesImageReaderOperation() extends MapRangeOperation {
             val msg = s"Invalid URI: $u"
             throw LatisException(msg, e)
         }
-        GoesImageReader.read(uri).unsafeForce().data
+        GoesImageReader().read(uri).unsafeForce().data
       //TODO: deal will errors from unsafeForce
       case _ =>
         val msg = "URI variable must be of type text"
@@ -36,7 +36,7 @@ case class GoesImageReaderOperation() extends MapRangeOperation {
   }
 
   def applyToModel(model: DataType): DataType = model match {
-    case Function(d, _) => Function(d, GoesImageReader.model)
+    case Function(d, _) => Function(d, GoesImageReader().model)
   }
 
 }

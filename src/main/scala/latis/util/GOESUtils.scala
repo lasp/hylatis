@@ -1,6 +1,16 @@
 package latis.util
 
 import scala.math._
+
+import latis.data.Data
+import latis.data.DomainData
+import latis.data.Number
+import latis.data.TupleData
+import latis.dataset.ComputationalDataset
+import latis.metadata.Metadata
+import latis.model.Function
+import latis.model.Scalar
+import latis.model.Tuple
  
 /**
  * Transform between GRS80 geodetic coordinates and GOES index coordinates.
@@ -195,5 +205,40 @@ object GOESUtils {
         (toDegrees(geoLat), toDegrees(geoLon))
       }
     }
+  }
+
+  val geoCSX: ComputationalDataset = {
+    val md = Metadata("goes_geo_csx")
+    val model = Function(
+      Tuple(
+        Scalar(Metadata("x") + ("type" -> "double")),
+        Scalar(Metadata("y") + ("type" -> "double"))
+      ),
+      Tuple(
+        Scalar(Metadata("lon") + ("type" -> "double")),
+        Scalar(Metadata("lat") + ("type" -> "double"))
+      )
+    )
+
+    val csx: ((Double, Double)) => (Double, Double) =
+      GOESUtils.xyToGeo
+
+    val f: Data => Either[LatisException, Data] = {
+      (data: Data) => data match {
+        case TupleData(Number(x), Number(y)) =>
+          csx((x, y)) match {
+            case (lon, lat) =>
+              //if (lon.isNaN || lat.isNaN) {
+              //  Left(LatisException("Invalid coordinate"))
+              //} else {
+              val dd = DomainData(lon, lat)
+              Right(TupleData(dd))
+            //}
+          }
+        case _ => Left(LatisException(s"Function expected x-y pair but got $data"))
+      }
+    }
+
+    ComputationalDataset(md, model, f)
   }
 }

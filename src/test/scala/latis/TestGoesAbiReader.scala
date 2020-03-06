@@ -1,122 +1,53 @@
 package latis
 
-import io.findify.s3mock._
-import org.junit._
-import org.junit.Assert._
-import org.scalatest.junit.JUnitSuite
-import scala.io.Source
+import java.net.URI
 
+import org.junit._
+import org.scalatest.junit.JUnitSuite
+
+import latis.data._
 import latis.dataset._
 import latis.input._
-import latis.output._
-import latis.util.AWSUtils
-import latis.util.SparkUtils
-import latis.metadata._
-import latis.model._
-import latis.data._
 import latis.ops._
-import java.net.URL
-import java.net.URI
-import java.io.File
-import java.awt.Color
-
-import latis.ops.Operation
-import latis.ops.Uncurry
-import cats.effect.IO
-
-import latis.util.GOESUtils.GOESGeoCalculator
-import fs2._
-import os./
-
-import latis.util.StreamUtils._
-import latis.util.StreamUtils
-import ucar.ma2.Section
-
-import latis.util.GOESUtils
-import latis.util.HysicsUtils
-import latis.util.LatisConfig
-import latis.util.LatisException
+import latis.output._
 
 class TestGoesAbiReader extends JUnitSuite {
 
-//  //@Test
-//  def bulk_load_goes = {
-//    val goes = GoesReader().getDataset
-//
-//    val ops: Seq[UnaryOperation] = Seq(
-//      //Contains("wavelength", 1370.0, 2200.0, 3900.0),
-//      GeoGridImageResampling(-130, 0, -30, 50, 10000),
-//      RGBImagePivot(1370.0, 2200.0, 3900.0)
-//    )
-//
-//    val ds = ops.foldLeft(goes)((ds, op) => op(ds))
-//    //TextWriter(System.out).write(ds)
-//    ImageWriter("goesRGB.png").write(ds)
-//  }
-//
-//
-////  @Test
-////  def read_NetCDF_S3_image = {
-////    val ds = GoesImageReader(new URI("s3://goes-001/goes0001.nc")).getDataset()
-////    Writer.write(ds)
-////  }
+  lazy val goesDataset: Dataset = {
+    val section = "(500:5000:10, 500:5000:10)" //full: (0:5423, 0:5423)
+    import latis.dsl._
+    val uri = new URI("file:///data/goes/2018_230_17")
+ //TODO use s3 URI
+    GoesGranuleListReader
+      .read(uri) //wavelength -> uri
+      //.stride(4) //limit number of bands
+      .select("wavelength < 4000") //first 3 bands
+      .toSpark() //use Spark
+      .withReader(GoesImageReader(section))    //wavelength -> (y, x) -> radiance
+      .uncurry()                               //(wavelength, y, x) -> radiance
+      .groupByVariable("x", "y", "wavelength") //(x, y, wavelength) -> radiance
+      .cache2()
+  }
 
-
-  @Test
-  def read_netcdf_file = {
-    val stride = Array(2, 2)
+  //@Test
+  def read_netcdf_file(): Unit = {
     val uri = new URI("file:///data/goes/2018_230_17/OR_ABI-L1b-RadF-M3C16_G16_s20182301700501_e20182301711279_c20182301711333.nc")
-    val reader = GoesImageReader
-    val ds = reader.read(uri)
-      .stride(stride)
+    val reader = GoesImageReader()
+    val ds = reader
+      .read(uri)
+      .stride(2,2)
     println(ds.unsafeForce().data.sampleSeq.length)
     //TextWriter(System.out).write(ds)
   }
 
-  @Test
-  def goes_image_files() = {
+  //@Test
+  def goes_image_files(): Unit = {
     val uri = new URI("file:///data/goes/2018_230_17")
-    val ds = GoesGranuleListReader.read(uri)
-
+    val ds  = GoesGranuleListReader.read(uri) // wavelength -> uri
     TextWriter(System.out).write(ds)
   }
 
-  val geoCSX: ComputationalDataset = {
-    val md = Metadata("goes_geo_csx")
-    val model = Function(
-      Tuple(
-        Scalar(Metadata("x") + ("type" -> "double")),
-        Scalar(Metadata("y") + ("type" -> "double"))
-      ),
-      Tuple(
-        Scalar(Metadata("lon") + ("type" -> "double")),
-        Scalar(Metadata("lat") + ("type" -> "double"))
-      )
-    )
-
-    val csx: ((Double, Double)) => (Double, Double) =
-      GOESUtils.xyToGeo
-
-    val f: Data => Either[LatisException, Data] = {
-      (data: Data) => data match {
-        case TupleData(Number(x), Number(y)) =>
-          csx((x, y)) match {
-            case (lon, lat) =>
-              //if (lon.isNaN || lat.isNaN) {
-              //  Left(LatisException("Invalid coordinate"))
-              //} else {
-                val dd = DomainData(lon, lat)
-                Right(TupleData(dd))
-              //}
-          }
-        case _ => Left(LatisException(s"Function expected x-y pair but got $data"))
-      }
-    }
-
-    ComputationalDataset(md, model, f)
-  }
-
-  @Test
+  //@Test
   def rgb_extration(): Unit = {
     val ds = List(1, 2, 3)
     val rs = List(List(1, 2, 3))
@@ -125,7 +56,7 @@ class TestGoesAbiReader extends JUnitSuite {
     }
   }
 
-  @Test
+  //@Test
   def geo_grid() = {
     import latis.dsl._
     val g = geoGrid((-114, -43), (-25, 34), 16)
@@ -133,41 +64,33 @@ class TestGoesAbiReader extends JUnitSuite {
   }
 
   @Test
-  def goes_cube(): Unit = {
+  def geo_rgb_image(): Unit = {
     import latis.dsl._
-    val uri = new URI("file:///data/goes/2018_230_17")
-    GoesGranuleListReader.read(uri) //wavelength -> uri
-      .stride(LatisConfig.getOrElse("hylatis.goes.stride", 1))
-//TODO: getting diff aspect ratio in spark!
-      //.toSpark() //.restructureWith(RddFunction)  //use Spark
-      //.withOperation(ReaderOperation(GoesImageReader)) //wavelength -> (y, x) -> radiance
-        //spark serialization error in ReaderOperation: GoesImageReader
-      .readGoesImages() //wavelength -> (y, x) -> radiance
-      .uncurry() //(wavelength, y, x) -> radiance
-      .groupByVariable("x", "y", "wavelength") //(x, y, wavelength) -> radiance
-      // canonical cube
-      .cache2()
+    import latis.util.GOESUtils._
 
-    val ds = Dataset.fromName("goes")
-      .curry(2) //(x, y) -> wavelength -> radiance
-      .compose(rgbExtractor(1370.0, 6900.0, 10300.0)) //match stride of 4
+    goesDataset
+      .curry(2)                                      //(x, y) -> wavelength -> radiance
+      .compose(rgbExtractor(1370.0, 2200.0, 3900.0)) //first 3
+      //.compose(rgbExtractor(1370.0, 6900.0, 10300.0)) //match stride of 4
       .substitute(geoCSX) // (lon, lat) -> wavelength -> radiance
-        //yikes, NaN domain values for off disk,
-        //TODO: GBB.compose(sub), avoid non-cartesian grid (can't plot)
-      //.select("lon >= -114")
-      //.select("lon < -25")
-      //.select("lat >= -43")
-      //.select("lat < 34")
-      //.fromSpark() //since GBB leaves gaps in spark
       //-114.1, -25.5 to -43.5, 34.8
-      //.groupByBin(geoGrid((-114, -43), (-25, 34), 100000), HeadAggregation())
-      .groupByBin(geoGrid((-105, -25), (-45, 25), 10000), HeadAggregation())
+      .groupByBin(geoGrid((-110, -25), (-45, 35), 100000), HeadAggregation())
+    //TODO: hide Agg
+      .writeImage("/data/goes/goesRGB.png")
+    //TODO: image is upside down
+  }
 
-      .eval(TupleData(-105.0, -23.0))
+  //@Test
+  def geo_eval(): Unit = {
+    import latis.dsl._
+    import latis.util.GOESUtils._
 
+    goesDataset
+      .curry(2)           //(x, y) -> wavelength -> radiance
+      .substitute(geoCSX) // (lon, lat) -> wavelength -> radiance
+      .groupByBin(geoGrid((-105, -25), (-45, 25), 100), HeadAggregation())
+      .eval(TupleData(-69.0, 0.0))
       .writeText()
-      //.writeImage("/data/goes/goesRGB.png")
-      //println(ds.unsafeForce().data.sampleSeq.length)
   }
 
 //  //@Test
@@ -189,17 +112,3 @@ class TestGoesAbiReader extends JUnitSuite {
 //   *  10, -90 (2167, 1908) y1, x2
 //   */
 }
-
- 
-
-
-//object TestGoes {
-//  
-//  private val s3mock: S3Mock = S3Mock(port = 8001, dir = "/data/s3")
-//  
-//  @BeforeClass
-//  def startS3Mock: Unit = s3mock.start
-//  
-//  @AfterClass
-//  def stopS3Mock: Unit = s3mock.stop
-//}

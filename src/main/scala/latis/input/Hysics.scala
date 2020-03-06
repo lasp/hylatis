@@ -2,13 +2,10 @@ package latis.input
 
 import java.net.URI
 
-import latis.data.RddFunction
 import latis.dataset.Dataset
-import latis.ops.HysicsImageReaderOperation
 import latis.ops.Stride
 import latis.ops.Uncurry
 import latis.util.LatisConfig
-import latis.util.LatisException
 
 class Hysics extends StaticDatasetResolver {
   //TODO: change to HysicsReader with read(uri)
@@ -30,8 +27,8 @@ class Hysics extends StaticDatasetResolver {
       .read(baseUri) //ix -> uri
       .withOperation(Stride(stride))
       //.restructureWith(RddFunction)
-      .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
-      .withOperation(Uncurry()) // (ix, iy, iw) -> radiance
+      .withReader(HysicsImageReader) // ix -> (iy, iw) -> radiance
+      .withOperation(Uncurry())      // (ix, iy, iw) -> radiance
 
   private def getWavelengthDataset(): Dataset = ???
 }

@@ -6,6 +6,16 @@ import org.geotools.referencing.CRS
 import org.geotools.referencing.GeodeticCalculator
 import os./
 
+import latis.data.Data
+import latis.data.Index
+import latis.data.Number
+import latis.data.TupleData
+import latis.dataset.ComputationalDataset
+import latis.metadata.Metadata
+import latis.model.Function
+import latis.model.Scalar
+import latis.model.Tuple
+
 //So far, just des_veg_cloud geo ref stuff
 object HysicsUtils {
   /*
@@ -135,4 +145,66 @@ object HysicsUtils {
   //TODO: geoToXY = (lonLat: (Double, Double)) => {
   
   val indexToGeo = (indexToXY andThen hysicsToGeo)
+
+
+  /**
+   * Defines the coordinate system transform from the index coordinate system
+   * to the spatial x-y coordinate system.
+   */
+  val xyCSX: ComputationalDataset = {
+    val md = Metadata("hysics_xy_csx")
+    val model = Function(
+      Tuple(
+        Scalar(Metadata("ix") + ("type" -> "int")),
+        Scalar(Metadata("iy") + ("type" -> "int"))
+      ),
+      Tuple(
+        Scalar(Metadata("x") + ("type" -> "double")),
+        Scalar(Metadata("y") + ("type" -> "double"))
+      )
+    )
+
+    val f: Data => Either[LatisException, Data] = {
+      (data: Data) => data match {
+        case TupleData(Index(ix), Index(iy)) =>
+          val td = TupleData(
+            HysicsUtils.x(ix),
+            HysicsUtils.y(iy)
+          )
+          Right(td)
+      }
+    }
+
+    ComputationalDataset(md, model, f)
+  }
+
+  /**
+   * Defines the coordinate system transform from x-y to
+   * lon-lat geo coordinates.
+   */
+  val geoCSX: ComputationalDataset = {
+    val md = Metadata("hysics_geo_csx")
+    val model = Function(
+      Tuple(
+        Scalar(Metadata("x") + ("type" -> "double")),
+        Scalar(Metadata("y") + ("type" -> "double"))
+      ),
+      Tuple(
+        Scalar(Metadata("lon") + ("type" -> "double")),
+        Scalar(Metadata("lat") + ("type" -> "double"))
+      )
+    )
+
+    val f: Data => Either[LatisException, Data] = {
+      (data: Data) => data match {
+        case TupleData(Number(x), Number(y)) =>
+          HysicsUtils.hysicsToGeo((x, y)) match {
+            case (lon, lat) =>
+              Right(TupleData(lon, lat))
+          }
+      }
+    }
+
+    ComputationalDataset(md, model, f)
+  }
 }

@@ -6,7 +6,7 @@ import latis.model._
 /**
  * Defines a reader for a Hyscis data granule.
  */
-object HysicsImageReader extends AdaptedDatasetReader {
+object HysicsImageReader extends AdaptedDatasetReader with Serializable {
 
   def metadata: Metadata = Metadata("tmp_image")
 

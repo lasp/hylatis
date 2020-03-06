@@ -1,76 +1,41 @@
 package latis.input
 
-import java.net.URL
-import scala.io.Source
-import latis.ops._
-import latis.data._
-import latis.metadata._
-import scala.collection.mutable.ArrayBuffer
-import latis.util.HysicsUtils
-import latis.util.AWSUtils
 import java.net.URI
+
 import latis.dataset.Dataset
-import latis.util.CacheManager
-import org.apache.spark.storage.StorageLevel
+import latis.dsl._
+import latis.model._
+import latis.ops._
+import latis.util.HysicsUtils._
+import latis.util.LatisConfig
 
 /**
  * Read the Hysics granule list dataset, put it into Spark,
  * and apply operation to read and structure the data.
- * Cache the RDD and the LaTiS Dataset so we don't have to reload 
+ * Cache the RDD and the LaTiS Dataset so we don't have to reload
  * it into spark each time.
  */
-//class HysicsReader extends DatasetReader {
-//
-//  // Used by the DatasetReader ServiceLoader
-//  override def read(uri: URI): Option[Dataset] = {
-//    // Don't bother trying if this is not a Hysics dataset
-//    if (!uri.toString.contains("hysics")) None
-//    else Option(HysicsReader.read(uri))
-//  }
-//}
+object HysicsReader extends DatasetReader {
 
-object HysicsReader {
-  
-  //def read(uri: URI): Dataset = {
-  //  // Load the granule list dataset into spark
-  //  val reader = HysicsGranuleListReader.readDataset(uri) // hysics_image_files
-  //  // iy -> uri
-  //  val ds = reader.getDataset
-  //    //TODO: use config option to specify whether to use spark
-  //    //.unsafeForce //causes latis to use the MemoizedFunction since StreamFunction is not complete
-  //    .restructure(RddFunction) //memoize data in the form of a Spark RDD
-  //
-  //  // Define operations to be applied to this dataset to complete the cube
-  //  val ops: Seq[UnaryOperation] = Seq(
-  //    HysicsImageReaderOperation(), // Load data from each granule; iy -> (ix, iw) -> radiance
-  //    Uncurry(),  // Uncurry the dataset: (iy, ix, iw) -> radiance
-  //    GroupBy("iw")  // iw -> (iy, ix) -> radiance
-  //  )
-  //
-  //  // Apply Operations
-  //  val ds2 = ops.foldLeft(ds)((ds, op) => op(ds))
-  //
-  //  // Get the dataset of Hysics wavelengths: iw -> wavelength
-  //  val wds = HysicsWavelengths()
-  //  //TODO: cache to spark via broadcast?
-  //
-  //  // Substitute wavelength values: wavelength -> (iy, ix) -> radiance
-  //  //TODO: handle binary operations better, AST?
-  //  val ds3 = Substitution()(ds2, wds)
-  //
-  //  // Persist the RDD now that all operations have been applied
-  //  val data = ds3.data match {
-  //    case rf: RddFunction =>
-  //      //TODO: config storage level
-  //      RddFunction(rf.rdd.persist(StorageLevel.MEMORY_AND_DISK_SER))
-  //    case sf => sf //no-op if not an RddFunction
-  //  }
-  //
-  //  // Create and rename the new Dataset and add it to the LaTiS CacheManager.
-  //  val ds4 = ds3.copy(data = data).rename("hysics")
-  //  ds4.cache()
-  //  ds4
-  //}
-  
+  // Redundant but needed ultimately for ReaderOperation (which we don't use with this)
+  // (x, y, wavelength) -> radiance
+  val model: DataType = ModelParser.parse("(x, y, wavelength) -> radiance").toTry.get
+
+  // Used by the DatasetReader ServiceLoader
+  override def read(uri: URI): Dataset = {
+    val wlds = {
+      val wluri = new URI(uri.toString + "/wavelength.txt")
+      HysicsWavelengthReader.read(wluri)
+    }
+    HysicsGranuleListReader
+      .read(uri)                                                 //ix -> uri
+      .stride(LatisConfig.getOrElse("hylatis.hysics.stride", 1)) //4200 slit images
+      //.toSpark() //TODO: use config?
+      .withReader(HysicsImageReader) // ix -> (iy, iw) -> radiance
+      .uncurry()                                   // (ix, iy, iw) -> radiance
+      .substitute(wlds)
+      .substitute(xyCSX)
+      // This is the canonical form of the cube, cache here
+      .cache2() //TODO: resolve conflict with Dataset.cache
+  }
 }
-

@@ -1,28 +1,54 @@
 package latis
 
+import java.net.URI
+
+import io.findify.s3mock._
 import org.junit._
 import org.scalatest.junit.JUnitSuite
 
 import latis.data._
-import latis.dsl._
 import latis.dataset._
 import latis.input._
 import latis.metadata._
 import latis.model._
 import latis.model.Tuple
-import latis.output._
-import latis.util.HysicsUtils
-import latis.util.LatisConfig
-import latis.util.LatisException
-//import latis.ops.HysicsImageOp
-import java.net.URI
-
-import io.findify.s3mock._
-
 import latis.ops._
-import latis.ops.Uncurry
+import latis.output._
+import latis.util.HysicsUtils._
 
 class TestHysics extends JUnitSuite {
+
+  /**
+   * Loads the Hysics data, shapes it into the nominal spectral dataset
+   * and caches it.
+   *   (x, y, wavelength) -> radiance
+   */
+  lazy val hysicsDataset: Dataset = {
+    import latis.dsl._
+    //TODO: update to use s3
+    val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud")
+    val wluri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/wavelength.txt")
+    val wlds = HysicsWavelengthReader.read(wluri)
+
+    // Set of y indices spanning the slit dimension
+    val iys: Seq[String] = Range(0, 480, 48).map(_.toString)
+
+    HysicsGranuleListReader
+      .read(uri) //ix -> uri
+      .stride(420) //4200 total slit images
+      .toSpark()
+      .withReader(HysicsImageReader) // ix -> (iy, iw) -> radiance
+      .uncurry() // (ix, iy, iw) -> radiance
+      .contains("iy", iys: _*) //TODO: stride
+      //.select("iy < 2") //note: not supported in nested function yet
+      //.select("iw < 3")
+      .contains("iw", "540", "572", "594") // 630.87, 531.86, 463.79
+      //RDD partitioner preserved after filter //TODO: range selections generally impact our partitioning
+      .substitute(wlds)
+      .substitute(xyCSX)
+      // This is the canonical form of the cube, cache here
+      .cache2() //TODO: resolve conflict with Dataset.cache
+  }
 
   //@Test
   def read_granules(): Unit = {
@@ -49,59 +75,6 @@ class TestHysics extends JUnitSuite {
     TextWriter().write(ds)
   }
 
-  val xyCSX: ComputationalDataset = {
-    val md = Metadata("hysics_xy_csx")
-    val model = Function(
-      Tuple(
-        Scalar(Metadata("ix") + ("type" -> "int")),
-        Scalar(Metadata("iy") + ("type" -> "int"))
-      ),
-      Tuple(
-        Scalar(Metadata("x") + ("type" -> "double")),
-        Scalar(Metadata("y") + ("type" -> "double"))
-      )
-    )
-
-    val f: Data => Either[LatisException, Data] = {
-      (data: Data) => data match {
-        case TupleData(Index(ix), Index(iy)) =>
-          val td = TupleData(
-            HysicsUtils.x(ix),
-            HysicsUtils.y(iy)
-          )
-          Right(td)
-      }
-    }
-
-    ComputationalDataset(md, model, f)
-  }
-
-  val geoCSX: ComputationalDataset = {
-    val md = Metadata("hysics_geo_csx")
-    val model = Function(
-      Tuple(
-        Scalar(Metadata("x") + ("type" -> "double")),
-        Scalar(Metadata("y") + ("type" -> "double"))
-      ),
-      Tuple(
-        Scalar(Metadata("lon") + ("type" -> "double")),
-        Scalar(Metadata("lat") + ("type" -> "double"))
-      )
-    )
-
-    val f: Data => Either[LatisException, Data] = {
-      (data: Data) => data match {
-        case TupleData(Number(x), Number(y)) =>
-          HysicsUtils.hysicsToGeo((x, y)) match {
-            case (lon, lat) =>
-              Right(TupleData(lon, lat))
-          }
-      }
-    }
-
-    ComputationalDataset(md, model, f)
-  }
-
   def geoSet: DomainSet = {
     val model = Tuple(
       Scalar(Metadata("lon") + ("type" -> "double")),
@@ -118,41 +91,27 @@ class TestHysics extends JUnitSuite {
     geoSet.elements.foreach(println)
   }
 
-  @Test
-  def read_cube(): Unit = {
+  //@Test
+  def geo_rgb_image(): Unit = {
     import latis.dsl._
-    val uri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud")
-    val wluri = new URI("file:///data/s3/hylatis-hysics-001/des_veg_cloud/wavelength.txt")
-    val wlds = HysicsWavelengthReader.read(wluri)
-
-    // Set of y indices spanning the slit dimension
-    val iys: Seq[String] = Range(0, 480, 5).map(_.toString)
-
-    val ds = HysicsGranuleListReader
-      .read(uri) //ix -> uri
-      //.stride(LatisConfig.getOrElse("hylatis.hysics.stride", 1)) //4200 slit images
-      .stride(100) //4200 total slit images
-      //.select("ix < 40")
-    //  .toSpark()
-      .withOperation(HysicsImageReaderOperation()) // ix -> (iy, iw) -> radiance
-      .uncurry() // (ix, iy, iw) -> radiance
-      .contains("iy", iys: _*) //TODO: stride
-      //.select("iy < 2") //note: not supported in nested function yet
-      //.select("iw < 3")
-      .contains("iw", "540", "572", "594") // 630.87, 531.86, 463.79
-      //RDD partitioner preserved after filter //TODO: range selections generally impact our partitioning
-      .substitute(wlds)
-      .substitute(xyCSX)
-      // This is the canonical form of the cube, cache here
-      .cache2() //TODO: resolve conflict with Dataset.cache
-
+    hysicsDataset
       .curry(2) // (x, y) -> (wavelength) -> radiance
       .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
       //.compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
       .compose(rgbExtractor(630.87, 531.86, 463.79)) //iw = 540, 572, 594
       .groupByBin(geoGrid((-108.27, 34.68), (-108.195, 34.76), 10000), HeadAggregation()) //based on HYLATIS-35
       .writeImage("/data/hysics/hysicsRGB.png") //TODO: image flipped in y-dim, grid order is fine
-      //ds.writeText()
+      //.writeText()
+  }
+
+  @Test
+  def geo_eval(): Unit = {
+    import latis.dsl._
+    hysicsDataset
+      .curry(2) // (x, y) -> (wavelength) -> radiance
+      .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
+      .eval(TupleData(-108.20030094623623, 34.732390980689615))
+      .writeText()
   }
 
   //======= legacy =============================================================

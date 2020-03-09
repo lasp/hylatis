@@ -10,6 +10,7 @@ import latis.ops._
 import latis.ops.MapRangeOperation
 import latis.util.HylatisPartitioner
 import latis.util.LatisConfig
+import latis.util.LatisException
 import latis.util.SparkUtils._
 
 /**
@@ -24,67 +25,43 @@ case class RddFunction(rdd: RDD[Sample]) extends MemoizedFunction {
   //TODO: just to make SF happy for now, make this work with Sample ordering
   def ordering: Option[PartialOrdering[DomainData]] = None
 
-  //override def apply(value: DomainData): Either[LatisException, RangeData] = {
-  //  //TODO: support interpolation
-  //  rdd.lookup(value).headOption match {
-  //    case Some(r) => Right(r)
-  //    case None =>
-  //      val msg = s"No sample found matching $value"
-  //      Left(LatisException(msg))
-  //  }
-  //}
-  /*
-   * lookup:
-   * "This operation is done efficiently if the RDD has a known partitioner by only searching the partition that the key maps to."
-   * one job per lookup
-   * only from driver?
-   * "if partitioner is None, spark will filter all"
-   * we get a MapPartitionsRDD with a partitioner of None
-   * as a PairRDD it does have our DomainOrdering but None partitioner
-   */
-  
+  override def apply(value: DomainData): Either[LatisException, RangeData] =
+    //TODO: support interpolation
+    rdd.lookup(value).headOption match {
+      case Some(r) => Right(r)
+      case None =>
+        val msg = s"No sample found matching $value"
+        Left(LatisException(msg))
+    }
+
   override def sampleSeq: Seq[Sample] =
     rdd.toLocalIterator.toSeq
-  
+
   override def samples: Stream[IO, Sample] =
     Stream.fromIterator[IO, Sample](rdd.toLocalIterator)
 
-
   override def applyOperation(op: UnaryOperation, model: DataType): SampledFunction = op match {
     //TODO: repartition as needed
-    case filter: Filter => RddFunction(rdd.filter(filter.predicate(model)))
+    case filter: Filter  => RddFunction(rdd.filter(filter.predicate(model)))
     case MapOperation(f) => RddFunction(rdd.map(f(model)))
-    case flatMapOp: FlatMapOperation => RddFunction(rdd.flatMap(flatMapOp.flatMapFunction(model)(_).sampleSeq))
-    case mapRange: MapRangeOperation => RddFunction(
-      rdd.mapValues { rd =>
-        RangeData(mapRange.mapFunction(model)(Data.fromSeq(rd)))
-      }
-    )
-    case groupOp: GroupOperation => RddFunction(
-      gb(groupOp, model)
-      //rdd.groupBy(groupOp.groupByFunction(model)(_).get) //TODO: deal with None
-      //  .mapValues(groupOp.aggregation.aggregateFunction(model)(_))
-    )
+    case flatMapOp: FlatMapOperation =>
+      RddFunction(rdd.flatMap(flatMapOp.flatMapFunction(model)(_).sampleSeq))
+    case mapRange: MapRangeOperation =>
+      RddFunction(
+        rdd.mapValues { rd =>
+          RangeData(mapRange.mapFunction(model)(Data.fromSeq(rd)))
+        }
+      )
+    case groupOp: GroupOperation =>
+      RddFunction(
+        gb(groupOp, model)
+        //rdd.groupBy(groupOp.groupByFunction(model)(_).get) //TODO: deal with None
+        //  .mapValues(groupOp.aggregation.aggregateFunction(model)(_))
+      )
     case _ => super.applyOperation(op, model)
   }
-/*
-TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
-  should it do another map to add empty (filled?) bins?
-    would like to avoid shuffle
-  could be done as a join?
-    but how to generalized?
-    could it avoid shuffle?
- */
+
   def gb(groupOp: GroupOperation, model: DataType): RDD[Sample] = {
-    ////define fill RDD if GBB
-    //val fillRDD: Option[RDD[_]] = {
-    //  val samples = groupOp match {
-    //    case GroupByBin(dset, _) =>
-    //      dset.elements.map((_, RangeData(NullData)))
-    //  }
-    //  Some(sparkContext.parallelize(samples))
-    //  //TODO: partition based on 1st dim
-    //}
 
     // Defines a key for homeless samples using NullData
     val badKey: DomainData = {
@@ -94,23 +71,41 @@ TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
 
     val f: Sample => DomainData = groupOp.groupByFunction(model)(_).getOrElse(badKey)
 
-    //TODO: use our partitioner
-    val nPartitions = LatisConfig.getOrElse("spark.default.parallelism", 4)
-    val p = new HashPartitioner(nPartitions) //Partitioner.defaultPartitioner(rdd)
+    implicit val ord: Ordering[DomainData] = groupOp.ordering(model)
 
-    implicit val ord: Ordering[DomainData] = groupOp.ordering(model) //needed to be able to call SortByKey
-    rdd.groupBy(f, p)
-      .mapValues{ rd =>
+    val p = groupOp match {
+      case GroupByBin(dset, _) =>
+        dset match {
+          //TODO: project 1st set of product set
+          case lset: LinearSet2D =>
+            val min   = lset.min.head match { case Number(d) => d }
+            val max   = lset.max.head match { case Number(d) => d }
+            val count = LatisConfig.getOrElse("spark.default.parallelism", lset.shape(0))
+            HylatisPartitioner(count, min, max)
+        }
+      case _ =>
+        //Partitioner.defaultPartitioner(rdd)
+        //Note, defaultPartitioner can be a RangePartitioner which will use keys of the current RDD
+        // This won't work for grouping if domain changes (e.g. 3D to 2D).
+        // Performance was actually better with HashPartitioner.
+        val nPartitions = LatisConfig.getOrElse("spark.default.parallelism", 4)
+        new HashPartitioner(nPartitions)
+
+    }
+
+    rdd
+      .groupBy(f, p)
+      .mapValues { rd =>
         RangeData(groupOp.aggregation.aggregateFunction(model)(rd))
       }
       //.partitionBy(Partitioner.defaultPartitioner(z))
-      .sortByKey() //apparently won't sort by itself, but impl ord does enable implicit OrderedRDDFunctions
+      .sortByKey() //apparently won't sort by itself, but impl ord does enable implicit OrderedRDDFunctions, not much impact
       // Remove homeless samples
       //TODO: seems like there should be a more efficient way
       // take all but last, but only if last is null
       .filter {
         case Sample(d, _) if ord.equiv(d, badKey) => false
-        case _ => true
+        case _                                    => true
       }
   }
 
@@ -124,7 +119,7 @@ TODO: GroupByBin needs to have a bin for each domainSet element, even if empty
 //    }
 //    RddFunction(rdd)
 //  }
-  
+
   //override def union(that: SampledFunction) = that match {
   //  case rf: RddFunction =>
   //    // Note, spark union does not remove duplicates
@@ -144,22 +139,24 @@ object RddFunction extends FunctionFactory {
     val (dmin, dmax) = {
       def go(ss: List[Sample], dmin: Double, dmax: Double): (Double, Double) = ss match {
         case Nil => (dmin, dmax)
-        case s :: ss => s match {
-          case Sample(DomainData(Number(d), _*), _) =>
-            go(ss, min(dmin, d), max(dmax, d))
-        }
+        case s :: ss =>
+          s match {
+            case Sample(DomainData(Number(d), _*), _) =>
+              go(ss, min(dmin, d), max(dmax, d))
+          }
       }
       go(samples.toList, Double.MaxValue, Double.MinValue)
     }
-    val part = HylatisPartitioner(samples.length, dmin, dmax)
-    val rdd = sparkContext.parallelize(samples)
-                          .partitionBy(part)
+    val count = LatisConfig.getOrElse("spark.default.parallelism", samples.length)
+    val part  = HylatisPartitioner(count, dmin, dmax)
+    val rdd = sparkContext
+      .parallelize(samples)
+      .partitionBy(part)
     RddFunction(rdd)
   }
-    
 
   override def restructure(data: SampledFunction): MemoizedFunction = data match {
     case rf: RddFunction => rf //no need to restructure
-    case _ => fromSamples(data.unsafeForce.sampleSeq)
+    case _               => fromSamples(data.unsafeForce.sampleSeq)
   }
 }

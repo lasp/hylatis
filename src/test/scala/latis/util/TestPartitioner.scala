@@ -51,4 +51,11 @@ class TestPartitioner extends JUnitSuite {
     val i = domainSetPartitioner.getPartition(DomainData(0.0))
     assertEquals(4, i)
   }
+
+  @Test
+  def match_tuple() = {
+    val p = HylatisPartitioner(10, 0.0, 10)
+    val d = DomainData(3.3, -2)
+    assertEquals(3, p.getPartition(d))
+  }
 }

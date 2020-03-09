@@ -1,5 +1,6 @@
 package latis
 
+import java.io.FileOutputStream
 import java.net.URI
 
 import io.findify.s3mock._
@@ -8,6 +9,7 @@ import org.scalatest.junit.JUnitSuite
 
 import latis.data._
 import latis.dataset._
+import latis.dsl.geoGrid
 import latis.input._
 import latis.metadata._
 import latis.model._
@@ -91,17 +93,31 @@ class TestHysics extends JUnitSuite {
     geoSet.elements.foreach(println)
   }
 
-  //@Test
+  @Test
+  def geo_grid() = {
+    //val dset = geoGrid((-108.27, 34.68), (-108.195, 34.76), 16)
+    //println(dset.min) // -108.27, 34.68
+    //println(dset.max) // -108.21375, 34.74
+
+    val dset = geoGrid((0, 2), (10, 4), 4)
+    dset.elements.foreach(println)
+  }
+
+  @Test
   def geo_rgb_image(): Unit = {
     import latis.dsl._
+    val ds = hysicsDataset
+    //val t0 = System.nanoTime
     hysicsDataset
       .curry(2) // (x, y) -> (wavelength) -> radiance
       .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
       //.compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
       .compose(rgbExtractor(630.87, 531.86, 463.79)) //iw = 540, 572, 594
-      .groupByBin(geoGrid((-108.27, 34.68), (-108.195, 34.76), 10000), HeadAggregation()) //based on HYLATIS-35
+      .groupByBin(geoGrid((-108.27, 34.68), (-108.195, 34.76), 100), HeadAggregation()) //based on HYLATIS-35
       .writeImage("/data/hysics/hysicsRGB.png") //TODO: image flipped in y-dim, grid order is fine
-      //.writeText()
+      //.writeText() //new FileOutputStream("/data/tmp.txt"))
+    //println((System.nanoTime - t0) / 1000000000)
+    //240x210 to 100000: spark: 4s, w/o: 3s but loading was much longer: 3m vs 46s
   }
 
   @Test
@@ -110,7 +126,8 @@ class TestHysics extends JUnitSuite {
     hysicsDataset
       .curry(2) // (x, y) -> (wavelength) -> radiance
       .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
-      .eval(TupleData(-108.20030094623623, 34.732390980689615))
+      .groupByBin(geoGrid((-108.27, 34.68), (-108.195, 34.76), 4), HeadAggregation())
+      .eval(TupleData(-108.27, 34.68)) //Note, range values may depend on thinning
       .writeText()
   }
 

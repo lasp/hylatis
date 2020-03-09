@@ -1,31 +1,28 @@
 package latis
 
-import latis.data._
-import latis.input.ModisReader
-import latis.model._
-import latis.ops.RGBImagePivot
-import latis.output.ImageWriter
+import java.net.URI
 
-import org.junit._
-import scala.collection.mutable.SortedMap
-import latis.util.CoordinateSystemTransform
-import latis.metadata.Metadata
-import latis.output.TextWriter
-import scala.collection.mutable.Buffer
-import latis.util.StreamUtils
-import cats.effect.IO
-import latis.data.SetFunction
-import java.io.FileOutputStream
-import latis.input.ModisGeolocationReader
-import latis.ops.Substitution
-import latis.ops._
-import scala.util.Random
+import org.scalatest.junit.JUnitSuite
+
+import latis.dataset._
 import latis.input.ModisGranuleListReader
-import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.io.Output
-import java.io.ObjectOutputStream
 
-class TestModis {
+class TestModis extends JUnitSuite {
+
+  lazy val modisDataset: Dataset = {
+    val uri = new URI("s3://hylatis-modis/MYD021KM.A2014230.1940.061.2018054170416.hdf")
+    ModisGranuleListReader
+      .read(uri)           //band -> uri
+      .select("band <= 3") //first 3 bands
+    //.toSpark() //use Spark
+    //.withReader(ModisImageReader())    //wavelength -> (y, x) -> radiance
+    //.uncurry()                               //(wavelength, y, x) -> radiance
+    //.groupByVariable("x", "y", "wavelength") //(x, y, wavelength) -> radiance
+    //.cache2()
+  }
+
+}
+
 //object TestModis extends App {
 //
 //  //@Test
@@ -570,4 +567,3 @@ class TestModis {
 //
 //    TextWriter().write(ds)
 //  }
-}

@@ -1,21 +1,28 @@
 package latis.input
 
+import java.net.URI
+
 import latis.data._
+import latis.dataset._
 import latis.metadata._
 import latis.model._
-import latis.util.LatisConfig
-import latis.dataset._
 
-case class ModisGranuleListReader() { //extends DatasetReader {
+object ModisGranuleListReader extends DatasetReader {
   
-  val model = Function(
+  val model: Function = Function(
     Scalar(Metadata("id" -> "band", "type" -> "double")),
     Scalar(Metadata("id" -> "uri", "type" -> "text"))
   )
+
+  def read(uri: URI): Dataset = {
+    val metadata =  Metadata("modis")
+    val data = getData(uri)
+    new MemoizedDataset(metadata, model, data)
+  }
   
-  val data = {
-    val file = LatisConfig.get("hylatis.modis.uri").get
-    val allSamples = Seq(
+  def getData(uri: URI): MemoizedFunction = {
+    val file = uri.toString
+    val samples = Seq(
       Sample(DomainData(1.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB,0")),
       Sample(DomainData(2.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB,1")),
       Sample(DomainData(3.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_500_Aggr1km_RefSB,0")),
@@ -56,13 +63,12 @@ case class ModisGranuleListReader() { //extends DatasetReader {
       Sample(DomainData(36.0), RangeData(s"$file,MODIS_SWATH_Type_L1B/Data_Fields/EV_1KM_Emissive,15"))
     )
 
-    val samples = LatisConfig.getInt("hylatis.modis.nbands") match {
-      case Some(n) => allSamples.take(n)
-      case None    => allSamples
-    }
+    //val samples = LatisConfig.getInt("hylatis.modis.nbands") match {
+    //  case Some(n) => allSamples.take(n)
+    //  case None    => allSamples
+    //}
     
     SampledFunction(samples)
   }
-  
-  def getDataset = new MemoizedDataset(Metadata("modis_granules"), model, data)
+
 }

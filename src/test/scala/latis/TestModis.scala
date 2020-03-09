@@ -2,10 +2,12 @@ package latis
 
 import java.net.URI
 
+import org.junit.Test
 import org.scalatest.junit.JUnitSuite
 
 import latis.dataset._
 import latis.input.ModisGranuleListReader
+import latis.input.ModisImageReader
 
 class TestModis extends JUnitSuite {
 
@@ -15,12 +17,28 @@ class TestModis extends JUnitSuite {
       .read(uri)           //band -> uri
       .select("band <= 3") //first 3 bands
     //.toSpark() //use Spark
-    //.withReader(ModisImageReader())    //wavelength -> (y, x) -> radiance
-    //.uncurry()                               //(wavelength, y, x) -> radiance
-    //.groupByVariable("x", "y", "wavelength") //(x, y, wavelength) -> radiance
+      .withReader(ModisImageReader)
+      //.stride(1, 1000, 1000) //TODO: will this be applied via the NetcdfAdapter? need to make ModisImageReader with Section like goes?
+    //.uncurry()
+    //.groupByVariable("x", "y", "wavelength")
     //.cache2()
   }
 
+  @Test
+  def read_cube() = {
+    import latis.dsl._
+    modisDataset
+      .writeText()
+  }
+
+  //@Test
+  def read_single_image() = {
+    import latis.dsl._
+    val uri = new URI("file:///data/s3/hylatis-modis/MYD021KM.A2014230.1940.061.2018054170416.hdf!/MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB#(0,0:2030,0:1354)")
+    val ds = ModisImageReader.read(uri)
+      .stride(1, 1000, 1000) //won't work with ":" in stride
+      ds.writeText()
+  }
 }
 
 //object TestModis extends App {

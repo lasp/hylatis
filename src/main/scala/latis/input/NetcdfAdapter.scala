@@ -6,6 +6,7 @@ import java.nio.file._
 import cats.effect.IO
 import fs2.Stream
 import ucar.ma2.{Array => NcArray}
+import ucar.ma2.{Range => URange}
 import ucar.ma2.Section
 import ucar.nc2.{Variable => NcVariable}
 import ucar.nc2.dataset.NetcdfDataset
@@ -59,7 +60,7 @@ case class NetcdfAdapter(
                 (0 until ncArr.getSize.toInt).map { i =>
                   Data.fromValue(ncArr.getObject(i)) match {
                     case Right(d: Datum) => DomainData(d)
-                    case Left(le)        => ??? //TODO: error or drop?
+                    case Left(le)        => throw le //TODO: error or drop?
                   }
                 }
               SeqSet1D(scalar, ds)
@@ -80,7 +81,7 @@ case class NetcdfAdapter(
             RangeData(arrs.map { a =>
               Data.fromValue(a.getObject(i)) match {
                 case Right(d) => d
-                case Left(le) => ??? //TODO: error or fill?
+                case Left(le) => throw le //TODO: error or fill?
               }
             })
           }
@@ -149,20 +150,19 @@ object NetcdfAdapter {
     case Stride(stride) => applyStride(section, stride.toArray)
   }
 
+  //Note, must include stride even for 1-length dimensions
   def applyStride(section: Section, stride: Array[Int]): Section = {
     import collection.JavaConverters._
     if (section.getRank != stride.length) {
       val msg = s"Invalid rank for stride: ${stride.mkString(",")}}"
       throw LatisException(msg)
     }
-    val origin = section.getOrigin
-    // Get last of each range
-    val lasts = section.getRanges.asScala.toArray.map(_.last)
-    // Compute the new stride The product of the original and requested stride
-    val newStride = stride.zip(section.getRanges.asScala.map(_.stride)).map {
-      case (s1, s2) => s1 * s2
+
+    val rs: Array[URange] = section.getRanges.asScala.zipWithIndex.toArray.map {
+      case (r, i) => new URange(r.first, r.last, r.stride * stride(i))
     }
-    new Section(origin, lasts, newStride)
+
+    new Section(rs: _*)
   }
 }
 

@@ -64,18 +64,34 @@ class TestGoesAbiReader extends JUnitSuite {
   }
 
   @Test
+  def dsl_rgb_image() = {
+    import latis.dsl._
+    goesDataset.makeRGBImage(1370.0, 2200.0, 3900.0)
+      .writeImage("/data/goes/goesRGB.png")
+  }
+
+  @Test
+  def dsl_geo_rgb_image() = {
+    import latis.dsl._
+    goesDataset
+      .geoSubset((-110, -25), (-45, 35), 100000)
+      .makeRGBImage(1370.0, 2200.0, 3900.0)
+      .writeImage("/data/goes/goesRGB.png")
+  }
+
+  @Test
   def geo_rgb_image(): Unit = {
     import latis.dsl._
     import latis.util.GOESUtils._
     val grid = geoGrid((-110, -25), (-45, 35), 100000)
 
     goesDataset
-      .curry(2)                                      //(x, y) -> wavelength -> radiance
+      .curry(2) //(x, y) -> wavelength -> radiance
       .compose(rgbExtractor(1370.0, 2200.0, 3900.0)) //first 3
       //.compose(rgbExtractor(1370.0, 6900.0, 10300.0)) //match stride of 4
       .substitute(geoCSX) // (lon, lat) -> wavelength -> radiance
       //-114.1, -25.5 to -43.5, 34.8
-      .groupByBin(grid, HeadAggregation()) //TODO: hide Agg
+      .resample(grid)
       .writeImage("/data/goes/goesRGB.png")
     //TODO: image is upside down
   }

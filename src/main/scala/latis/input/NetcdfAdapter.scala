@@ -55,15 +55,20 @@ case class NetcdfAdapter(
           val dsets: List[DomainSet] = domain.getScalars.zipWithIndex.map {
             case (scalar, index) =>
               val sec   = new Section(section.getRange(index))
-              val ncArr = nc.readVariable(scalar.id, sec)
-              val ds: IndexedSeq[DomainData] =
-                (0 until ncArr.getSize.toInt).map { i =>
-                  Data.fromValue(ncArr.getObject(i)) match {
-                    case Right(d: Datum) => DomainData(d)
-                    case Left(le)        => throw le //TODO: error or drop?
+              nc.readVariable(scalar.id, sec).map { ncArr =>
+                val ds: IndexedSeq[DomainData] =
+                  (0 until ncArr.getSize.toInt).map { i =>
+                    Data.fromValue(ncArr.getObject(i)) match {
+                      case Right(d: Datum) => DomainData(d)
+                      case Left(le) => throw le //TODO: error or drop?
+                    }
                   }
-                }
-              SeqSet1D(scalar, ds)
+                SeqSet1D(scalar, ds)
+              }.getOrElse {
+                // Variable not found, use index
+                val r = section.getRange(index)
+                IndexSet1D(r.first, r.stride, r.length)
+              }
           }
           if (dsets.length == 1) dsets.head
           else ProductSet(dsets)
@@ -74,7 +79,8 @@ case class NetcdfAdapter(
       val rangeData: IndexedSeq[RangeData] = model match {
         case Function(_, range) =>
           // Read the NcArray for each range variable
-          val arrs: List[NcArray] = range.getScalars.map { scalar =>
+          val arrs: List[NcArray] = range.getScalars.flatMap { scalar =>
+          //TODO: beware of silent failure if var not found
             nc.readVariable(scalar.id, section)
           }
           (0 until arrs.head.getSize.toInt).map { i =>
@@ -179,13 +185,15 @@ case class NetcdfWrapper(ncDataset: NetcdfDataset, model: DataType, config: Netc
   private lazy val variableMap: Map[String, NcVariable] = {
     //TODO: fail faster by not making this lazy?
     val ids = model.getScalars.map(_.id)
-    val pairs = ids.map { id =>
+    val pairs = ids.flatMap { id =>
       val vname = getNcVarName(id)
       ncDataset.findVariable(vname) match {
-        case v: NcVariable => (id, v)
-        case null =>
-          val msg = s"NetCDF variable not found: $vname"
-          throw LatisException(msg)
+        case v: NcVariable => Some((id, v))
+        case null => None
+          //Note, domain variables not found will be replaced by index
+          //TODO: what about range vars?
+          //val msg = s"NetCDF variable not found: $vname"
+          //throw LatisException(msg)
       }
     }
     pairs.toMap
@@ -198,8 +206,17 @@ case class NetcdfWrapper(ncDataset: NetcdfDataset, model: DataType, config: Netc
   def defaultSection: Section = config.section match {
     case Some(spec) => new Section(spec) //TODO: error handling
     case None       =>
-      // Complete Section, ":" for each dimension
-      val spec = List.fill(model.arity)(":").mkString(",")
+      // Complete Section
+      // Note, we can't use ":" since it becomes a null Range in the Section
+      // Use first range variable
+      //TODO: risky to assume first range variable is suitable
+      val id = model match {
+        //TODO: assumes only Functions
+        case Function(_, r) => r.getScalars.head.id
+      }
+      val spec = variableMap(id).getShape.map { n =>
+        s"0:${n-1}"
+      }.mkString(",")
       new Section(spec)
   }
 
@@ -217,8 +234,8 @@ case class NetcdfWrapper(ncDataset: NetcdfDataset, model: DataType, config: Netc
    * Reads the section of the given variable into a NcArray.
    * This is where the actual IO is done.
    */
-  def readVariable(id: String, section: Section): NcArray =
-    variableMap(id).read(section)
+  def readVariable(id: String, section: Section): Option[NcArray] =
+    variableMap.get(id).map(_.read(section))
 
   //def close(): Unit = ncDataset.close() //ncStream.compile.drain.unsafeRunSync()
 }

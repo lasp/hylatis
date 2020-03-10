@@ -38,7 +38,7 @@ class TestHysics extends JUnitSuite {
     HysicsGranuleListReader
       .read(uri) //ix -> uri
       .stride(420) //4200 total slit images
-      .toSpark()
+      //.toSpark()
       .withReader(HysicsImageReader) // ix -> (iy, iw) -> radiance
       .uncurry() // (ix, iy, iw) -> radiance
       .contains("iy", iys: _*) //TODO: stride
@@ -94,18 +94,36 @@ class TestHysics extends JUnitSuite {
   }
 
   @Test
+  def dsl_rgb_image() = {
+    import latis.dsl._
+    hysicsDataset.makeRGBImage(630.87, 531.86, 463.79)
+      .writeImage("/data/hysics/hysicsRGB.png")
+  }
+
+  @Test
+  def dsl_geo_rgb_image() = {
+    import latis.dsl._
+    hysicsDataset
+      .geoSubset((-108.27, 34.68), (-108.195, 34.76), 10000)
+      .makeRGBImage(630.87, 531.86, 463.79)
+      .writeImage("/data/hysics/hysicsRGB.png")
+  }
+
+  @Test
   def geo_grid() = {
     //val dset = geoGrid((-108.27, 34.68), (-108.195, 34.76), 16)
     //println(dset.min) // -108.27, 34.68
     //println(dset.max) // -108.21375, 34.74
 
-    val dset = geoGrid((0, 2), (10, 4), 4)
+    val dset = geoGrid((0, 2), (8, 4), 16)
+    println(dset)
     dset.elements.foreach(println)
   }
 
   @Test
   def geo_rgb_image(): Unit = {
     import latis.dsl._
+    val grid = geoGrid((-108.27, 34.68), (-108.195, 34.76), 10000) //based on HYLATIS-35
     val ds = hysicsDataset
     //val t0 = System.nanoTime
     hysicsDataset
@@ -113,7 +131,7 @@ class TestHysics extends JUnitSuite {
       .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
       //.compose(rgbExtractor(2301.7, 2298.6, 2295.5)) //first 3
       .compose(rgbExtractor(630.87, 531.86, 463.79)) //iw = 540, 572, 594
-      .groupByBin(geoGrid((-108.27, 34.68), (-108.195, 34.76), 100), HeadAggregation()) //based on HYLATIS-35
+      .resample(grid)
       .writeImage("/data/hysics/hysicsRGB.png") //TODO: image flipped in y-dim, grid order is fine
       //.writeText() //new FileOutputStream("/data/tmp.txt"))
     //println((System.nanoTime - t0) / 1000000000)
@@ -123,11 +141,23 @@ class TestHysics extends JUnitSuite {
   @Test
   def geo_eval(): Unit = {
     import latis.dsl._
+    val grid = geoGrid((-108.27, 34.68), (-108.195, 34.76), 4)
     hysicsDataset
       .curry(2) // (x, y) -> (wavelength) -> radiance
       .substitute(geoCSX) // (lon, lat) -> (wavelength) -> radiance
-      .groupByBin(geoGrid((-108.27, 34.68), (-108.195, 34.76), 4), HeadAggregation())
-      .eval(TupleData(-108.27, 34.68)) //Note, range values may depend on thinning
+      //.groupByBin(grid, HeadAggregation())
+      .resample(grid)
+      //.eval(TupleData(-108.27, 34.68)) //Note, range values may depend on thinning
+      .eval(TupleData(-108.25, 34.7)) //Note, using bin set
+      .writeText()
+  }
+
+  @Test
+  def project_wavelength() = {
+    import latis.dsl._
+    hysicsDataset
+      .groupByVariable("wavelength") //TODO: allow agg
+ //     .project("wavelength") //TODO: only supports range for now
       .writeText()
   }
 

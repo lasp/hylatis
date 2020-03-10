@@ -5,38 +5,84 @@ import java.net.URI
 import org.junit.Test
 import org.scalatest.junit.JUnitSuite
 
+import latis.data.ArrayFunction2D
 import latis.dataset._
+import latis.input.ModisGeolocationReader
 import latis.input.ModisGranuleListReader
 import latis.input.ModisImageReader
+import latis.ops.HeadAggregation
 
 class TestModis extends JUnitSuite {
 
   lazy val modisDataset: Dataset = {
-    val uri = new URI("s3://hylatis-modis/MYD021KM.A2014230.1940.061.2018054170416.hdf")
+    import latis.dsl._
+    //val uri = new URI("s3://hylatis-modis/MYD021KM.A2014230.1940.061.2018054170416.hdf")
+    val uri = new URI("file:///data/s3/hylatis-modis/MYD021KM.A2014230.1940.061.2018054170416.hdf")
     ModisGranuleListReader
       .read(uri)           //band -> uri
-      .select("band <= 3") //first 3 bands
-    //.toSpark() //use Spark
+      .select("band <= 4")
+      //.toSpark() //use Spark //slower: 1:25 vs 0:16
       .withReader(ModisImageReader)
       //.stride(1, 1000, 1000) //TODO: will this be applied via the NetcdfAdapter? need to make ModisImageReader with Section like goes?
-    //.uncurry()
-    //.groupByVariable("x", "y", "wavelength")
-    //.cache2()
+      .uncurry()
+      .groupByVariable("ix", "iy", "band")
+      .cache2()
+  }
+
+  lazy val geoLocation: Dataset = {
+    val uri = new URI("file:///data/s3/hylatis-modis/MYD03.A2014230.1945.061.2018054000612.hdf")
+    ModisGeolocationReader
+      .read(uri)
+      .restructureWith(ArrayFunction2D)
   }
 
   @Test
-  def read_cube() = {
+  def dsl_rgb_image() = {
     import latis.dsl._
-    modisDataset
-      .writeText()
+    modisDataset.makeRGBImage(1, 4, 3)
+      .writeImage("/data/s3/hylatis-modis/modisRGB.png")
   }
 
-  //@Test
+  @Test
+  def dsl_geo_rgb_image() = {
+    import latis.dsl._
+    modisDataset
+      .geoSubset((-120, 30), (-84, 52), 100000)
+      .makeRGBImage(1, 4, 3)
+      .writeImage("/data/s3/hylatis-modis/modisRGB.png")
+  }
+
+  @Test
+  def geo_rgb_image() = {
+    import latis.dsl._
+    val grid = geoGrid((-120, 30), (-84, 52), 100000)
+    modisDataset
+      .curry(2)
+      //.stride(1000,1000) //TODO: buggy
+      //.select("ix < 50")
+      //.select("iy < 50")
+      .compose(rgbExtractor(1, 4, 3))
+      .substitute(geoLocation)
+      .resample(grid)
+      //.writeText()
+      .writeImage("/data/s3/hylatis-modis/modisRGB.png")
+  }
+
+  @Test
+  def read_geolocation() = {
+    import latis.dsl._
+    val ds = geoLocation
+      .stride(1000, 1000) //stride is buggy outside of netcdf adapter
+      .writeText()
+    //println(ds)
+  }
+
+  @Test
   def read_single_image() = {
     import latis.dsl._
-    val uri = new URI("file:///data/s3/hylatis-modis/MYD021KM.A2014230.1940.061.2018054170416.hdf!/MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB#(0,0:2030,0:1354)")
+    val uri = new URI("file:///data/s3/hylatis-modis/MYD021KM.A2014230.1940.061.2018054170416.hdf!/MODIS_SWATH_Type_L1B/Data_Fields/EV_250_Aggr1km_RefSB#(0,0:2029:1000,0:1353:1000)")
     val ds = ModisImageReader.read(uri)
-      .stride(1, 1000, 1000) //won't work with ":" in stride
+      //.stride(1, 1000, 1000) //won't work with ":" in stride
       ds.writeText()
   }
 }

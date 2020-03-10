@@ -3,7 +3,7 @@ package latis.input
 import latis.metadata.Metadata
 import latis.model._
 
-object ModisImageReader extends AdaptedDatasetReader {
+object ModisImageReader extends AdaptedDatasetReader with Serializable {
 
   def metadata: Metadata = Metadata("modis_image")
 

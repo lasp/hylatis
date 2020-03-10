@@ -3,28 +3,16 @@ package latis.input
 import latis.model._
 import latis.metadata.Metadata
 
-import java.net.URI
-import latis.util.LatisConfig
-import latis.data.ArrayFunction2D
-import latis.dataset._
-
-case class ModisGeolocationReader() { //extends DatasetReader {
-  //TODO: define as Dataset, need a Dataset trait instead of case class
-  //or object value, not class
+object ModisGeolocationReader extends AdaptedDatasetReader {
   
-  /**
-   * Get the URI for the MODIS data file to read.
-   */
-  val uri: URI = LatisConfig.get("hylatis.modis.geoloc.uri") match {
-    case Some(s) => new URI(s) //TODO: invalid URI
-    case _ => ??? //TODO: uri not defined
-  }
-  
-  val metadata = Metadata("modis_geolocation")
+  def metadata = Metadata("modis_geolocation")
   
   // (ix, iy) -> (longitude, latitude)
-  val model = Function(
-    Tuple(Scalar("ix"), Scalar("iy")),
+  def model = Function(
+    Tuple(
+      Scalar(Metadata("id" -> "ix", "type" -> "int")),
+      Scalar(Metadata("id" -> "iy", "type" -> "int"))
+    ),
     Tuple(
       Scalar(Metadata(
           "id" -> "longitude", 
@@ -39,11 +27,6 @@ case class ModisGeolocationReader() { //extends DatasetReader {
     )
   )
   
-  val adapter = NetcdfAdapter(model)
-  
-  def getDataset: Dataset = {
-    // Use ArrayFunction2D to optimize evaluation by index domain values
-    val data = ArrayFunction2D.restructure(adapter.getData(uri))
-    new TappedDataset(metadata, model, data)
-  }
+  def adapter = NetcdfAdapter(model)
+
 }

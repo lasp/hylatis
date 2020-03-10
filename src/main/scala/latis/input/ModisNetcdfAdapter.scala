@@ -89,12 +89,14 @@ case class ModisNetcdfAdapter(
       //val shape = ncDataset.findVariable(vname).getShape
       //val shape = section.getShape
       //val strides = section.getStride
+
       val ranges: Array[URange] = section.getRanges.asScala.toArray
       val r1 = ranges(1)
       val r2 = ranges(2)
-      val domainSet = LinearSet2D(
-        LinearSet1D(r1.first, r1.stride, r1.length),
-        LinearSet1D(r2.first, r2.stride, r2.length)
+      val domainSet = IndexSet2D(
+        IndexSet1D(r1.first, r1.stride, r1.length),
+        IndexSet1D(r2.first, r2.stride, r2.length),
+        model.asInstanceOf[Function].domain
       )
 
       // Note, all range variables must have the same shape
@@ -116,6 +118,11 @@ case class ModisNetcdfAdapter(
             })
           }
       }
+
+      ////TODO: but lose index into geolocation
+      //val ny = section.getShape(2)
+      //val arr = rangeData.toArray.grouped(ny).toArray
+      //ArrayFunction2D(arr)
 
       SetFunction(domainSet, rangeData)
     }.compile.toVector.unsafeRunSync().head //Note, will close file

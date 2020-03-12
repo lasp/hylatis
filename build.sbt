@@ -8,6 +8,7 @@ val sparkVersion    = "2.4.0"
 val jettyVersion    = "9.4.11.v20180605"
 val geotoolsVersion = "20.2"
 val fs2Version      = "1.0.2"
+val geotrellis      = "org.locationtech.geotrellis"
 
 lazy val `latis3-core` = ProjectRef(file("../latis3"), "core")
 
@@ -17,25 +18,25 @@ lazy val hylatis = (project in file("."))
   .settings(
     name := "latis-hylatis",
     libraryDependencies ++= Seq(
-      // "io.latis-data"   %% "latis-core"       % latisVersion,
-      // "io.latis-data"   %% "latis-spark"      % latisVersion,
-      "org.eclipse.jetty"   % "jetty-server"     % jettyVersion,
-      "org.eclipse.jetty"   % "jetty-servlet"    % jettyVersion,
-      "org.geotools"        % "gt-main"          % geotoolsVersion,
-      "org.geotools"        % "gt-epsg-hsql"     % geotoolsVersion,
-      "org.geotools"        % "gt-api"           % geotoolsVersion,
-      "org.geotools"        % "gt-referencing"   % geotoolsVersion,
-      "org.locationtech.geotrellis" %% "geotrellis-raster" % "3.2.0",
-      "org.apache.commons"  % "commons-math3"    % "3.6.1",
-      "io.findify"         %% "s3mock"           % "0.2.4",
-      "edu.ucar"            % "cdm"              % "5.0.0",
-      "edu.ucar"            % "httpservices"     % "5.0.0",
-      "org.apache.spark"   %% "spark-sql"        % sparkVersion,
-      "com.amazonaws"       % "aws-java-sdk-s3"  % "1.11.489",
-      "co.fs2"             %% "fs2-core"         % fs2Version,
-      "co.fs2"             %% "fs2-io"           % fs2Version,
-      "com.typesafe"        % "config"           % "1.3.4",
-      ("sh.almond"          % "scala-kernel-api" % "0.6.0" % Provided).cross(CrossVersion.full)
+      // "io.latis-data"   %% "latis-core"        % latisVersion,
+      // "io.latis-data"   %% "latis-spark"       % latisVersion,
+      "org.eclipse.jetty"   % "jetty-server"      % jettyVersion,
+      "org.eclipse.jetty"   % "jetty-servlet"     % jettyVersion,
+      "org.geotools"        % "gt-main"           % geotoolsVersion,
+      "org.geotools"        % "gt-epsg-hsql"      % geotoolsVersion,
+      "org.geotools"        % "gt-api"            % geotoolsVersion,
+      "org.geotools"        % "gt-referencing"    % geotoolsVersion,
+      geotrellis           %% "geotrellis-raster" % "3.2.0",
+      "org.apache.commons"  % "commons-math3"     % "3.6.1",
+      "io.findify"         %% "s3mock"            % "0.2.4",
+      "edu.ucar"            % "cdm"               % "5.0.0",
+      "edu.ucar"            % "httpservices"      % "5.0.0",
+      "org.apache.spark"   %% "spark-sql"         % sparkVersion,
+      "com.amazonaws"       % "aws-java-sdk-s3"   % "1.11.489",
+      "co.fs2"             %% "fs2-core"          % fs2Version,
+      "co.fs2"             %% "fs2-io"            % fs2Version,
+      "com.typesafe"        % "config"            % "1.3.4",
+      ("sh.almond"          % "scala-kernel-api"  % "0.6.0" % Provided).cross(CrossVersion.full)
     ),
     updateOptions := updateOptions.value.withGigahorse(false),
     resolvers ++= Seq(

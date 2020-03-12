@@ -13,6 +13,7 @@ import java.io.FileOutputStream
 import org.checkerframework.checker.units.qual.g
 
 import latis.dataset.Dataset
+import latis.util.ImageUtils._
 
 /**
  * Create an png image of a Dataset of one of the shapes:
@@ -154,7 +155,7 @@ object ImageWriter {
 
   /**
    * Make an Image assuming a Dataset of the form: (x, y) -> (r, g, b)
-   * with natural ordering.
+   * in a Cartesian coordinate system, i.e. (0, 0) being the bottom left corner.
    */
   private def makeImageFromRGB(dataset: Dataset): BufferedImage = {
     // Use Map so we can fill gaps in almost Cartesian dataset (no missing rows or columns)
@@ -176,64 +177,20 @@ object ImageWriter {
         gb += (x, y) -> g
         bb += (x, y) -> b
     }
-
-    // Filter out NaN before finding min/max
-    //val drop = 0.1
-    val rmax = rb.values.filter(! _.isNaN()).max //* (1 - drop - 0.5)
-    val gmax = gb.values.filter(! _.isNaN()).max //* (1 - drop - 0.5)
-    val bmax = bb.values.filter(! _.isNaN()).max //* (1 - drop - 0.5)
-    val rmin = rb.values.filter(! _.isNaN()).min //* (1 + drop)
-    val gmin = gb.values.filter(! _.isNaN()).min //* (1 + drop)
-    val bmin = bb.values.filter(! _.isNaN()).min //* (1 + drop)
-
     val width = xs.size
     val height = ys.size
-    
-    // Normalize to 0..1 based on range of min to max value.
-    /*
-     * TODO: make histogram and drop outer n%
-     * try drop above
-     */
-    
-    
-    // Assume natural x-y ordering
-    // Put into row-column order.
-    val data: List[Int] = for {
-      row <- ys.toList.sorted //(0 until height)  //height - y -1
-      col <- xs.toList.sorted //(0 until width)   //x
-    } yield {
-      //val i = col * height + height - row -1
-      val r: Float = {
-        //TODO: sanity check orientation
-        val r = if (rb.contains(col, row)) rb(col, row) else Float.NaN
-        ((r - rmin) / (rmax - rmin)).toFloat match {
-          case v if v.isNaN => 0
-          case v if v < 0   => 0
-          case v if v > 1   => 1
-          case v            => v
-        }
-      }
-      val g: Float = {
-        val g = if (gb.contains(col, row)) gb(col, row) else Float.NaN
-        ((g - gmin) / (gmax - gmin)).toFloat match {
-          case v if v.isNaN => 0
-          case v if v < 0   => 0
-          case v if v > 1   => 1
-          case v            => v
-        }
-      }
-      val b: Float = {
-        val b = if (bb.contains(col, row)) bb(col, row) else Float.NaN
-        ((b - bmin) / (bmax - bmin)).toFloat match {
-          case v if v.isNaN => 0
-          case v if v < 0   => 0
-          case v if v > 1   => 1
-          case v            => v
-        }
-      }
-      new Color(r, g, b).getRGB
-    }
 
+    // Put into row-column order and fill missing values
+    val rgb: Seq[(Double, Double, Double)] = for {
+      row <- ys.toList.sorted.reverse
+      col <- xs.toList.sorted
+    } yield {
+      val r: Double = if (rb.contains(col, row)) rb(col, row) else 0.0
+      val g: Double = if (gb.contains(col, row)) gb(col, row) else 0.0
+      val b: Double = if (bb.contains(col, row)) bb(col, row) else 0.0
+      (r, g, b)
+    }
+    val data = toJavaColor(linearPercentStretchRgb(rgb, p = 0.03)).map(_.getRGB)
     val image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
     image.setRGB(0, 0, width, height, data.toArray, 0, width)
     image
